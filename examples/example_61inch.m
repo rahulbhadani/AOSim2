@@ -13,7 +13,6 @@ aa = SPACING;
 % spider = 0.0254;
 spider = 0.01;
 
-
 PUPIL_DEFN = [
    0 0 D         1 aa 0 0 0 0 0
    0 0 secondary 0 aa/2 0 0 0 0 0
