@@ -17,6 +17,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
     % 20100514 JLCodona.  Added a coordinates caching scheme.
     % 20141120 JLCodona.  Made the objects deep-copyable.
     
+    
     %% Properties
     properties(Constant=true, GetAccess='protected')
         SECS_PER_RADIAN = 206265;

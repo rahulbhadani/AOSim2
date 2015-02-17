@@ -4,6 +4,7 @@
 % Date: 2/16/2015
 % Software provided by Johanan L. Codona
 clear all; clc; close all;
+
 %% Getting Started!
 % It is important to keep the updated version of AOSim2 as the version you
 % are using.  The easiest way to do this is to make use of command line git
@@ -115,7 +116,7 @@ clear all; clc; close all;
 % So let's make a simple AOGrid:
 Grid = AOGrid(64);
 
-% This creates an AOGrid object that contains a 256x256 array.  The default
+% This creates an AOGrid object that contains a 64x64 array.  The default
 % values for data properties seen in the Constructor method are set to the
 % object as well. 
 
