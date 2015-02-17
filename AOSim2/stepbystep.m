@@ -39,6 +39,22 @@ clear all; clc; close all;
 % You will see: On branch OPTI528. Your branch is up-to-date with 'origin/OPTI528'.
 % This means you have the most recent version of the repo.
 %
+% Once you add a file (a script to run something using AOSim2) to this
+% directory, you will need to add it to the repo.  Do this using the
+% command: git add <path/to/file>  example: git add stepbystep.m
+% Type in git status after doing this, and you should see in green
+% "new file:   stepbystep.m"
+% This change now needs to be committed.
+% Type: git commit. A window will open for you to type in a comment about
+% what has changed in the files being commited. Save that file, and the
+% commit will go through.  using git commit -a will automatically commit
+% all modifications (you will still need to do the changes file.  If you
+% have your own git repo, you can sync to it, and push these changes so it
+% is always up to date.  To do that, look up how to sync to a remote, and
+% use the command: git push.  If you have code that fixes a bug, or is
+% something John finds interesting, he will likely have you push it to the
+% OPTI528 branch for everyone to be able to use/enjoy.
+% 
 % Now that you have the software, we will examine how to use it.  There
 % will be more on git later.
 
