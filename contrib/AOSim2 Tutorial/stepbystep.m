@@ -174,13 +174,23 @@ Grid = AOGrid(64);
 
 % The following code will print what is stored in Grid.grid_ under 3
 % different cases:
-Grid.grid
+figure(1)
+subplot(1,3,1)
+imagesc(Grid.grid)
+caxis([-1,1]);
+title('Default Array');
+subplot(1,3,2)
 matrix_A = magic(64);
 Grid.grid(matrix_A);
-Grid.grid
+imagesc(Grid.grid)
+title(sprintf('Array Set Using grid Method\n'));
+subplot(1,3,3)
 Grid.constant(1);
-Grid.grid
-% Printed in the workspace are now the default array values (zeros), the
+imagesc(Grid.grid)
+caxis([-1,1]);
+title('Array Set Using constant Method');
+
+% Printed in the figure 1 are now the default array values (zeros), the
 % array when it is set by the grid method to a matrix that is already
 % known, and when it is set by the contant method.  Notice that the array
 % is overwritten each time, because AOGrid can store only 1 array at a
@@ -211,7 +221,7 @@ cyl = R<=0.7;
 Grid.grid(cyl);
 fgrid = Grid.fft(64);
 Grid.grid(fgrid);
-figure(1)
+figure(2)
 subplot(1,2,1)
 Grid.plotC(1);
 title('OOP Designation');
@@ -238,7 +248,7 @@ plotC(Grid,1);
 title('Standard Matlab Function Designation');
 touch(Grid);
 
-% You can see in figure 1 that calling the methods either way nets the
+% You can see in figure 2 that calling the methods either way nets the
 % exact same result.  Pretty cool, right?
 
 % Keep looking through the methods in AOGrid and have some fun! The more
