@@ -313,20 +313,39 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             DK = 2*pi./(size(obj.grid_) .* obj.spacing_);
         end
         
+        %%
         function g = grid(obj,nugrid) % TODO: make this fancier.
+        %% function g = grid(obj,nugrid) 
+        % Returns the array insie of an AOGrid.
+        % e.g.
+        % grid = F.grid();
+        %
+        % You can set the grid to a new one by
+        % F.grid(newarray);
+        % The return value in the newgrid case is the object.
+        % 
+        % F.grid(newarray).show;
+        
             if(nargin==1)
                 g = obj.grid_;
             else
+                nugrid = squeeze(nugrid);
+                nugrid = nugrid(:,:,1);
+                nugrid = squeeze(nugrid);
                 if(size(obj)==size(nugrid))
-                    obj.grid_ = nugrid;
-                    obj.fftgrid_ = [];
+                    obj.grid_ = double(nugrid);
+                    obj.touch;
                 else
-                    error('different sized grid assignment not supported (yet)');
+                    obj.resize(size(nugrid));
+                    obj.grid_ = double(nugrid);
+                    obj.touch;
+                    %error('different sized grid assignment not supported (yet)');
                 end
-                g = obj;
+                g = obj; % Note
             end
         end
         
+        %% This is not really useful anymore.  Center is the default alignment.
         function A = center(A)
             
             % CENTER: Move the grid to be face-centered.
@@ -720,7 +739,13 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
         end
         
+        %%
         function sgrid = subGrid(G,y,x)
+        % function sgrid = subGrid(G,y,x)
+        % Extract a smaller part of a grid.
+        % x and y are 1-d lists of coordinates.
+        % example>> SUBGRID = GRID.subGrid(10:20,30:40);
+        
             sgrid = G.grid_(y,x);
         end
         
