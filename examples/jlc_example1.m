@@ -9,7 +9,7 @@ A.name = 'Pupil';
 D = 10*0.0254; % 10 inch primary.
 secondary = D/4;
 
-SPACING = D/30;
+SPACING = D/100;
 aa = SPACING/3; % This is smoothing or "antialiasing".
 % aa = 0.04;
 % spider = 0.0254;
@@ -46,6 +46,7 @@ PUPIL_DEFN = [
 A.spacing(SPACING);
 A.pupils = PUPIL_DEFN;
 A.make; % This builds the grid from the definitions in A.pupils.
+colormap(gray(256));
 A.show;
 
 input 'Press a key to continue...'
@@ -73,8 +74,8 @@ F.name = 'Field';
 
 % This is pretty small, so make it bigger.
 
-% F.resize(256);
-F.resize(64);
+F.resize(256);
+%F.resize(64);
 
 F.lambda = 1e-6;
 F.FFTSize = 1024;
@@ -90,7 +91,8 @@ F.show;
 PSFmax = max(PSF(:));
 
 subplot(1,2,2);
-imagesc(thx,thy,PSF/PSFmax);
+% imagesc(thx,thy,log10(PSF/PSFmax),[-4 0]);
+imagesc(thx,thy,(PSF/PSFmax));
 daspect([1 1 1]);
 
 %% Make a phase screen
@@ -214,6 +216,7 @@ F.FFTSize = 1024;
 
 THld = F.lambda/D * 206265;
 
+PS.spacing(0.01);
 PS.setR0(0.08);
 PS.make;
 

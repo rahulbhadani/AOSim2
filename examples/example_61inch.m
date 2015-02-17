@@ -42,7 +42,7 @@ LENS.name = 'Lens';
 F = AOField(A);
 F.lambda = AOField.VBAND;
 
-% LENS.zero.addZernike(2,0,-F.lambda/8,D);
+LENS.zero.addZernike(2,0,-F.lambda/8,D);
 
 [x,y] = F.coords;
 
@@ -78,10 +78,11 @@ input 'Continue...'
 
 %% Now pass through the lens and defocus...
 
-for DEFOCUS=-2:.1:2
+for DEFOCUS=-2:.05:2
     
     % Set the lens defocus.  Use F.lambda as a reference.
     LENS.zero.addZernike(2,0,-F.lambda*DEFOCUS,D);
+    LENS.addZernike(3,3,F.lambda,D);
     
     F.planewave*A*LENS;
 
