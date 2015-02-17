@@ -140,7 +140,10 @@ classdef AOScreen < AOGrid
             else
                 APP = fits_read_image_subset(FITSNAME,START,STOP);
             end
-            S.grid_ = APP'*(S.lambdaRef/2/pi);
+            % Notice the transpose.  This may cause trouble if you load
+            % things from other places and don't also transpose there. I
+            % will probably change this in the future.
+            S.grid_ = APP'*(S.lambdaRef/2/pi); 
             %S.spacing(HEADER.XSPACING);
         end
         
