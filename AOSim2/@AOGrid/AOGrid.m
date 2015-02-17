@@ -849,19 +849,19 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             if(isscalar(b))
                 % fprintf('AOGrid scalar minus.\n');
                 a.grid_ = a.grid_ - b;
-                a.fftgrid_ = [];
+                touch(a);
             elseif(isa(b,'AOGrid'))
                 % fprintf('AOGrid-AOGrid.\n');
                 if(isCommensurate(a,b))
                     a.grid_ = a.grid_ - b.grid;
-                    a.fftgrid_ = [];
+                    touch(a);
                 else
                     % fprintf('AOGrid-AOGrid: non-commensurate grids.\n');
                     [X,Y] = a.COORDS;
                     bg = b.interpGrid(X,Y);
                     bg(isnan(bg)) = 0;
                     a.grid_ = a.grid_ + bg;
-                    a.fftgrid_ = [];
+                    touch(a);
                 end
             end
         end
@@ -874,26 +874,26 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             if(isnumeric(b))
                 % fprintf('AOGrid scalar product.\n');
                 a.grid_ = a.grid_ * b;
-                a.fftgrid_ = [];
+                touch(a);
             elseif(isa(b,'AOGrid'))
                 % fprintf('AOGrid .* AOGrid.\n');
                 if(isCommensurate(a,b))
                     a.grid_ = a.grid_ .* b.grid;
-                    a.fftgrid_ = [];
+                    touch(a);
                 else
                     % fprintf('AOGrid .* AOGrid: non-commensurate grids.\n');
                     [X,Y] = a.COORDS;
                     bg = b.interpGrid(X,Y);
                     bg(isnan(bg)) = b.nanmap;
                     a.grid_ = a.grid_ .* bg;
-                    a.fftgrid_ = [];
+                    touch(a);
                 end
             end
         end
         
         function G = shiftPixels(G,pixels)
             G.grid_ = circshift(G.grid_,pixels);
-            G.fftgrid_ = [];
+            G.touch;
         end
     end % of methods
     

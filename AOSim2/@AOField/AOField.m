@@ -185,7 +185,9 @@ classdef AOField < AOGrid
 				a.grid_ = a.grid_ .* exp((2*pi*1i/a.lambda)*b.OPL(a,a.z));
 			else
 				a = mtimes@AOGrid(a,b);
-			end
+            end
+            
+            a.touch;
         end
         
           function wavenumber = k(this)
