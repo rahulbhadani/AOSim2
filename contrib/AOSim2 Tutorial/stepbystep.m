@@ -5,6 +5,19 @@
 % Software provided by Johanan L. Codona
 clear all; clc; close all;
 
+%% A Note About Using This Guide
+% While the run button can be pressed to execute this entire tutorial, it
+% is recommended that you read through it, and copy/paste the code into the
+% command window to execute it.  This will allow you to follow along with
+% the comments and execute the code in a step by step fashion.  If you want
+% to run sections of it as a whole at one time, that is also possible by
+% executing the "Run Section" button with the piece you want to run as the
+% active cell.  For those of you that do not know, a section of Matlab
+% script that starts with a double % and has a bold title is known as a
+% cell.  The cell that has a yellow background (in the default color
+% scheme) is the active one.  Clicking the Run Section button will execute
+% the commands only in this active cell.
+
 %% Getting Started!
 % It is important to keep the updated version of AOSim2 as the version you
 % are using.  The easiest way to do this is to make use of command line git
@@ -129,7 +142,7 @@ clear all; clc; close all;
 % explain them all here, and a lot of them are used when others are called.
 % I will go into detail about some of them when the need arises.
 %
-% So let's make a simple AOGrid:
+% So let's make a simple AOGrid object named Grid:
 Grid = AOGrid(64);
 
 % This creates an AOGrid object that contains a 64x64 array.  The default
@@ -143,25 +156,91 @@ Grid = AOGrid(64);
 [X,Y] = Grid.COORDS;
 
 % Take a look at the results
-% you will see that x,y are vectors, and X,Y are meshgrid-like matrices.
+% You will see that x,y are vectors, and X,Y are meshgrid-like matrices.
 % These commands map a real life coordinate system (in meters) to the
 % pixels in the AOGrid based on the spacing property (defaults to 0.04)
 % and how many pixels you gave to the array when creating the object (64
 % in this example script).
-% This are very convenient for things like plotting, and for understanding
+% This is very convenient for things like plotting, and for understanding
 % what a simulation might be like in physical units.
 
 % grid
 % This is another important method. This is used a lot in other classes
 % that come down the line, but is useful to look at here.  Calling
-% Grid.grid will print the current array stored in the object. If you have
-% a matrix already created somewhere that is the right size, you can set
-% the property grid_ (the actual array is stored here) to that matrix.  You
-% can also set grid_ by using the constant method.
+% Grid.grid will print the current array stored in the object Grid. If you 
+% have a matrix already created somewhere that is the right size, you can 
+% set the property grid_ (the actual array is stored here) to that matrix.  
+% You can also set grid_ by using the constant method.
 
+% The following code will print what is stored in Grid.grid_ under 3
+% different cases:
 Grid.grid
 matrix_A = magic(64);
 Grid.grid(matrix_A);
 Grid.grid
 Grid.constant(1);
 Grid.grid
+% Printed in the workspace are now the default array values (zeros), the
+% array when it is set by the grid method to a matrix that is already
+% known, and when it is set by the contant method.  Notice that the array
+% is overwritten each time, because AOGrid can store only 1 array at a
+% time.
+
+% Finally, take note of the overloaded operators section.  This is defining
+% how objects with the class type of AOGrid react to mathematical operator
+% commands (+, *, and -).  These operators become very important once we
+% get to later classes (AOField especially).
+
+% Spend some time playing around with the Grid and learn what the class is
+% capable of doing.  I found that the easiest way to not only get a feel
+% for using OOP, but also to begin to understand the power of AOSim2.  Call
+% some methods, give inputs to them, and see what happens.  I will give you
+% a few of my favorites to get you started:
+
+% Grabbing Values from a matrix at certain coordinate points and making
+% them a vector (You will see the power of this when we get to Deformable
+% Mirros)
+OPL = magic(64);
+Grid.grid(OPL);
+pistonvec = Grid.interpGrid(x(1,:),y(1,:));
+
+% Create a circle, use Grid to fourier transform it, and then plot the
+% complex result without a Cdata error.
+R = sqrt(X.^2 + Y.^2);
+cyl = R<=0.7;
+Grid.grid(cyl);
+fgrid = Grid.fft(64);
+Grid.grid(fgrid);
+figure(1)
+subplot(1,2,1)
+Grid.plotC(1);
+title('OOP Designation');
+
+% This example brings me to an important point about AOSim2.  Whenever you
+% use a script that makes use of the .fft command (either from a different
+% method, or straight as done in this example), the fftgrid_ property is
+% set and cached.  This means you have to clear the property if you want to
+% do a different FFT. It is written this way to save time from having to do
+% the same FFT over and over, so if the property is not empty, the program
+% assumes you want to use the cached copy and avoid unnecssary computation.
+% Clearing the property is simple.  Use the touch method.
+Grid.touch;
+
+% Another note.  You don't have to use the OOP designation to call methods.
+% They are all written such that the first input is the class object, which
+% means you can get the same effect by using standard Matlab notation
+clear fgrid;
+grid(Grid,cyl);
+fgrid = fft(Grid,64);
+grid(Grid,fgrid);
+subplot(1,2,2)
+plotC(Grid,1);
+title('Standard Matlab Function Designation');
+touch(Grid);
+
+% You can see in figure 1 that calling the methods either way nets the
+% exact same result.  Pretty cool, right?
+
+% Keep looking through the methods in AOGrid and have some fun! The more
+% you know about this class, and how to use the methods for the object, the
+% better off you will be as we add complexity and move forward.
