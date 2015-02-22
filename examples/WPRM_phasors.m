@@ -34,8 +34,9 @@ A.make;
 clf;
 colormap(gray);
 
-A.show;
-input 'Press ENTER to Continue...'
+% A.show;
+% input 'Press ENTER to Continue...'
+% pause(3);
 
 %% Make a Kolmogorov phase screen.
 TURBULENCE = AOScreen(2048); % Make it big so we get good low-frequency behavior.
@@ -45,9 +46,9 @@ TURBULENCE.spacing(.02);
 TURBULENCE.setR0(r0); 
 TURBULENCE.make;
 
-TURBULENCE.show;
-input 'Press ENTER to Continue...'
-
+% TURBULENCE.show;
+% input 'Press ENTER to Continue...'
+% pause(3);
 
 %% Make an AOField object.
 
@@ -59,9 +60,9 @@ F.lambda = lambda;
 [x,y] = F.coords;
 
 F.planewave*A;
-F.show;
+% F.show;
 
-input 'Continue...'
+% input 'Continue...'
 
 % This adds a reference wave to the field and computes the intensity.
 % imagesc(x,y,F.interferometer(1),[0 3]);
@@ -84,7 +85,7 @@ axis square;
 axis xy;
 colorbar;
 
-input 'Continue...'
+% input 'Continue...'
 
 PIXEL_RANGE = 513 + (-400:400);
 xx = x(PIXEL_RANGE);
@@ -103,11 +104,11 @@ N1=2; N2=2;
 
 % RANGES = [1:10,20:10:100,200:100:1000,2000:1000:1e4];
 % RANGES = logspace(1,log10(ZMAX),100);
-RANGES = logspace(1,6,200);
+RANGES = logspace(1,6,100);
 SELECT = 513+(-15:15); % points for the phasor plot.
 
 for z=RANGES
-
+    fprintf('Range: %.1f m\n',z);
     % Assume the phase screen is in the z= plane.
     
     % Start the field over each time rather than repeatedly propagating.  
@@ -124,11 +125,13 @@ for z=RANGES
     daspect([1 1 1]);
     axis xy;
     colorbar;
+    
+    drawCircles([D secondary]/2,[0 0],1,'r-')
 
     if(z<1000)
         title(sprintf('Irradiance z=%.1f m',z));
     else
-        title(sprintf('Irradiance z=%.2f km',z/100));
+        title(sprintf('Irradiance z=%.2f km',z/1000));
     end
     subplot(N1,N2,2);
 
@@ -166,8 +169,6 @@ for z=RANGES
     drawnow; 
 end
 
-
-
 %% Do it again.... (processing saved data from the earlier loop would be 
 % faster, but I can't count on how much memory you have.)
 
@@ -185,6 +186,7 @@ warning('off','MATLAB:Axes:NegativeDataInLogAxis');
 
 RANGES = logspace(1,6,50);
 for z=RANGES
+    fprintf('[pass 2] Range: %.1f m\n',z);
 
     % Assume the phase screen is in the z= plane.
     
@@ -207,7 +209,7 @@ for z=RANGES
     if(z<1000)
         title(sprintf('Irradiance z=%.1f m',z));
     else
-        title(sprintf('Irradiance z=%.0f km',z/100));
+        title(sprintf('Irradiance z=%.0f km',z/1000));
     end
     
     % Complex scatterplot
