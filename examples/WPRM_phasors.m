@@ -140,7 +140,7 @@ for z=RANGES
     xlim([-1 1]*3);
     ylim([-1 1]*3);
     daspect([1 1 1]);
-    title('Complex Pupil Field');
+    title('Small patch of Field');
     xlabel('real');
     ylabel('imag');
     
@@ -167,3 +167,108 @@ for z=RANGES
 end
 
 
+
+%% Do it again.... (processing saved data from the earlier loop would be 
+% faster, but I can't count on how much memory you have.)
+
+SELECT = 128:8:1024-128; % Large region for phasor plot.
+
+% select PSD binning
+[XX,YY] = meshgrid(xx,yy);
+RR = sqrt(XX.^2+YY.^2);
+% lbinning = log10(1); % octaves
+lbinning = 1/20; 
+RR_ = 10.^(round(log10(RR)/lbinning)*lbinning);
+RLIST = unique(sort(RR_(:)));
+KAPPA = RLIST/xx(end)*pi/F.dx;
+warning('off','MATLAB:Axes:NegativeDataInLogAxis');
+
+RANGES = logspace(1,6,50);
+for z=RANGES
+
+    % Assume the phase screen is in the z= plane.
+    
+    % Start the field over each time rather than repeatedly propagating.  
+    % It minimizes numerical issues..
+    
+    F.planewave*TURBULENCE;
+    F.propagate(z);
+    
+    subplot(N1,N2,1);
+    % IRRADIANCE = F.mag2;
+    PSI = F.subGrid(PIXEL_RANGE,PIXEL_RANGE);
+    IRRADIANCE = PSI .* conj(PSI); 
+    
+    imagesc(xx,yy,IRRADIANCE,[0 3]);
+    daspect([1 1 1]);
+    axis xy;
+    colorbar;
+
+    if(z<1000)
+        title(sprintf('Irradiance z=%.1f m',z));
+    else
+        title(sprintf('Irradiance z=%.0f km',z/100));
+    end
+    
+    % Complex scatterplot
+    subplot(N1,N2,2);
+    %hold on;
+    %plot(F.subGrid(SELECT,SELECT),'k.','MarkerSize',1);
+    plot(PSI(1:8:end,1:8:end),'k.','MarkerSize',1);
+    %hold off;
+    %drawCircles(1,[0 0],1,'r--');
+    grid;
+    xlim([-1 1]*3);
+    ylim([-1 1]*3);
+    daspect([1 1 1]);
+    title('Complex Field');
+    xlabel('real');
+    ylabel('imag');
+
+    %% PDF
+    subplot(N1,N2,3);
+
+    %[C,B] = hist(angle(PSI(:)),360);
+    [C,B] = hist(IRRADIANCE(:),linspace(0,10,1000));
+    C = C/sum(C); % make histogram be indep of binning choices.
+    %plot(B,C);
+    semilogy(B,C);
+    %semilogx(B,C);
+    %loglog(B,C);
+    grid;
+    xlim([B(1) B(end)]);
+    ylim(10.^[-6 0]);
+    %title('Phase Probability');
+    title('Irradiance Probability');
+    xlabel('Irradiance');
+    ylabel('Probability');
+    
+    %% Irradiance Power Spectrum
+    subplot(N1,N2,4);
+    
+    PSD = fft2(IRRADIANCE);
+    PSD = fftshift(PSD.*conj(PSD));
+
+    PSD_ = zeros(size(RLIST));
+    PSD_sigma = zeros(size(RLIST));
+    for nk=1:length(RLIST)
+        PSD_(nk) = mean(PSD(RR_(:)==RLIST(nk)));
+        PSD_sigma(nk) = std(PSD(RR_(:)==RLIST(nk)));
+    end
+    
+    %loglog(KAPPA,PSD_);
+    %loglog(KAPPA,PSD_,'k-',KAPPA,PSD_+PSD_sigma,'y--',KAPPA,PSD_-PSD_sigma,'y--');
+    loglog(KAPPA,PSD_,'k-','LineWidth',3);
+    hold on;
+    loglog(KAPPA,PSD_+PSD_sigma,'k--',KAPPA,PSD_-PSD_sigma,'k-');
+    hold off;
+    grid;
+
+    title('Irradiance Power Spectrum');
+    xlabel('spatial freq');
+    ylabel('power spectrum');
+        
+    drawnow; 
+end
+
+warning('on','MATLAB:Axes:NegativeDataInLogAxis');
