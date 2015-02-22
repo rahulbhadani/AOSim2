@@ -115,6 +115,7 @@ for z=RANGES
     % It minimizes numerical issues..
     
     F.planewave*TURBULENCE;
+    %F.propagate(z,0); % don't filter high angles.
     F.propagate(z);
     
     PSI = F.subGrid(PIXEL_RANGE,PIXEL_RANGE);
@@ -194,7 +195,7 @@ for z=RANGES
     % It minimizes numerical issues..
     
     F.planewave*TURBULENCE;
-    F.propagate(z);
+    F.propagate(z,0); % don't filter high angles.
     
     subplot(N1,N2,1);
     % IRRADIANCE = F.mag2;
@@ -262,7 +263,7 @@ for z=RANGES
     %loglog(KAPPA,PSD_,'k-',KAPPA,PSD_+PSD_sigma,'y--',KAPPA,PSD_-PSD_sigma,'y--');
     loglog(KAPPA,PSD_,'k-','LineWidth',3);
     hold on;
-    loglog(KAPPA,PSD_+PSD_sigma,'k--',KAPPA,PSD_-PSD_sigma,'k-');
+    loglog(KAPPA,PSD_+PSD_sigma,'k--',KAPPA,PSD_-PSD_sigma,'k--');
     hold off;
     grid;
 
