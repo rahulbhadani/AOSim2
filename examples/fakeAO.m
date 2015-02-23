@@ -36,7 +36,8 @@ A.make;
 
 clf;
 % colormap(gray);
-colormap(jet);
+% colormap(jet);
+colormap(hot);
 
 % A.show;
 % input 'Press ENTER to Continue...'
@@ -45,6 +46,7 @@ colormap(jet);
 %% Make a Kolmogorov phase screen.
 TURBULENCE = AOScreen(2048); % Make it big so we get good low-frequency behavior.
 %TURBULENCE.lambdaRef = AOField.VBAND; %This is the default.
+TURBULENCE.name = 'Turbulent Layer';
 
 TURBULENCE.spacing(.02);
 TURBULENCE.setR0(r0); 
@@ -56,6 +58,7 @@ CORRECTOR.grid(-TURBULENCE.grid);  % This will be what we use to make the opposi
 %% Make an AOField object.
 
 F = AOField(A);
+F.resize(256); % do this to give a buffer around pupil for propagation.
 F.FFTSize = 1024; % Used to compute PSFs, etc.
 F.lambda = lambda;
 
@@ -171,7 +174,7 @@ for z=RANGES
     
     fitswrite([CCD_noAO CCD_AO],sprintf('fake_AO_z%.0fm.fits',z));
     
-    input 'Press ENTER to go on...'
+    %input 'Press ENTER to go on...'
     
 end
 
