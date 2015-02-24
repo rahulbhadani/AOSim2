@@ -36,7 +36,8 @@ A.make;
 
 clf;
 % colormap(gray);
-colormap(jet);
+% colormap(jet);
+colormap(hot);
 
 % A.show;
 % input 'Press ENTER to Continue...'
