@@ -126,6 +126,7 @@ for z=RANGES
     daspect([1 1 1]);
     axis xy;
     colorbar;
+    setFoV(1.0); % set the size of the plot window.
     
     drawCircles([D secondary]/2,[0 0],1,'r-')
 
@@ -266,7 +267,10 @@ for z=RANGES
     loglog(KAPPA,PSD_+PSD_sigma,'k--',KAPPA,PSD_-PSD_sigma,'k--');
     hold off;
     grid;
-
+    
+    xlim([0.1 1e3]);
+    ylim([1 1e10]);
+    
     title('Irradiance Power Spectrum');
     xlabel('spatial freq');
     ylabel('power spectrum');
