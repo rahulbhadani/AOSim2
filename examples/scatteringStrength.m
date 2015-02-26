@@ -70,10 +70,10 @@ F.planewave*A;
 
 THld = F.lambda/D * 206265; % Lambda/D in arcsecs.
 
-% Figure layout
-% N1=2; N2=2;
+F.planewave*A;
+[PSF,thx,thy] = F.mkPSF(3,THld/5);
 
-SELECT = 513+(-15:15); % points for the phasor plot.
+PSFmax = max(PSF(:));
 
 for q=0.01:0.01:3
 
