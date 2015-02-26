@@ -77,7 +77,7 @@ SELECT = 513+(-15:15); % points for the phasor plot.
 
 for q=0.01:0.01:3
 
-    r0q = TURBULENCE.r0/q^(6/5);
+    r0q = TURBULENCE.r0/q^(6/5); % This is found by scaling the Kolmogorov structure function.
     fprintf('r0 = %.3f m\n',r0q);
 
     TURBULENCE.grid(OPL*q);
