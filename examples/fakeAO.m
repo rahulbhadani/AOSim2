@@ -92,7 +92,7 @@ N1=2; N2=2; % subplots
 
 % Do this at these ranges
 % RANGES = [100 1e3 5e3 10e3 20e3 ];
-RANGES = [5e3 10e3 20e3 50e3 ];
+RANGES = [500 1e3 5e3 10e3 20e3 50e3 ];
 
 for z=RANGES
     fprintf('Range: %.1f m\n',z);
