@@ -76,10 +76,10 @@ classdef AOAtmo < AOGrid
         %ATMO = make(ATMO)
         
             for n=1:ATMO.nLayers
+                fprintf('Screen %d: ',n);
                  ATMO.layers{n}.screen.make;
             end
         end
-        
         
 		function ATMO = setBeacon(ATMO,x,y,z)
 		%ATMO = setBeacon(ATMO,x,y,z)

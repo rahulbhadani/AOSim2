@@ -132,9 +132,12 @@ classdef AOField < AOGrid
 			k = 2*pi/A.lambda;
 			THX = KX/k;
 			THY = KY/k;
-		end
+        end
 		
 		function a = mtimes(a,b)
+		% function a = mtimes(a,b)
+        % This is overloaded to compute smart "times" operations for AOFields.
+        
 			if(isa(b,'AOPhaseScreen'))
 				if(isCommensurate(a,b))
 					if(isPhase(b))
@@ -178,7 +181,8 @@ classdef AOField < AOGrid
 					%bg(isnan(bg)) = 1;
 					bg(isnan(bg)) = b.nanmap;
 					a.grid_ = a.grid_ .* bg;
-				end
+                end
+                
 			elseif(isa(b,'AOAtmo'))
 % 				fprintf('DEBUG: AOField*AOAtmo at altitude %f.\n',a.z);
 				% opl = b.OPL(a,a.z);
