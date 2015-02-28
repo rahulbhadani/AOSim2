@@ -25,6 +25,7 @@ classdef AOAtmo < AOGrid
 		
 		% Operations
 		function ATMO = addLayer(ATMO,screen,alt)
+            % ATMO = addLayer(ATMO,screen,alt)
 			n = length(ATMO.layers)+1;
 			L = struct; % start building the layer.
 			L.name = sprintf('Layer %d:%s',n,screen.name);
@@ -41,6 +42,7 @@ classdef AOAtmo < AOGrid
 		end
 		
 		function ATMO = deleteLayer(ATMO,n)
+		%ATMO = deleteLayer(ATMO,n)
 			if(n>0 && n<=length(ATMO.layers))
 				ATMO.layers(n) = [];
 			else
@@ -59,16 +61,19 @@ classdef AOAtmo < AOGrid
 
 		
 		function n = nLayers(ATMO)
+		%n = nLayers(ATMO)
 			n = length(ATMO.layers);
 		end
 		
 		function ATMO = touch(ATMO)
+		%ATMO = touch(ATMO)
 			for n=1:ATMO.nLayers
 				ATMO.layers{n}.screen.touch;
 			end
         end
 		
         function ATMO = make(ATMO)
+        %ATMO = make(ATMO)
         
             for n=1:ATMO.nLayers
                  ATMO.layers{n}.screen.make;
@@ -77,6 +82,7 @@ classdef AOAtmo < AOGrid
         
         
 		function ATMO = setBeacon(ATMO,x,y,z)
+		%ATMO = setBeacon(ATMO,x,y,z)
 			if(nargin==4)
 				ATMO.BEACON = [ x y z ];
 			else
@@ -89,18 +95,22 @@ classdef AOAtmo < AOGrid
 		end
 		
 		function ATMO = useGeometry(ATMO,yn) % include geometry factors in results?
+		%ATMO = useGeometry(ATMO,yn) % include geometry factors in results?
 			ATMO.GEOMETRY = yn;
 		end
 		
 		function ATMO = setObsTime(ATMO,t) % set observation time.
+		%ATMO = setObsTime(ATMO,t) % set observation time.
 			ATMO.time = t;
 		end
 		
 		function ATMO = setObsAltitude(ATMO,z) % set default observation altitude.
+		%ATMO = setObsAltitude(ATMO,z) % set default observation altitude.
 			ATMO.z = z;
 		end
 		
 		function R = geomDistances(ATMO,X,Y,z) % Distances from the BEACON.
+		%R = geomDistances(ATMO,X,Y,z) % Distances from the BEACON.
 			if(nargin<4)
 				z = 0;
 			end
@@ -122,6 +132,7 @@ classdef AOAtmo < AOGrid
 		end
 		
 		function [X,Y] = scaleCone(ATMO,X,Y,z,znew,SOURCE) % Shrink to the SOURCE (defaults to BEACON).
+		% [X,Y] = scaleCone(ATMO,X,Y,z,znew,SOURCE) % Shrink to the SOURCE (defaults to BEACON).
 			if(nargin<6)
 				SOURCE = ATMO.BEACON;
 			end
@@ -140,6 +151,7 @@ classdef AOAtmo < AOGrid
 		end
 		
 		function g = grid(ATMO,nugrid)
+		% g = grid(ATMO,nugrid)
 			if(ATMO.nLayers == 0)
 				g = grid@AOScreen(ATMO,nugrid);
 				return;
@@ -152,12 +164,14 @@ classdef AOAtmo < AOGrid
 		
 		% ignore flag management
 		function ATMO = ignoreAllLayers(ATMO)
+		% ATMO = ignoreAllLayers(ATMO)
 			for n=1:ATMO.nLayers
 				ATMO.layers{n}.ignore = true;
 			end
 		end
 		
 		function ATMO = includeAllLayers(ATMO)
+		% ATMO = includeAllLayers(ATMO)
 			for n=1:ATMO.nLayers
 				ATMO.layers{n}.ignore = false;
 			end
@@ -165,6 +179,7 @@ classdef AOAtmo < AOGrid
 		
 		% path integration functions
 		function opl = OPL_(ATMO,X,Y,z,SOURCE)
+		% opl = OPL_(ATMO,X,Y,z,SOURCE)
 			opl = zeros(size(X));
 			
 			% fprintf('DEBUG: OPL_ layers: ');
@@ -194,6 +209,7 @@ classdef AOAtmo < AOGrid
 		end
 		
 		function opl = OPL(ATMO,varargin)
+		% opl = OPL(ATMO,varargin)
 			% OPL: valid arg lists... (Always uses ATMO BEACON.)
 			%      Nothing. Uses internal phase screen.  Don't use this as
 			%      it confuses things.
@@ -249,6 +265,7 @@ classdef AOAtmo < AOGrid
         end
         
         function r0 = totalFriedScale(ATMO,lambda)
+        % r0 = totalFriedScale(ATMO,lambda)
 
             if(nargin<2)
                 lambda = AOField.VBAND;
@@ -262,8 +279,5 @@ classdef AOAtmo < AOGrid
             
             r0 = (0.423*(2*pi/lambda)^2*SLABS)^(-3/5); % see e.g. Roddier or Fried or Tatarskii or ANYBODY!
         end
-        
-        
-        
     end
 end
