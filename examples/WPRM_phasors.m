@@ -4,6 +4,8 @@
 % 
 % 20150221 JLCodona
 
+SAVE_IMGS = false;
+
 lambda = AOField.RBAND; % Red light.
 r0 = 0.15; % r0 is 15 cm at 500 nm.
 
@@ -153,7 +155,7 @@ for z=RANGES
     subplot(N1,N2,3);
     % F.show;
     PSI = F.subGrid(PUPIL_PIXELS,PUPIL_PIXELS);
-    plotComplex(PSI,3);
+    plotComplex(PSI,1);
     axis xy;
     axis off;
     title('Complex Pupil Field');
@@ -167,8 +169,11 @@ for z=RANGES
 
     title('PSF');
     
-    
     drawnow; 
+
+    if(SAVE_IMGS)
+        savePNG(sprintf('WPRM_z%.0fm.png',z),150);
+    end
 end
 
 %% Do it again.... (processing saved data from the earlier loop would be 
