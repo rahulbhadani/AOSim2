@@ -1,4 +1,4 @@
-classdef AOAtmo < AOGrid
+classdef AOAtmo < AOScreen
 	% AOAtmo: AOAtmo class from AOSim2.
 	%
 	% This class holds AOScreens to define will hold the wavefront as meters of displacement, which makes
@@ -7,20 +7,21 @@ classdef AOAtmo < AOGrid
 	% Written by: Johanan L. Codona, Steward Observatory: CAAO
 	% Feb. 21, 2009
 	% 20090418, JLCodona.  AOSim2.
+    % 20150228, JLCodona Changed cladd parent to AOScreen.
 	
 	% properties
 	properties(Access='public')
 		layers = {};
-		BEACON; % [x,y,z] a single point.
+		BEACON = [ 0 0 1.5e11 ]*100; % [x,y,z] a single point. Defaults to 100 AU.
 		time = 0;
 		GEOMETRY = true;
 		z = 0;
 	end
-	
+
 	methods
 		% Constructor
 		function ATMO = AOAtmo(varargin)
-			ATMO = ATMO@AOGrid(varargin);
+			ATMO = ATMO@AOScreen(varargin);
 		end
 		
 		% Operations
@@ -38,6 +39,8 @@ classdef AOAtmo < AOGrid
 			L.ignore = false;
 			
 			ATMO.layers{end+1} = L;
+            ATMO.touch;
+            
 			fprintf('AOAtmo now has %d layers.\n',length(ATMO.layers));
 		end
 		
@@ -47,7 +50,9 @@ classdef AOAtmo < AOGrid
 				ATMO.layers(n) = [];
 			else
 				error('AOAtmo: cannot delete layer %d.',n);
-			end
+            end
+            
+            ATMO.touch;
 		end
 		
 		function ATMO = disp(ATMO)
@@ -59,7 +64,6 @@ classdef AOAtmo < AOGrid
 			end
 		end
 
-		
 		function n = nLayers(ATMO)
 		%n = nLayers(ATMO)
 			n = length(ATMO.layers);
@@ -79,6 +83,8 @@ classdef AOAtmo < AOGrid
                 fprintf('Screen %d: ',n);
                  ATMO.layers{n}.screen.make;
             end
+        
+            ATMO.touched = false;
         end
         
 		function ATMO = setBeacon(ATMO,x,y,z)
@@ -119,16 +125,22 @@ classdef AOAtmo < AOGrid
 			% end
 			
 			if(isempty(ATMO.BEACON))
-				error('The BEACON coordinates are undefined.');
+				fprintf('The BEACON is undefined. Using FLAT wavefront.');
 			end
 			
-			if(isa(X,'AOGrid'))
-				G = X;
-				[X,Y] = COORDS(G);
-				R = sqrt((X-ATMO.BEACON(1)).^2+(Y-ATMO.BEACON(2)).^2+(z-ATMO.BEACON(3)).^2);
-			else
-				R = sqrt((X-ATMO.BEACON(1)).^2+(Y-ATMO.BEACON(2)).^2+(z-ATMO.BEACON(3)).^2);
-			end
+            Rmachine = 1e-10/eps; % max distance with Angstrom accuracy and machine resolution.
+			
+            dz = abs(z-ATMO.BEACON(3));
+            if(isa(X,'AOGrid'))
+				[X,Y] = X.COORDS;
+            end
+            
+            dX2 = (X-ATMO.BEACON(1)).^2+(Y-ATMO.BEACON(2)).^2;
+            if(abs(dz)<Rmachine) % near machine distances
+                R = sqrt(dX2 + dz^2)-dz; % remove the main part.
+            else % far machine distances.
+                R = dX2/2/abs(dz);
+            end
 		end
 		
 		function [X,Y] = scaleCone(ATMO,X,Y,z,znew,SOURCE) % Shrink to the SOURCE (defaults to BEACON).
@@ -155,11 +167,15 @@ classdef AOAtmo < AOGrid
 			if(ATMO.nLayers == 0)
 				g = grid@AOScreen(ATMO,nugrid);
 				return;
-			end
-			
+            end
+
+            if(ATMO.touched)
+                ATMO.make;
+            end
+            
 			[X,Y] = COORDS(ATMO);
 			g = ATMO.OPL(X,Y,ATMO.z);
-			
+            ATMO.grid_ = g;
 		end
 		
 		% ignore flag management
