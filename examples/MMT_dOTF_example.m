@@ -1,10 +1,30 @@
-% I am assuming that the AOSim2 data directory is here.
-% A symlink is good enough.
+% This is a demo of the dOTF technique using AOSim2.
+% You can use photons in the PSF images or turn them off and just use
+% computed irradiance. The pupil modification is introduced by using a
+% "finger" just inside the edge of the pupil.
+% For more information, see
+% http://spie.org/Publications/Journal/10.1117/1.OE.52.9.097105
 
-LAMBDA = AOField.JBAND;
+USE_PHOTONS = true;
 
 D = 6.5;
 
+% The following computes the photons per exposure for stars of magnitude MAG.
+% Computing the photons per exposure will be different for gold
+% nanoparticles in microscopy will be different, but just as important.
+
+MAG = 3;
+EXPOSURE = 1/30;
+
+FLUX0 = 1e10; % 0 mag is ~10^10 photons/s/m2/micron.
+FRACTIONAL_BANDWIDTH = 0.1; % delta-f/f.
+AREA = pi*(D/2)^2;
+
+LAMBDA = AOField.HBAND;
+
+PHOTONS = FLUX0 * EXPOSURE * AREA * (LAMBDA*FRACTIONAL_BANDWIDTH/1e-6) * 10^(-MAG/2.5) 
+
+% Define the pupil
 PMMT = [    0            0          6.5            1         0.03            0            0            0            0            0
             0            0         0.64            0         0.02            0            0            0            0            0
             ];
@@ -33,14 +53,15 @@ thld = LAMBDA/D*206265;
 FOV = 25 * thld;
 PLATE_SCALE = thld/3;
 
+% Define the "FINGER" mask for the dOTF.
 FINGER = AOSegment(A)
 FINGER.name = 'The Finger!';
 
 [X,Y] = FINGER.COORDS;
 
 % Just put a mask into the grid directly...
-% FINGER.grid(~(Y<-2.5 & abs(X-1)<0.25));
-FINGER.grid(exp(1i*pi/2*double(Y<-2.5 & abs(X-1)<0.25)));
+FINGER.grid(~(Y<-2.8 & abs(X-0)<0.15)); % blocker finger
+% FINGER.grid(exp(1i*pi/2*double(Y<-3.0 & abs(X-0)<0.2))); % phase finger
 
 F = AOField(A);
 F.lambda = LAMBDA;
@@ -57,6 +78,10 @@ title('Baseline pupil field');
 % First part for the dOTF...
 PSF0 = F.mkPSF(FOV,PLATE_SCALE);
 PEAK = findPeakCCD(PSF0)
+if(USE_PHOTONS)
+    PSF0 = photonz(PSF0,PHOTONS);
+end
+
 OTF0 = ifftshift(fft2(circshift(PSF0,1-PEAK)));
 
 subplot(N1,N2,2);
@@ -66,6 +91,9 @@ title('Modified pupil field');
 
 % Second part for the dOTF...
 PSF1 = F.mkPSF(FOV,PLATE_SCALE);
+if(USE_PHOTONS)
+    PSF1 = photonz(PSF1,PHOTONS);
+end
 OTF1 = ifftshift(fft2(circshift(PSF1,1-PEAK)));
 
 dOTF = OTF0 - OTF1;
