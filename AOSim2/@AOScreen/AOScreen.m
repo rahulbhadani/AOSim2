@@ -14,6 +14,7 @@ classdef AOScreen < AOGrid
 		lambdaRef = AOField.VBAND;
 	
 		mirror = false;  % This is like a height doubler.
+        conjugate = false; % This changes the sign of the phase when multiplying an AOField.
 		touched = true;
         radius = 1; % This is for Zernike reference.
         
@@ -91,7 +92,7 @@ classdef AOScreen < AOGrid
 		% Utilities
 		
 		function b = isPhase(G)
-            b=true; % This is for confused programs that think this is an AOPhaseScreen.
+            b = true; % This is for confused programs that think this is an AOPhaseScreen.
 		end
 		
 		function PSI = phasor(PS,lambda)

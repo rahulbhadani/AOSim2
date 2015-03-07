@@ -172,15 +172,21 @@ classdef AOField < AOGrid
 					MIRROR = 2;
 				else
 					MIRROR = 1;
-				end
-				
+                end
+			
+                if(b.conjugate)
+                    FLIP = -1;
+                else
+                    FLIP = 1;
+                end
+                
 				if(isCommensurate(a,b))
-% 					fprintf('DEBUG: AOField*AOScreen: commensurate grids.\n');
-					a.grid_ = a.grid_ .* exp((MIRROR*2*pi*1i/a.lambda)*b.grid);
+                    %fprintf('DEBUG: AOField*AOScreen: commensurate grids.\n');
+					a.grid_ = a.grid_ .* exp((FLIP*MIRROR*2*pi*1i/a.lambda)*b.grid);
 				else
 					[X,Y] = a.COORDS;
-% 					fprintf('DEBUG: AOField*AOScreen: non-commensurate grids.\n');
-					bg = exp((MIRROR*2*pi*1i/a.lambda)*interpGrid(b,X,Y));
+ 					%fprintf('DEBUG: AOField*AOScreen: non-commensurate grids.\n');
+					bg = exp((FLIP*MIRROR*2*pi*1i/a.lambda) * b.interpGrid(X,Y));
 					
 					%bg(isnan(bg)) = 1;
 					bg(isnan(bg)) = b.nanmap;
