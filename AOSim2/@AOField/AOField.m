@@ -14,6 +14,10 @@ classdef AOField < AOGrid
         LBAND = 3.8e-6;
 		MBAND = 4.769e-6;
 		NBAND = 10.472e-6;
+        BrGamma = 2.165e-6; % Brackett Gamma
+        HAlpha = 0.6563e-6; % Hydrogen Alpha 
+        PaBeta =1.2818e-6;  % Paschen Beta
+        OIII = 0.5007e-6;   % Oxygen III
 		
 		Rayleigh_LGS = 532e-9;
 		Sodium_LGS = 589e-9;
