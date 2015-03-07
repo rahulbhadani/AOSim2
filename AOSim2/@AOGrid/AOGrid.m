@@ -917,9 +917,54 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function G = shiftPixels(G,pixels)
+            % G = G.shiftPixels(PIXELS)
+            % Perform a circular shift of the grid by the vector PIXELS.
+            
             G.grid_ = circshift(G.grid_,pixels);
             G.touch;
         end
+        
+        function AOGRID = padBy(AOGRID,PADDING,PADVAL)
+            % AOGRID = AOGRID.padBy(PADDING,[PADVAL])
+            %
+            % Pads the grid by PADDING pixels.
+            
+            if(numel(PADDING) < 2)
+                PADDING(2) = PADDING(1);
+            end
+            
+            if(nargin<3)
+                PADVAL = 0;
+            end
+            
+            AOGRID.grid(padarray(AOGRID.grid,PADDING,PADVAL,'both'));
+            
+        end
+        
+        function AOGRID = importFITS(AOGRID,FITSNAME,FRAME)
+            % AOGRID = AOGRID.importFITS(FITSNAME,[FRAME_NUMBER])
+            % Read in an AOGrid from a FITS file.
+            % The grid will change size to accomodate the data.
+            %
+            % Note that I use MATLAB's FITS functions.
+            
+            if(nargin<3)
+                FRAME = 1;
+            end
+            
+            % I am going to keep it simple here by reading in a cube and
+            % grabbing the part I need.  If this is too inefficient for
+            % some reason, email me.
+            
+            CUBE = fitsread(FITSNAME);
+            if(FRAME>size(CUBE,3))
+                fprintf('Warning: The FITS file does not have that many image planes.\n');
+                return;
+            end
+            
+            AOGRID.grid(double(CUBE(:,:,FRAME)));
+        end
+        
     end % of methods
     
     %% static methods
