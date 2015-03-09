@@ -107,6 +107,13 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         %% Utilities
         
+        function BLURB = describe(G)
+            % BLURB = describe(G)
+            % Returns a one-line description of the object.
+            
+            BLURB = sprintf('%s [%s: %dx%d]',G.name,class(G),G.size);
+        end
+        
         function G = touch(G)
             G.fftgrid_ = [];
         end
@@ -659,39 +666,78 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function dex = dex(A)
-            dex = log10(abs(A.grid_).^2);
+        % dex = A.dex()
+        % Returns the grid intensity values in log10 (decades).
+            
+            dex = log10(A.mag2);
         end
         
         function dex = ndex(A)
-            dex = abs(A.grid_).^2;
+        % dex = A.ndex()
+        % Returns the grid intensity values in log10 normalized to the max value.
+            dex = A.mag2;
             dex = log10(dex/max(dex(:)));
         end
         
         function m = mean(A)
+            % m = A.mean()
+            % Returns the mean value of the grid.
+            
             m = mean(A.grid_(:));
         end
         
         function v = var(A)
+            % v = A.var()
+            % Returns the variance of the grid.
+            
             v = var(A.grid_(:));
         end
         
         function s = std(A)
+            % sigma = A.std()
+            % Returns the standard deviation of the grid.
+            
             s = std(A.grid_(:));
         end
         
+        function s = sigma(A)
+            % sigma = A.sigma()
+            % Returns the standard deviation of the grid.
+            
+            s = A.std;
+        end
+        
         function b = isX(G)
+            % BOOLEAN = AOGRID.isX();
+            % This method is left over from AOSim1 when grids could be in
+            % configuration space or in Fourier space.  In AOSim2 all
+            % AOGrids are assumed to be in configuration space.
+            % This method is deprecated.
             b=(strcmp(G.domain_,AOGrid.DOMAIN_SPACE)==1);
         end
         
         function b = isK(G)
+            % BOOLEAN = AOGRID.isK();
+            % This method is left over from AOSim1 when grids could be in
+            % configuration space (X) or in Fourier space (K).  
+            % In AOSim2 all AOGrids are assumed to be in configuration space.
+            % This method is deprecated.
             b=(strcmp(G.domain_,AOGrid.DOMAIN_FREQ)==1);
         end
         
         function b = isCentered(G)
+            % BOOLEAN = AOGRID.isCentered();
+            % This method is left over from AOSim1 when grids could be
+            % centered on the middle of the array or on the [1,1] corner,
+            % as in a Fourier transform result.
+            % In AOSim2 all AOGrids are assumed to be centered.
+            % This method is deprecated.
             b=(strcmp(G.axis_,AOGrid.AXIS_FACE)==1);
         end
         
         function yn = isCommensurate(a,b)
+            % yn = isCommensurate(a,b)
+            % Returns a boolean if two AOGrids have the same geometry.
             yn = false;
             
             if(strcmp(a.domain,b.domain)~=1)
@@ -701,34 +747,10 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
             
             if(strcmp(a.axis,b.axis)~=1)
-                %                 % TODO: Fix this yourself.
-                %                 warning('AOGrid:ALIGN','mismatched axis alignment. try g.center.');
-                %                 return;
                 a.center;
                 b.center;
             end
             
-            %             %if(size(a)~=size(b))
-            %             if(AOGrid.differ(size(a),size(b)))
-            %                 return;
-            %             end
-            %
-            %             %if(spacing(a)~=spacing(b))
-            %             if(AOGrid.differ(spacing(a),spacing(b)))
-            %                 return;
-            %             end
-            %
-            %             %if(origin(a)~=origin(b))
-            %             if(differ(origin(a),origin(b)))
-            %                 return;
-            %             end
-            %
-            %             %if(a.Offset~=b.Offset)
-            %             if(differ(a.Offset,b.Offset))
-            %                 return;
-            %             end
-            
-            %if(size(a)~=size(b))
             if( AOGrid.differ(size(a),size(b)) || ...
                     AOGrid.differ(spacing(a),spacing(b)) || ...
                     AOGrid.differ(origin(a),origin(b)) || ...
@@ -753,8 +775,15 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             G.grid_(n1,n2) = value;
         end
         
-        % returns a grid of G values interpolated to the spec'd coords.
         function g = interpGrid(G,varargin)
+            % g = interpGrid(G,varargin)
+            % Returns a grid of G values interpolated to the spec'd coords.
+            %
+            % This command currently has two forms:
+            %
+            % g = G.interpGrid(XARRAY,YARRAY);
+            % g = G.interpGrid(AOGRID);
+
             switch length(varargin)
                 case 0
                     error('No coordinates to interpolate to?');
@@ -763,7 +792,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     if(isa(arg1,'AOGrid'))
                         [Xout,Yout] = COORDS(arg1);
                     else
-                        error('I do not understand what you want with a single %s',class(arg1));
+                        error('I do not understand what you want to do with a single %s',class(arg1));
                     end
                 case 2
                     Xout = varargin{1};
@@ -823,21 +852,23 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
         end
         
-        % Compute the gradient of the grid.
-        % Note that the first element of the answer is dZdx.
-        % delZ = [dZ/dx,dZ/dy].
-        % Sorry for the confusion, but this is not simply compatable with
-        % MATLAB. JLC. 20091005
-        % TODO: Error handling!
         function delZ = del(G)
+            % delZ = G.del()
+            %
+            % Compute the gradient of the grid.
+            % Note that the first element of the answer is dZdx.
+            % delZ = [dZ/dx,dZ/dy].
+            
             dxy = G.spacing;
-            %Z = G.grid;
             [Zx,Zy] = gradient(G.grid_);
             delZ = [Zx/dxy(1),Zy/dxy(2)];
         end
         
         %% Overloaded operators.
         function a = plus(a,b)
+            % a = plus(a,b)
+            % Add something to an AOGrid.
+            
             if(~isa(a,'AOGrid'))
                 error('operator call not in canonical form.');
             end
@@ -862,12 +893,16 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function a = uminus(a)
-            % fprintf('AOGrid unary minus.\n');
+            % a = uminus(a)
+            % Negate an AOGrid.
+            
             a.grid_ = -a.grid_;
             touch(a);
         end
         
         function a = minus(a,b)
+            % Subtract something from an AOGrid.
+            
             if(~isa(a,'AOGrid'))
                 error('operator call not in canonical form.');
             end

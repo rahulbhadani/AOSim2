@@ -159,6 +159,31 @@ classdef AOSegment < AOGrid
         function a = mtimes(a,b)
             a = mtimes@AOGrid(a,b);
         end
+        
+        function D = estimateD(a)
+        % D = estimateD(a)
+        % Estimate the pupil diameter from the grid.
+        
+        CUTOFF = 0.1;
+        
+        PRJ = find(max((a.abs>CUTOFF),[],2));
+        D1 = (max(PRJ)-min(PRJ))*a.dx;
+        
+        PRJ = find(max((a.abs>CUTOFF),[],1));
+        D2 = (max(PRJ)-min(PRJ))*a.dy;
+
+        D = max(D1,D2);
+        
+        end
+        
+
+        function AREA = estimateArea(a)
+            % AREA = estimateArea(a)
+            
+            AREA = sum(abs(a.grid_(:)))*a.dx*a.dy;
+            
+        end
+
     end
     
     methods(Static=true)
