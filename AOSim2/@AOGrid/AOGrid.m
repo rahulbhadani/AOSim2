@@ -763,12 +763,18 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         %%
         function sgrid = subGrid(G,y,x)
-        % function sgrid = subGrid(G,y,x)
-        % Extract a smaller part of a grid.
-        % x and y are 1-d lists of coordinates.
-        % example>> SUBGRID = GRID.subGrid(10:20,30:40);
-        
-            sgrid = G.grid_(y,x);
+            % function sgrid = subGrid(G,y,x)
+            % Extract a smaller part of a grid.
+            % x and y are 1-d lists of coordinates.
+            % example>> SUBGRID = GRID.subGrid(10:20,30:40);
+            %
+            % Note that if x is omitted, x and y are assumed to be the same.
+            
+            if(nargin<3)
+                sgrid = G.grid_(y,y);
+            else
+                sgrid = G.grid_(y,x);
+            end
         end
         
         function G = setPixel(G,n1,n2,value)
@@ -1033,6 +1039,12 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function org = middlePixel(n)
+            % STATIC: org = AOGrid.middlePixel(n)
+            % Figure out which pixel would be the origin in an FFT of
+            % length n.
+            if(isa(n,'AOGrid'))
+                n = n.size;
+            end
             org = (n+2-mod(n,2))/2;
         end
         
