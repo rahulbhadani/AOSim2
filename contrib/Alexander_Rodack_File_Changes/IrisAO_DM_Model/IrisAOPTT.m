@@ -1,5 +1,10 @@
 function [ DM ] = IrisAOPTT( DM, segList, pistonList, tipList, tiltList, bump)
-%[ DM ] = IrisAOPTT( DM, segList, pistonList, tipList, tiltList )
+%**************************************************************************
+%*********************************ANTIQUATED*******************************
+%**************************************************************************
+%****USE PTT METHOD IN AOAPERTURE INSTEAD---MUST MAP YOURSELF IF YOU DO****
+%**************************************************************************
+% [ DM ] = IrisAOPTT( DM, segList, pistonList, tipList, tiltList )
 %   Applys Piston, Tip, and Tilt to an IrisAO model. This will do it in
 %   hardware order, not in the Model's order. Input segList can be 1:37,
 %   and this will map to the corresponding segment in DM.segList.
