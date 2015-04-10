@@ -41,8 +41,6 @@ lambda = AOField.VBAND;
 %Flags
 verbose_makeDM = false; %turns on/off plotting the mirror as it is constructed
 
-verbose = true; %turns on/off plotting intermediate steps when adding PTT
-
 Scalloped_Field = true; %turns on/off returning an AOField Object that 
 %encodes the actual surface shape of the segments.
 
@@ -114,7 +112,7 @@ PLATE_SCALE = THld/5; % Pixel Size for PSF computation
 
 % Set a Zernike Polynomial
 Zernike_Number = 5;
-Zernike_Coefficient_waves = 2;
+Zernike_Coefficient_waves = 1;
 PTTpos = IrisAOComputeZernPositions( lambda, Zernike_Number, Zernike_Coefficient_waves);
 
 
@@ -130,6 +128,8 @@ end
 DM.PTT(PTT);
 DM.touch;
 DM.render;
+figure(1);
+DM.show;
 
 if Scalloped_Field == true
     F = F_scal.copy;
@@ -138,6 +138,7 @@ else
     F.planewave * DM * A;
 end
 
+figure(2);
 [PSF,thx,thy] = F.mkPSF(FOV,PLATE_SCALE);
 PSFmax = max(PSF(:));
 % imagesc(thx,thy,PSF/PSFmax);
