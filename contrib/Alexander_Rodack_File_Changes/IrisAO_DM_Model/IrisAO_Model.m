@@ -127,6 +127,8 @@ PTTpos = IrisAOComputeZernPositions( lambda, Zernike_Number, Zernike_Coefficient
 
 %% Map the PTTpos Matrix
 load('IrisAO_SegMap.mat');
+PTT = zeros(37,3);
+
 for ii = 1:37
     mapped_segment = IrisAO_SegMap(ii);
     PTT(ii,1:3) = PTTpos(mapped_segment,:);
