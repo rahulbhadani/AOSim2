@@ -1,0 +1,146 @@
+%% Clear Workspace
+clear all;
+clc;
+close all;
+
+%% Some Starting Comments
+% This code makes a model of an IrisAO PTT111 type mirror.  It does not
+% include the limits on stroke or tip/tilt angle that a real mirror has.
+% The size of the segments is accurate to within 3 microns of a real
+% mirror, and the piston, tip, and tilt functionality is correct (to the
+% best of my knowledge right now, after lots of debugging).
+%
+% The scripts that are used in creating the mirror model and using it are
+% all in the folder you found this one.  The ones that are important to
+% look at should you want to adapt this script for your own purposes are:
+%******************************
+% makeIrisAODM.m
+% IrisAOComputeZernPositions.m
+% IrisAOPTT.m
+%******************************
+% These functions are what are used to make, and then update the shape of
+% the mirror (the middle one is not required to be used, but can be helpful
+% if you want to apply zernike polynomials).
+%
+% Please also note that this REQUIRES AOSim2 to be on your current pathway.
+% The model is completely built in, and depends on the functionality of
+% AOSim2.
+%
+% If you find a bug, or that it is not working accurately, please let me
+% know what the problem you encountered is and I will work to fix it.  
+% I am also in the process of writing a function to do the rendering to
+% make it easier to port this model to separate scripts.
+%
+% ATR (email: atrodack@email.arizona.edu)
+
+
+
+%% Set Initial Parameters and Flags
+%Parameters (currently set to Specs from UAWFC Testbed)
+segpitch = 606e-6;
+magnification = 1;
+lambda = AOField.VBAND;
+
+%Flags
+verbose_makeDM = false; %turns on/off plotting the mirror as it is constructed
+
+verbose = true; %turns on/off plotting intermediate steps when adding PTT
+
+Scalloped_Field = true; %turns on/off returning an AOField Object that 
+%encodes the actual surface shape of the segments.
+
+%% Make the Mirror
+if Scalloped_Field == true
+    [DM,F_scal] = makeIrisAODM(magnification,verbose_makeDM,Scalloped_Field);
+    F = F_scal.copy;
+    F.FFTSize = [2048 2048];
+    F.lambda = lambda;
+else
+    DM = makeIrisAODM(magnification,verbose_makeDM,Scalloped_Field);
+end
+DM.lambdaRef = lambda;
+
+clc; %clears the command window of the text generated from adding segments to the AOAperture object
+
+%Save the Coordinate vectors of the DM
+[x,y] = DM.coords;
+
+%Compute the extent of the Segment's Grid to Construct Aperture
+extentx = abs(min(x)) + abs(max(x));
+extenty = abs(min(y)) + abs(max(y));
+fprintf('X Width = %0.4f mm\n',extentx * 10^3);
+fprintf('Y Width = %0.4f mm\n',extenty * 10^3);
+
+%% Make an Aperture and a Field
+A = AOSegment(DM);
+D = (extentx);
+dx = (magnification *segpitch) / 100;
+PNECO = [0 0 D 1 1.5*dx 0 0 0 0 0];
+A.pupils = PNECO;
+A.make;
+
+DM.trueUp;
+A.centerOn(DM); %Ensures the aperture is aligned with the DM. Previous
+%versions of the IrisAO Model were found to be broken with this step due to
+%an offset in the x-positioning of the mirror segments. That has been fixed
+
+if Scalloped_Field == false
+    F = AOField(A);
+    F.name = 'IrisAO DM';
+    F.FFTSize = [2048 2048];
+    F.lambda = lambda;
+end
+
+THld = lambda/D * 206265; % Lambda/D in arcsecs.
+FOV = 50*THld; % FOV for PSF computation
+PLATE_SCALE = THld/5; % Pixel Size for PSF computation
+
+%% Get Something to Put on Mirror
+%There are all options of what can be sent to the mirror, in the syntax an
+%actual IrisAO Mirror would like them, with a few minor differences. The
+%actaul mirror wants its inputs in microns and milliradians, but this
+%function wants meters and radians, and this includes a flag that tells the
+%command to either overwrite the current settings (false) or bump them
+%(true). If you are not bumping, only one should be uncommented at a time.
+%See IrisAOPTT.m for more help. If using Zernikes, see
+%IrisAOComputeZernPositions.m for help.
+
+% Flatten the Mirror
+% DM = IrisAOPTT(DM,1:37,zeros(37,1)*10^-6,zeros(37,1)*-10^-3,zeros(37,1)*10^-3,false);
+
+%Apply only a Tip
+% DM = IrisAOPTT(DM,1:37,zeros(37,1)*10^-6,ones(37,1)*10^-3,zeros(37,1)*10^-3,false);
+
+% Apply a Tip and a Tilt
+% DM = IrisAOPTT(DM,1:37,zeros(37,1)*10^-6,ones(37,1)*10^-3,ones(37,1)*-10^-3,false);
+
+% Set a Random Mirror Shape
+% DM = IrisAOPTT(DM,1:37,randn(37,1)*10^-6,randn(37,1)*-10^-3,randn(37,1)*10^-3,true);
+
+% Set Random Piston
+% DM = IrisAOPTT(DM,1:37,randn(37,1)*10^-5,zeros(37,1)*10^-3,zeros(37,1)*10^-3,false);
+
+% Apply Random Tip and a Tilt
+% DM = IrisAOPTT(DM,1:37,zeros(37,1)*10^-6,randn(37,1)*10^-3,randn(37,1)*-10^-3,false);
+
+% Set a Zernike Polynomial
+Zernike_Number = 5;
+Zernike_Coefficient_waves = 0;
+PTTpos = IrisAOComputeZernPositions( lambda, Zernike_Number, Zernike_Coefficient_waves);
+DM = IrisAOPTT(DM,1:37,PTTpos(1:37,1),PTTpos(1:37,2),PTTpos(1:37,3),false);
+
+if Scalloped_Field == true
+    F = F_scal.copy;
+    F * DM * A;
+else
+    F.planewave * DM * A;
+end
+
+[PSF,thx,thy] = F.mkPSF(FOV,PLATE_SCALE);
+PSFmax = max(PSF(:));
+% imagesc(thx,thy,PSF/PSFmax);
+imagesc(thx,thy,log10(PSF/PSFmax),[-3,0]);
+colormap(gray);
+axis xy;
+sqar;
+title(sprintf('PSF\n'));
