@@ -96,38 +96,45 @@ FOV = 50*THld; % FOV for PSF computation
 PLATE_SCALE = THld/5; % Pixel Size for PSF computation
 
 %% Get Something to Put on Mirror
-%There are all options of what can be sent to the mirror, in the syntax an
-%actual IrisAO Mirror would like them, with a few minor differences. The
+%These are all options of what can be sent to the mirror, in the syntax an
+%actual IrisAO Mirror would like them, with a minor difference. The
 %actaul mirror wants its inputs in microns and milliradians, but this
-%function wants meters and radians, and this includes a flag that tells the
-%command to either overwrite the current settings (false) or bump them
-%(true). If you are not bumping, only one should be uncommented at a time.
-%See IrisAOPTT.m for more help. If using Zernikes, see
-%IrisAOComputeZernPositions.m for help.
+%wants meters and radians.
 
 % Flatten the Mirror
-% DM = IrisAOPTT(DM,1:37,zeros(37,1)*10^-6,zeros(37,1)*-10^-3,zeros(37,1)*10^-3,false);
+% PTTpos = zeros(37,3);
 
 %Apply only a Tip
-% DM = IrisAOPTT(DM,1:37,zeros(37,1)*10^-6,ones(37,1)*10^-3,zeros(37,1)*10^-3,false);
+% PTTpos = horzcat(horzcat(zeros(37,1)*10^-6,ones(37,1)*10^-3),zeros(37,1)*10^-3);
 
 % Apply a Tip and a Tilt
-% DM = IrisAOPTT(DM,1:37,zeros(37,1)*10^-6,ones(37,1)*10^-3,ones(37,1)*-10^-3,false);
+% PTTpos = horzcat(horzcat(zeros(37,1)*10^-6,ones(37,1)*10^-3),ones(37,1)*10^-3);
 
 % Set a Random Mirror Shape
-% DM = IrisAOPTT(DM,1:37,randn(37,1)*10^-6,randn(37,1)*-10^-3,randn(37,1)*10^-3,true);
+% PTTpos = horzcat(horzcat(randn(37,1)*10^-6,randn(37,1)*10^-3),randn(37,1)*10^-3);
 
 % Set Random Piston
-% DM = IrisAOPTT(DM,1:37,randn(37,1)*10^-5,zeros(37,1)*10^-3,zeros(37,1)*10^-3,false);
+% PTTpos = horzcat(horzcat(randn(37,1)*10^-6,zeros(37,1)*10^-3),zeros(37,1)*10^-3);
 
 % Apply Random Tip and a Tilt
-% DM = IrisAOPTT(DM,1:37,zeros(37,1)*10^-6,randn(37,1)*10^-3,randn(37,1)*-10^-3,false);
+% PTTpos = horzcat(horzcat(zeros(37,1)*10^-6,randn(37,1)*10^-3),randn(37,1)*10^-3);
 
 % Set a Zernike Polynomial
 Zernike_Number = 5;
-Zernike_Coefficient_waves = 0;
+Zernike_Coefficient_waves = 2;
 PTTpos = IrisAOComputeZernPositions( lambda, Zernike_Number, Zernike_Coefficient_waves);
-DM = IrisAOPTT(DM,1:37,PTTpos(1:37,1),PTTpos(1:37,2),PTTpos(1:37,3),false);
+
+
+%% Map the PTTpos Matrix
+load('IrisAO_SegMap.mat');
+for ii = 1:37
+    mapped_segment = IrisAO_SegMap(ii);
+    PTT(ii,1:3) = PTTpos(mapped_segment,:);
+end
+
+DM.PTT(PTT);
+DM.touch;
+DM.render;
 
 if Scalloped_Field == true
     F = F_scal.copy;
