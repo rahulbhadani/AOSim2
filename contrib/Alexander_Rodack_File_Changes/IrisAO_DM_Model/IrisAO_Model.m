@@ -16,11 +16,10 @@ close all;
 %******************************
 % makeIrisAODM.m
 % IrisAOComputeZernPositions.m
-% IrisAOPTT.m
 %******************************
 % These functions are what are used to make, and then update the shape of
-% the mirror (the middle one is not required to be used, but can be helpful
-% if you want to apply zernike polynomials).
+% the mirror. IrisAOComputeZernPositions.m is not required to be used, but
+% can be helpful if you want to apply zernike polynomials.
 %
 % Please also note that this REQUIRES AOSim2 to be on your current pathway.
 % The model is completely built in, and depends on the functionality of
@@ -28,8 +27,6 @@ close all;
 %
 % If you find a bug, or that it is not working accurately, please let me
 % know what the problem you encountered is and I will work to fix it.  
-% I am also in the process of writing a function to do the rendering to
-% make it easier to port this model to separate scripts.
 %
 % ATR (email: atrodack@email.arizona.edu)
 
@@ -52,15 +49,13 @@ Scalloped_Field = true; %turns on/off returning an AOField Object that
 %% Make the Mirror
 if Scalloped_Field == true
     [DM,F_scal] = makeIrisAODM(magnification,verbose_makeDM,Scalloped_Field);
-    F = F_scal.copy;
-    F.FFTSize = [2048 2048];
-    F.lambda = lambda;
 else
     DM = makeIrisAODM(magnification,verbose_makeDM,Scalloped_Field);
 end
 DM.lambdaRef = lambda;
 
 clc; %clears the command window of the text generated from adding segments to the AOAperture object
+fprintf('Mirror Constructed\n');
 
 %Save the Coordinate vectors of the DM
 [x,y] = DM.coords;
@@ -80,9 +75,7 @@ A.pupils = PNECO;
 A.make;
 
 DM.trueUp;
-A.centerOn(DM); %Ensures the aperture is aligned with the DM. Previous
-%versions of the IrisAO Model were found to be broken with this step due to
-%an offset in the x-positioning of the mirror segments. That has been fixed
+A.centerOn(DM);
 
 if Scalloped_Field == false
     F = AOField(A);
