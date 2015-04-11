@@ -65,7 +65,7 @@ classdef AOSegment < AOGrid
             else
                 OPL = obj.piston;
             end
-            
+
             if(nargin==1)
                 if(obj.tiptilt==0)
                     if(obj.piston==0)  % no TT,no piston
@@ -75,8 +75,8 @@ classdef AOSegment < AOGrid
                     end
                 else  % piston and Tip tilt.
                     [X,Y] = COORDS(obj);
-                    X0 = obj.Offset(1);
-                    Y0 = obj.Offset(2);
+                    X0 = obj.Offset(2);
+                    Y0 = obj.Offset(1);
                     g = exp((1i*2*pi/obj.lambdaRef)*...
                         (OPL+obj.tiptilt(1)*(X-X0) +...
                         obj.tiptilt(2)*(Y-Y0))) .* ...

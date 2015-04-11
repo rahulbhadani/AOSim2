@@ -3,10 +3,7 @@ function [ PTTpos ] = IrisAOComputeZernPositions( wavelength, Zernike_Modes, Zer
 %
 % Help Section
 % Inputs:
-%wavelength =  the wavelength. Must be specified in microns! Annoying I know,
-%              but this is a function I wrote that actually controls a real 
-%              mirror, that uses software provided by IrisAO, which requires
-%              it be in microns.
+%wavelength =  the wavelength. Must be specified in meters!
 %            
 %Zernike_Modes = a vector of any number of integers between 1 and 23,
 %                  corresponding to the single number indexing of Zernikes
@@ -23,14 +20,12 @@ function [ PTTpos ] = IrisAOComputeZernPositions( wavelength, Zernike_Modes, Zer
 % Output:
 %PTTpos is a 37x3 matrix that contains the computed piston, tip, and tilt
 %values for each segemnt.  Column 1 is the piston values (in units of
-%microns), Column 2 is the tip values (in units of milliradians), and
-%Column 3 is the tilt values (again in units of milliradians). 
-%****NOTE that to use this in the simulation, each column must be converted
-%to the appriate units being looked for by IrisAOPTT.m****
+%meters), Column 2 is the tip values (in units of radians), and
+%Column 3 is the tilt values (again in units of radians). 
 %
 %
 
-lambda = wavelength;
+lambda = wavelength*10^6;
 ZernModes = Zernike_Modes;
 ZernCoeffs = Zernike_Coefficient_waves;
 
@@ -58,10 +53,11 @@ PTTPositionArray = GetPTT489ZernikePostions(ZernikeCoefficientArray);
 % Shrink to the size of PTT111
 PTTPositionArray = PTTPositionArray(1:37,:);
 PTTpos = PTTPositionArray;
+PTTpos(:,1) = PTTpos(:,1)/2; %make the vector fit how AOSim2 needs to see it
+PTTpos(:,1) = PTTpos(:,1) .* 10^-6; %make the values in units of meters
+PTTpos(:,2) = PTTpos(:,2) .* 10^-3; %make the values in units of radians
+PTTpos(:,3) = PTTpos(:,3) .* 10^-3; %make the values in units of radians
 
-fprintf('*****************************************************************\n');
-display('Segment Positions Calculated');
-fprintf('*****************************************************************\n');
 
 end
 

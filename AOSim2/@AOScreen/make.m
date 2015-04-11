@@ -93,7 +93,8 @@ filt = ((K02+K2).^(-alpha/4));
 % filt = fudge * filt .* ((PS.r0.^(-5/6))) .* (rootarea * constant) ;
 % filt = filt .* ((PS.r0.^(-5/6))) .* (rootarea * constant) ;
 
-filt(1,1) = 0.0;     % kill the DC term to make it zero-mean.
+% filt(1,1) = 0.0;     % kill the DC term to make it zero-mean.
+filt(CEN(1),CEN(2)) = 0.0;     % kill the DC term to make it zero-mean.
 
 PS.grid_ = PS.grid_ .* filt; % apply the filter.
 tX(PS); % Transform back to the space domain.
