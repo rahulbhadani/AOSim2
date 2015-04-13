@@ -273,6 +273,8 @@ classdef AODM < AOScreen
                 
                 % Concatenate and place into object
                 DM.bconds = vertcat(top,left,bottom,right);
+            else
+                error('PATTERN must be the string circle or square');
 
             end
 			
