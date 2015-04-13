@@ -231,9 +231,52 @@ classdef AODM < AOScreen
 			n = size(DM.actuators,1);
 		end
 		
-		function DM = defineBC(DM,radius,npoints)
-			theta = (1:npoints)'/npoints*2*pi;
-			DM.bconds = [cos(theta) sin(theta)] * radius;
+		function DM = defineBC(DM,radius,npoints,PATTERN)
+            if nargin == 3
+                PATTERN = 'circle';
+            end
+          
+            if strcmp(PATTERN,'circle')
+                theta = (1:npoints)'/npoints*2*pi;
+                DM.bconds = [cos(theta) sin(theta)] * radius;
+                
+            elseif strcmp(PATTERN,'square')
+                %change the meaning of npoints
+                npoints_per_side = npoints;
+                % Syntax requires this to be at least 2, which puts a BC on each corner
+                if npoints_per_side == 1
+                    npoints_per_side = 2;
+                end
+                
+                points = linspace(-radius,radius,npoints_per_side);
+                
+                % Initialize vectors
+                top = zeros(npoints_per_side,2);
+                bottom = top;
+                left = top;
+                right = top;
+                
+                for ii = 1:npoints_per_side
+                    top(ii,1) = points(ii);
+                    top(ii,2) = radius;
+                    bottom(ii,1) = points(ii);
+                    bottom(ii,2) = -radius;
+                    left(ii,1) = -radius;
+                    left(ii,2) = points(ii);
+                    right(ii,1) = radius;
+                    right(ii,2) = points(ii);
+                end
+                
+                % Remove duplicate points
+                left = left(2:end-1,:);
+                right = right(2:end-1,:);
+                
+                % Concatenate and place into object
+                DM.bconds = vertcat(top,left,bottom,right);
+            else
+                error('PATTERN must be the string circle or square');
+
+            end
 			
 			DM.bconds(:,1) = DM.bconds(:,1) + DM.Offset(2);
 			DM.bconds(:,2) = DM.bconds(:,2) + DM.Offset(1);
