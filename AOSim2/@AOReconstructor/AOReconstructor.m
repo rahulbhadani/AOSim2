@@ -831,6 +831,7 @@ classdef AOReconstructor < handle
             imagesc(this.RECONSTRUCTOR);
             ylabel('actuators');
             xlabel('slopes');
+            axis ij;
             drawnow;
         end
         
