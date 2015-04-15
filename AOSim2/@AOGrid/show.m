@@ -4,13 +4,13 @@ function show(AOG)
 % 20090408: JLCodona AOSim2
 
 AOG.center;
-[x,y] = AOG.coords;
 
 if(AOG.isX)
     AOG.plotC;
     title(AOG.describe,'FontSize',14);
     daspect([1 1 1]);
 else
+    [x,y] = AOG.coords;
     imagesc(x,y,AOG.ndex,[-3 0]);
     axis square;
     axis xy;
