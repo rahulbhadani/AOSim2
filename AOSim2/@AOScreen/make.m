@@ -124,12 +124,15 @@ end
 
 % estimate the current r0...
 Nest = round(PS.r0/PS.dx); % test near r0.
+Nest = min(Nest,round(SZ(2)/2));
+
 spacing = Nest*PS.dx;
 
 % note that the screen is not necessarily periodic now.  
 % Don't use circshift.
 
 % d1 = mean(mean((PS.grid_ - circshift(PS.grid_,[0 Nest])).^2));
+
 dZ = PS.grid_(:,1:end-Nest)-PS.grid_(:,1+Nest:end);
 d1 = mean(mean(dZ.^2));
 dx = PS.dx;
