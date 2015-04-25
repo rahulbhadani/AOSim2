@@ -26,6 +26,9 @@ R2 = (X-CENTER(1)).^2 + (Y-CENTER(2)).^2;
 FRESNEL = sqrt(F.lambda*RANGE);
 
 % F.grid(amplitude .* exp((-1i.*F.k/2/RANGE)*R2));
-F.grid(amplitude .* exp((1i.*F.k/2/RANGE-1/(CUTOFF*FRESNEL)^2)*R2));
+% F.grid(amplitude .* exp((1i.*F.k/2/RANGE-1/(CUTOFF*FRESNEL)^2)*R2));
+Rmax = FRESNEL^2/2/F.dx;
+% Rmax = Rmax/3; % Be conservative.
+F.grid(amplitude .* exp((1i.*F.k/2/RANGE)*R2).*smoothUP(1-R2/Rmax^2,1));
 
 end
