@@ -295,5 +295,21 @@ classdef AOAtmo < AOScreen
             
             r0 = (0.423*(2*pi/lambda)^2*SLABS)^(-3/5); % see e.g. Roddier or Fried or Tatarskii or ANYBODY!
         end
+        
+        function HEIGHTS = listHeights(ATMO)
+        % HEIGHTS = listHeights(ATMO)
+            HEIGHTS = nan(1,ATMO.nLayers);
+        
+            for n=1:ATMO.nLayers
+                HEIGHTS(n) = ATMO.layers{n}.screen.altitude;
+            end
+        end
+        
+        function CN2 = listCn2(ATMO)
+        % CN2 = listCn2(ATMO)
+            for n=1:ATMO.nLayers
+                CN2(n) = ATMO.layers{n}.screen.Cn2;
+            end
+        end
     end
 end
