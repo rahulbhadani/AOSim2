@@ -27,7 +27,7 @@ PS.make;
 F = AOField(A);
 F.lambda = AOField.VBAND;
 F.FFTSize = 1024;
-F.padBy(100);
+F.padBy(256);
 
 F.planewave*PS*A;F.show
 
@@ -64,9 +64,9 @@ end
 
 [x,y] = F.coords;
 Z = 2000;
-MAX_ANGLE = 10; % arcsecs
+MAX_ANGLE = D/R*206265*1.5; % arcsecs
 
-for Zback=10:100:R
+for Zback=[10:100:R,R]
     for n=1:4
         PS.shiftPixels([0 1]);
         F.sphericalWave(1,Z);
@@ -78,7 +78,8 @@ for Zback=10:100:R
         F.propagate2(-Zback,MAX_ANGLE);
         
         imagesc(x,y,F.mag2);sqar;axis xy;
-        title(sprintf('Focus Distance: %.0f (%.2f)',R-Zback,(R-Zback)/Z));
+        title(sprintf('Focus Distance: %.0f (%.2f to screen, %.2f to src)',...
+            Zback,(R-Zback)/Z,Zback/R));
         colorbar;
         drawnow;
     end
