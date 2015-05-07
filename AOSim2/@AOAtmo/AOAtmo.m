@@ -108,7 +108,13 @@ classdef AOAtmo < AOScreen
 		function ATMO = setObsTime(ATMO,t) % set observation time.
 		%ATMO = setObsTime(ATMO,t) % set observation time.
 			ATMO.time = t;
-		end
+
+            for n=1:ATMO.nLayers
+                ATMO.layers{n}.screen.Offset = ATMO.layers{n}.Wind*ATMO.time;
+            end
+
+        
+        end
 		
 		function ATMO = setObsAltitude(ATMO,z) % set default observation altitude.
 		%ATMO = setObsAltitude(ATMO,z) % set default observation altitude.
