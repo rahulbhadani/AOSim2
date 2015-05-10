@@ -233,6 +233,30 @@ classdef AOScreen < AOGrid
             touch(S);
         end
 		
+        function S = addPower(S,DIOPTERS,lensType)
+            % S = addPower(S,DIOPTERS,[lensType='sphere'])
+            % Add a specified amount of aberration power.
+            % lensType can be:
+            % 'sphere', 'cylinder'
+            % TODO: add cylinder.
+            
+            if(nargin<2)
+                lensType = 'sphere';
+            end
+            
+            FL = 1/DIOPTERS;
+            
+            [X,Y] = S.COORDS();
+            R2 = X.^2+Y.^2;
+            if(FL>0)
+                S + (FL-sqrt(max(0,FL^2-R2)));
+            else
+                S + (FL+sqrt(max(0,FL^2-R2)));
+            end
+            touch(S);
+        end
+        
+        
         function grid = LPF(S,scale)
             % grid = SCREEN.LPF(S)
             % This function returns a Gaussian smoothed version
