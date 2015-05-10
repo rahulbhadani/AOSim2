@@ -33,7 +33,7 @@
 D = 1.54;
 % secondary = 40.96/100;
 secondary = 14.5/100;
-aa = 0.04;
+aa = 0.01;
 spider = aa;
 
 
@@ -56,6 +56,7 @@ clf;
 % Seg.touch.make.show;
 A = AOAperture;
 A.name = 'Kuiper 61 inch';
+A.spacing(0.01);
 A.addSegment(Seg);
 A.show;
 colormap(gray);
@@ -101,7 +102,7 @@ RECON.show;
 
 % OWD = sqrt(MAX_MODES/pi);
 % % RECON.program(D,6*sqrt(2)); % Use Fourier modes. OWD is ~6 lambda/D for programming.
-% RECON.zprogram(D,12);  % program using Zernikes.
+RECON.zprogram(D,12);  % program using Zernikes.
 % RECON.rebuild(56).show;
 
 % % RECON.dhprogram(D,11); % program using disk harmonics.

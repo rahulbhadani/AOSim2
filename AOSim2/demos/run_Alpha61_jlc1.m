@@ -12,13 +12,13 @@ STROKE = 5.5e-6;
 WFS_FPS = 500.;
 WFS.qscale = 1; % smaller values make the WFS arrows bigger in the quiver plot.
 
-gain=1; % gain>2 is asking for trouble!
+% gain=1; % gain>2 is asking for trouble!
 % gain = 0.3; % gain>2 is asking for trouble!
 GAMMA = 4;  % This is the gamma correction for the PSF image.
 SCIENCE_WAVELENGTH = AOField.KBAND;
 
-FOV_START = 1.5;
-FOV_AO_ON = 1.5;
+FOV_START = 5;
+FOV_AO_ON = 5;
 
 ZOOM_STARTTIME = 0.1;
 ZOOM_ENDTIME = 0.2;
