@@ -206,6 +206,11 @@ classdef AODM < AOScreen
 					
 					COORDS(:,1) = COORDS(:,1) + segCenter(2);
 					COORDS(:,2) = COORDS(:,2) + segCenter(1);
+                elseif(isa(CENTER,'AOSegment'))
+					segCenter = CENTER.Offset;
+					
+					COORDS(:,1) = COORDS(:,1) + segCenter(2);
+					COORDS(:,2) = COORDS(:,2) + segCenter(1);
 				else
 					COORDS(:,1) = COORDS(:,1) + CENTER(2);
 					COORDS(:,2) = COORDS(:,2) + CENTER(1);
