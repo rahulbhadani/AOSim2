@@ -134,6 +134,7 @@ PLANET_OFFSET = [1 1]/sqrt(2)*THld*4;
 % colormap(flipud(gray));
 colormap((hot));
 CCD = 0;
+IMG_LYOT = 0;  % for studying the average irradiance in the Lyot plane.
 
 for n=1:1000
     modprint(n,20);
@@ -149,6 +150,8 @@ for n=1:1000
     F.grid(F.fft/F.nx); % Go to the focal plane.
     F*FPMASK; % Pass through the focal plane mask.
     F.grid(F.fft/F.nx); % Go to the Lyot pupil plane.
+    IMG_LYOT = IMG_LYOT + F.mag2;
+    
     F*LYOT; % Pass through the Lyot Stop.
     
     [PSF,thx,thy] = F.mkPSF(FOV,PLATE_SCALE); % This is the reference PSF.
