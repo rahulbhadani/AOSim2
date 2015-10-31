@@ -51,6 +51,7 @@ TURBULENCE.name = 'Turbulent Layer';
 TURBULENCE.spacing(.02);
 TURBULENCE.setR0(r0); 
 TURBULENCE.make;
+[xx,yy] = TURBULENCE.coords;
 
 CORRECTOR = AOScreen(TURBULENCE);
 CORRECTOR.grid(-TURBULENCE.grid);  % This will be what we use to make the opposite effect.
@@ -79,7 +80,6 @@ PSFmax = max(PSF0(:)); % Save for normalizing.
 PSF0 = PSF0/PSFmax; % make the brightest value =1.
 
 N1=2; N2=2; % subplots
-
 
 %% Plan of attack:
 % We start with a plane wave, 
@@ -118,7 +118,7 @@ for z=RANGES
     CCD_AO = 0; % Start the exposure.
     
     for t=1:1000  % t is just a counter here, not real time.
-%     for t=1:100  % t is just a counter here, not real time.
+    %for t=1:100  % t is just a counter here, not real time.
         modprint(t,20);
         
         CORRECTOR.grid(-TURBULENCE.grid); % we want the corrector to be from the past by some lag.
@@ -144,8 +144,13 @@ for z=RANGES
         %axis xy;
         %colorbar;
         %title('Instantaneous PSF');
-        F.show;
-        title('Post-AO Field');
+        %F.show;
+        %title('Post-AO Field');
+        wf = TURBULENCE.interpGrid(A);
+        imagesc((x+WIND_SHIFT(1)*TURBULENCE.dx)/z*206265,(y+WIND_SHIFT(1)*TURBULENCE.dx)/z*206265,wf.*A.grid);sqar;
+        colorbar;
+        %setFoV(FOV);
+        title('WF in angle');
 
         subplot(N1,N2,3);
         imagesc(thx,thy,log10(CCD_noAO/max(CCD_noAO(:))),[-4 0]);

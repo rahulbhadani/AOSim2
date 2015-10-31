@@ -558,6 +558,76 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             fgrid = g.fftgrid_;
         end
         
+        function fgrid = ifft(g,FFTSize)
+            % Performs an INVERSE FFT and returns the complex grid.
+            %
+            % (see AOGrid.fft() for more info.  This is basically the same
+            % function.)
+            %%
+            if(nargin>1) % A new FFTSize was specified.
+                g.FFTSize = FFTSize;
+            end
+            
+            if(isscalar(g.FFTSize)) % only one dim specified.
+                g.FFTSize = g.FFTSize(1)*[1 1]; % Canonical 2D grid.
+            end
+            
+            g.checkFFTSize;
+            
+            if(sum(g.FFTSize~=size(g.fftgrid_))) % differs from the old size setting.  Clear cache.
+                g.fftgrid_ = []; % Clear FFT cache
+            end
+            
+            %% DO THE FFT
+            if(isempty(g.fftgrid_)) % cache is cleared. RECOMPUTE FFT.
+                %fprintf('DEBUG: Computing FFT and caching result.\n');
+                
+                g.FAXIS_PIXEL = AOGrid.middlePixel(g.FFTSize);
+                
+                % Each part does the fft and centers it.
+                if(prod(double(g.FFTSize==g.size()))) % FFTSize IS the AOGrid size
+                    g.fftgrid_ = circshift(...
+                        ifft2(circshift(g.grid_,1-g.AXIS_PIXEL)),...
+                        g.FAXIS_PIXEL-1);
+                else % FFTSize is NOT the AOGrid size
+                    
+                    if(sum(g.FFTSize>g.size())==2)
+                        % the requested size is larger than the grid in both dims
+                        g.fftgrid_ = padarray(g.grid(),g.FFTSize-g.size(),'post');
+                        g.fftgrid_ = circshift(...
+                            ifft2(circshift(g.fftgrid_,1-g.AXIS_PIXEL)),...
+                            g.FAXIS_PIXEL-1);
+                    else %one or both dims are smaller than the grid
+                        
+                        % JLC 20101008: This code is probably not very efficient.
+                        % I'm hoping it doesn't get used very often.
+                        % Please feel free to contribute better code.
+                        
+                        DX = g.spacing;
+                        
+                        x1_ = 1:g.FFTSize(1);
+                        x1_ = fftshift(x1_); % this takes care of special cases.
+                        x1_ = (x1_-x1_(1))*DX(1);
+                        
+                        x2_ = 1:g.FFTSize(2);
+                        x2_ = fftshift(x2_); % this takes care of special cases.
+                        x2_ = (x2_-x2_(2))*DX(2);
+                        
+                        [X1_,X2_] = meshgrid(x1_,x2_);
+                        
+                        g.fftgrid_ = g.interpGrid(X2_,X1_); % backwards? forwards? BUG CHECK
+                        g.fftgrid_(isnan(g.fftgrid_)) = 0; % inefficient zero-padding
+                        
+                        g.fftgrid_ = circshift(ifft2(g.fftgrid_),g.FAXIS_PIXEL-1);
+                    end 
+                end                
+            else
+                fprintf('DEBUG: Returning cached FFT result.\n');
+            end
+            
+            fgrid = g.fftgrid_;
+        end
+        
         function DK = dk(g)
             % DK = dk(g):
             % This returns the fftgrid_ pixel sizes for the current FFTSize.
@@ -1049,7 +1119,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function array = normalize(array)
-            % normalize: Normalize an array so its max value is unity.
+            % normalize: [static] Normalize an array so its max value is unity.
             % USAGE: normed = AOGrid.normalize(array)
             %
             % Johanan L. Codona, Steward Observatory, CAAO
