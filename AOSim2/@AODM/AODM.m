@@ -195,22 +195,28 @@ classdef AODM < AOScreen
 			% COORDS is a list of [x,y] actuator coords.
 			% segNum is really just a label for plotting and sorting.  All
 			% actuators are treated alike and together.
+            % CENTER: coord vector or an AOSim2 object to use as the bias
+            % for the actuator coords.
 			
 			if(nargin<3)
 				segNum = nan;
 			end
 			
 			if(nargin>3)
-				if(isa(CENTER,'AOAperture'))
-					segCenter = CENTER.segList{segNum}.Offset;
-					
+				if(isa(CENTER,'AOAperture') || isnan(segNum))
+                    if(isempty(CENTER.segList))
+                        segCenter = CENTER.Offset;
+                    else
+                        segCenter = CENTER.segList{segNum}.Offset;
+                    end
+                    
 					COORDS(:,1) = COORDS(:,1) + segCenter(2);
 					COORDS(:,2) = COORDS(:,2) + segCenter(1);
-                elseif(isa(CENTER,'AOSegment'))
-					segCenter = CENTER.Offset;
+                elseif(isa(CENTER,'AOGrid'))
+					c = CENTER.Offset;
 					
-					COORDS(:,1) = COORDS(:,1) + segCenter(2);
-					COORDS(:,2) = COORDS(:,2) + segCenter(1);
+					COORDS(:,1) = COORDS(:,1) + c(2);
+					COORDS(:,2) = COORDS(:,2) + c(1);
 				else
 					COORDS(:,1) = COORDS(:,1) + CENTER(2);
 					COORDS(:,2) = COORDS(:,2) + CENTER(1);

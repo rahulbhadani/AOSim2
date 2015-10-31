@@ -532,6 +532,18 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                         % JLC 20101008: This code is probably not very efficient.
                         % I'm hoping it doesn't get used very often.
                         % Please feel free to contribute better code.
+
+                        % TODO: (JLC 20150919) This is buggy. 
+                        % It causes a x-y transpose in
+                        % the fft.  I also wonder if there shouldn't be a
+                        % warning if you set the FFT size to be smaller
+                        % than the grid, since the only time I ever have
+                        % FFTSize<size(g) is in error.  I usually use
+                        % FFTSize to increase resolution when I start with
+                        % a small grid, which is what I was intending.
+                        % Using it to shrink the resolution is inneficient
+                        % and probably not what the user meant to do.
+                        fprintf('WARNING: the FFTSize is smaller than the grid.  Is this really what you intended to do?\n');
                         
                         DX = g.spacing;
                         

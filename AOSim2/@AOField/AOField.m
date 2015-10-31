@@ -49,13 +49,12 @@ classdef AOField < AOGrid
             
             halo = F.fft; % do this first to initialize the buffers, etc.
             
-            k = 2*pi/F.lambda;
             [kx,ky] = kcoords(F);
             
             % This is the size of the FFT pixels...
             dTH = F.dk/F.k*206265;
-            thx_ = kx/k*206265;
-            thy_ = ky/k*206265;
+            thx_ = kx/F.k*206265;
+            thy_ = ky/F.k*206265;
             
             if(nargin<3)
                 dth = median(diff(thx_));
