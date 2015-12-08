@@ -24,7 +24,7 @@ classdef AOScreen < AOGrid
 	
 	% Private
 	properties(SetAccess='private', GetAccess='public')
-		thickness;
+		thickness = 1;
 		r0 = 0.15;
 		Cn2;
         L0 = 30;
@@ -64,8 +64,13 @@ classdef AOScreen < AOGrid
 		end
 		
 		function PS = setCn2(PS,cn2,thick)
-			if(nargin<3)
-				thick = 1;
+		% PS = setCn2(PS,cn2,thick)
+        % Set the Cn2 and optionally set the thickness.
+        % If the thickness is not set, it is left to the current value.
+        % PS.r0 is updated using lambdaRef.
+        
+			if(nargin>2)
+    			PS.thickness = thick;
 			end
 			
 			PS.thickness = thick;
@@ -75,17 +80,31 @@ classdef AOScreen < AOGrid
 		end
 		
 		function PS = setR0(PS,r0,thick)
-			if(nargin<3)
-				thick = 1;
+		% PS = setR0(PS,r0,thick)
+        % Set the R0 and optionally set the thickness.
+        % If the thickness is not set, it is left to the current value.
+        % PS.Cn2 is updated using lambdaRef and the current/new thickness.
+
+            if(nargin>2)
+    			PS.thickness = thick;
 			end
 			
-			PS.thickness = thick;
 			PS.r0 = r0;
 			PS.Cn2 = (r0^(-5/3))/0.423/(2*pi/PS.lambdaRef)^2/PS.thickness;
 			PS.touch;
         end
 
+        function PS = setThickness(PS,thick)
+        % PS = setThickness(PS,thick)
+        % Set the thickness of an AOScreen without changing any other parameters.
+        % This updates r0 using lambdaRef.
+        
+            PS.setCn2(PS.Cn2,thick);
+        
+		end
+        
         function PS = setOuterScale(PS,L0)
+        % PS = setOuterScale(PS,L0)
 			PS.L0 = L0;
 			PS.touch;
         end        
@@ -93,11 +112,18 @@ classdef AOScreen < AOGrid
 		% Utilities
 		
 		function b = isPhase(G)
-            b = true; % This is for confused programs that think this is an AOPhaseScreen.
+		% b = isPhase(G)
+        % This is for confused programs that think this is an AOPhaseScreen.
+            b = true; 
 		end
 		
 		function PSI = phasor(PS,lambda)
-			tX(PS);
+		% PSI = phasor(PS,lambda)
+        % Return exp(1i*k_ref*grid);
+        % If lambda is not set, I just use lambdaRef.
+        % lambdaRef is not changed.
+        
+        %tX(PS);
 			
 			if(nargin<2)
 				lambda = PS.lambdaRef;
@@ -107,7 +133,12 @@ classdef AOScreen < AOGrid
 		end
 		
 		function PHASE = phase(PS,lambda)
-			tX(PS);
+		% PHASE = phase(PS,lambda)
+        % Return k_ref*grid;
+        % If lambda is not set, I just use lambdaRef.
+        % lambdaRef is not changed.
+
+        %tX(PS);
 			
 			if(nargin<2)
 				lambda = PS.lambdaRef;
@@ -117,16 +148,21 @@ classdef AOScreen < AOGrid
 		end
 		
 		function Rf = fresnel(a)
+		% Rf = fresnel(a)
+        % Compute the Fresnel scale assuming lambdaRef and the screen
+        % altitude.
 			Rf = sqrt(a.lambdaRef * a.altitude);
         end
 		
         function S = touch(S)
+        % S = touch(S)
+        % Tell the AOScreen that we want to re-render.
             S.touch@AOGrid;
             S.touched = true;
         end
 		
         function S = importAPP(S,FITSNAME,FRAME)
-            % This is JLC specific.  Read in a PAC APP phase pattern.
+            % This is JLC specific.  Reads in a PAC APP phase pattern.
             
             if(nargin<3)
                 FRAME = 1;
@@ -164,6 +200,8 @@ classdef AOScreen < AOGrid
         end
 
         function S = addGDelta(S,CENTER,amp,width,xy)
+        % S = addGDelta(S,CENTER,amp,width,xy)
+        % Add a Gaussian delta.
             [X,Y] = S.COORDS();
             if(nargin<5)
                 error('need all args specified: addGDelta(S,CENTER,amp,width,xy)');
@@ -183,6 +221,7 @@ classdef AOScreen < AOGrid
 
         function S = addZernike(S,n,m,amp,D,cenx,ceny)
         % AOScreen S = S.addZernike(n,m,amp,D,cenx,ceny)
+        % Uses Noll normalization.
             if(nargin>4)
                 S.radius = D/2;
             end
@@ -209,6 +248,7 @@ classdef AOScreen < AOGrid
         end
 
 		function S = addDiskHarmonic(S,n,m,amp,D,cenx,ceny)
+		% S = addDiskHarmonic(S,n,m,amp,D,cenx,ceny)
             if(nargin>5)
                 Xcen=cenx;  %allows segment aberrations
                 Ycen=ceny;
@@ -402,6 +442,9 @@ classdef AOScreen < AOGrid
         end
     
         function SF = SFtheo(PS,x)
+        % SF = SFtheo(PS,x)
+        % Return the theoretical value(s) of the structure function using
+        % values from SL=H.
             SF = 6.88 * (x/PS.r0).^(5/3);
         end
         
