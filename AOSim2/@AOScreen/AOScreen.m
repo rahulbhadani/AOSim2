@@ -7,6 +7,7 @@ classdef AOScreen < AOGrid
 	%
 	% Written by: Johanan L. Codona, Steward Observatory: CAAO
 	% 20090417 JLCodona.  AOSim2.
+	% 20151208 Mark Milton. Changed the Zernike normalization to follow Noll.
 	
 	% Public properties
 	properties(Access='public')
@@ -198,7 +199,12 @@ classdef AOScreen < AOGrid
             x = (x-Ycen)/S.radius;
             y = (y-Xcen)/S.radius;
             zern = ZernikeStringR(n,m);
-            S + amp*eval(zern);
+            if m == 0
+                norm = sqrt(n + 1);
+            else
+                norm = sqrt(2*(n + 1));
+            end
+            S + amp*norm*eval(zern);
             %touch(S);
         end
 
@@ -328,7 +334,7 @@ classdef AOScreen < AOGrid
             % This method Starts with Npoints in the PS grid and then
             % filters them based on being inside the pupil.
             % The number of points is reduced from the value set, and
-            % pairwise ombined, so be aware of huge tasks being
+            % combined pairwise, so be aware of huge tasks being
             % inadvertently set.
 
             if(nargin<5)
