@@ -57,7 +57,7 @@ classdef AOScreen < AOGrid
 				PS.lambdaRef = varargin{3};
 			end
 
-			PS.thickness = 100;
+			%PS.thickness = 100;
 			PS.Cn2 = PS.r0^(-5/3)/0.423/(2*pi/PS.lambdaRef)^2/PS.thickness;
 			
 			PS.nanmap = 1; % Make clear beyond the turbulence.
@@ -73,7 +73,6 @@ classdef AOScreen < AOGrid
     			PS.thickness = thick;
 			end
 			
-			PS.thickness = thick;
 			PS.Cn2 = cn2;
 			PS.r0 = (0.423*(2*pi/PS.lambdaRef)^2*cn2*PS.thickness)^(-3/5); % see Roddier
 			PS.touch;
@@ -87,7 +86,7 @@ classdef AOScreen < AOGrid
 
             if(nargin>2)
     			PS.thickness = thick;
-			end
+            end
 			
 			PS.r0 = r0;
 			PS.Cn2 = (r0^(-5/3))/0.423/(2*pi/PS.lambdaRef)^2/PS.thickness;
@@ -301,6 +300,19 @@ classdef AOScreen < AOGrid
             end
             touch(S);
         end
+        
+%         function g = grid(S,nugrid)
+%         % g = grid(S,nugrid)
+%         % This is a normal grid method, but it looks to see if the AOScreen
+%         % needs to be rebuilt after a touch.
+%         
+%         if(S.touched & nargin<2)
+%             S.make;
+%         end
+%         
+%         S = grid@AOGrid(S,nugrid);
+%         
+%         end
         
         
         function grid = LPF(S,scale)
