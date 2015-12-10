@@ -19,17 +19,36 @@ classdef AOScreen < AOGrid
 		touched = true;
         radius = 1; % This is for Zernike reference.
         
-        fixLF = false; % This is to patch the FFT generation using fractal scaling.
-	end
+        L0 = 30;                % Outer scale
+        inner_scale = 0.005;    % Inner scale of turbulence. (For Rod!)
+
+        TURBULENCE_MODEL = AOScreen.VON_KARMEN;
+        ALPHA = 11/3;      % This is the PSD exponent.  Change it for non-standard turbulence.
+        
+        LOW_FREQ_FIX = 0;  % Flag if we want to compensate for the Fourier synthesis error.
+        %fixLF = false; % This is to patch the FFT generation using fractal scaling.
+
+    end
 	
 	% Private
 	properties(SetAccess='private', GetAccess='public')
-		thickness = 1;
-		r0 = 0.15;
-		Cn2;
-        L0 = 30;
-	end
+		thickness = 1;          % Thickness of the turbulent layer squashed into the screen.
+		r0 = 0.15;              % Fried length at lambdaRef.
+		Cn2;                    % Turbulence index of refraction structure constant.
+    end
 	
+%     Static constants
+	properties(Constant=true, SetAccess = 'private')
+        % Turbulence models. 
+        KOLMOGOROV      = 1; % Pure power-law with -11/3 spectral exponent.
+        TATARSKI        = 2; % Kolmogorov with an inner scale.
+        VON_KARMEN      = 3; % Kolmogorov with an outer scale and an inner scale.
+        MODIFIED_ATMO   = 4; % VON_KARMEN with the "Hill Bump."
+
+        LF_FRACTAL_PATCH = 1; 
+	end
+
+    
 	%% Methods
 	methods
 		% Constructors
