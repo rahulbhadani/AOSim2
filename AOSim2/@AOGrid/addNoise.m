@@ -10,5 +10,5 @@ function a = addNoise(a,sigma)
   
   % Just go with the MATLAB karma!
   dims = size(a);
-  a.grid_ = a.grid_ + sigma*(randn(dims) + 1i*randn(dims));
+  a.grid_ = a.grid_ + (sigma/sqrt(2))*(randn(dims) + 1i*randn(dims));
   
