@@ -42,7 +42,7 @@ switch PS.TURBULENCE_MODEL
         
     case AOScreen.TATARSKI
         PSD = 0.033 * PS.Cn2 * K2.^(-PS.ALPHA/2);
-        PSD = PSD .* exp(-K2./kappam^2); % Inner scale
+        PSD = PSD .* exp(-KR2./kappam^2); % Inner scale
         
     case AOScreen.VON_KARMAN
         PSD = 0.033 * PS.Cn2 .* (kappa0^2+KR2).^(-PS.ALPHA/2); % Outer scale
