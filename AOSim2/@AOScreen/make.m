@@ -26,7 +26,7 @@ kappam = 5.92/PS.inner_scale;
 
 switch PS.TURBULENCE_MODEL
     case AOScreen.KOLMOGOROV
-        PSD = 0.033 * PS.Cn2 * K2.^(-PS.ALPHA/2);
+        PSD = 0.033 * PS.Cn2 * KR2.^(-PS.ALPHA/2);
         
     case AOScreen.TATARSKI
         PSD = 0.033 * PS.Cn2 * K2.^(-PS.ALPHA/2);
