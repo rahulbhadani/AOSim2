@@ -1,5 +1,5 @@
 function PS = make(PS,L0,fixLF)
-% PS = make_new(PS)
+% PS = make(PS)
 % 
 % New, extensible turbulent screen maker.  
 % This method computes a new random realization of a screen.
