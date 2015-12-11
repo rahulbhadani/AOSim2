@@ -5,7 +5,19 @@ function PS = make(PS,L0,fixLF)
 % This method computes a new random realization of a screen.
 % It uses the parameters in the AOScreen class to determine the model.
 % 
-% Look at the class definition to see model types.
+% Supported turbulence models (specified by static class constants):
+% 
+% PS = AOScreen(N);
+% PS.TURBULENCE_MODEL = model_number.
+% 
+% The model numbers are 
+% AOScreen.KOLMOGOROV    -- pure power law turbulence spectrum.
+% AOScreen.TATARSKI      -- KOLMOGOROV with an inner scale.
+% AOScreen.VON_KARMAN    -- TATARSKI modified to include an outer scale (L0).
+% AOScreen.MODIFIED_ATMO -- VON_KARMAN modified to include the Hill inner
+%                           scale enhancement.
+% All models now have a variable power law PHI_n index ALPHA.  Set this in
+% the AOScreen before make()'ing it.
 
 % Start with the envelope, the random part is common to all models.
 
@@ -32,7 +44,7 @@ switch PS.TURBULENCE_MODEL
         PSD = 0.033 * PS.Cn2 * K2.^(-PS.ALPHA/2);
         PSD = PSD .* exp(-K2./kappam^2); % Inner scale
         
-    case AOScreen.VON_KARMEN
+    case AOScreen.VON_KARMAN
         PSD = 0.033 * PS.Cn2 .* (kappa0^2+KR2).^(-PS.ALPHA/2); % Outer scale
         PSD = PSD .* exp(-KR2./kappam^2); % Inner scale
                 

@@ -22,7 +22,7 @@ classdef AOScreen < AOGrid
         L0 = 30;                % Outer scale
         inner_scale = 0.005;    % Inner scale of turbulence. (For Rod!)
 
-        TURBULENCE_MODEL = AOScreen.VON_KARMEN;
+        TURBULENCE_MODEL = AOScreen.VON_KARMAN;
         ALPHA = 11/3;      % This is the PSD exponent.  Change it for non-standard turbulence.
         
         LOW_FREQ_FIX = 0;  % Flag if we want to compensate for the Fourier synthesis error.
@@ -42,8 +42,9 @@ classdef AOScreen < AOGrid
         % Turbulence models. 
         KOLMOGOROV      = 1; % Pure power-law with -11/3 spectral exponent.
         TATARSKI        = 2; % Kolmogorov with an inner scale.
-        VON_KARMEN      = 3; % Kolmogorov with an outer scale and an inner scale.
-        MODIFIED_ATMO   = 4; % VON_KARMEN with the "Hill Bump."
+        VON_KARMAN      = 3; % Kolmogorov with an outer scale and an inner scale.
+        MODIFIED_ATMO   = 4; % VON_KARMAN with the "Hill Bump."
+        HILL_MODEL      = 4; % An alias for MODIFIED_ATMO.
 
         LF_FRACTAL_PATCH = 1; 
 	end
