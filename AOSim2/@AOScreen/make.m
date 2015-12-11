@@ -37,7 +37,7 @@ switch PS.TURBULENCE_MODEL
         PSD = PSD .* exp(-KR2./kappam^2); % Inner scale
                 
     case AOScreen.MODIFIED_ATMO
-        kappal = 3.3/l0;
+        kappal = 3.3/PS.inner_scale;
         K = sqrt(KR2);
         PSD = 0.033 * PS.Cn2 .* (kappa0^2+KR2).^(-PS.ALPHA/2); % Outer scale
         PSD = PSD .* (1 + 1.802*(K/kappal) - 0.254*(K/kappal).^(7/6)); % Hill bump.
