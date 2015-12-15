@@ -37,7 +37,7 @@ classdef AOScreen < AOGrid
 		Cn2;                    % Turbulence index of refraction structure constant.
     end
 	
-%     Static constants
+    % Static constants
 	properties(Constant=true, SetAccess = 'private')
         % Turbulence models. 
         KOLMOGOROV      = 1; % Pure power-law with -11/3 spectral exponent.
@@ -45,10 +45,7 @@ classdef AOScreen < AOGrid
         VON_KARMAN      = 3; % Kolmogorov with an outer scale and an inner scale.
         MODIFIED_ATMO   = 4; % VON_KARMAN with the "Hill Bump."
         HILL_MODEL      = 4; % An alias for MODIFIED_ATMO.
-
-        LF_FRACTAL_PATCH = 1; 
 	end
-
     
 	%% Methods
 	methods
@@ -128,7 +125,26 @@ classdef AOScreen < AOGrid
 			PS.touch;
         end        
         
-		% Utilities
+        function PS = scaleTurbStrength(PS,RATIO)
+        % PS = scaleTurbStrength(PS,RATIO)
+        % Scale the strenth of the turbulence model so that the rms changes
+        % by the factor RATIO.
+        
+            PS.setCn2(PS.Cn2 * RATIO^2);
+        
+        end
+        
+        function PS = setLowFreqCorrection(PS,LowFreqCorr)
+        % PS = setLowFreqCorrection(PS,LowFreqCorr)
+        % LowFreqCorr is a boolean to turn on/off the low freq correction.
+        
+			PS.LOW_FREQ_FIX = LowFreqCorr;
+			PS.touch;
+        end        
+        
+        
+        
+		%% Utilities
 		
 		function b = isPhase(G)
 		% b = isPhase(G)
@@ -320,21 +336,7 @@ classdef AOScreen < AOGrid
             end
             touch(S);
         end
-        
-%         function g = grid(S,nugrid)
-%         % g = grid(S,nugrid)
-%         % This is a normal grid method, but it looks to see if the AOScreen
-%         % needs to be rebuilt after a touch.
-%         
-%         if(S.touched & nargin<2)
-%             S.make;
-%         end
-%         
-%         S = grid@AOGrid(S,nugrid);
-%         
-%         end
-        
-        
+
         function grid = LPF(S,scale)
             % grid = SCREEN.LPF(S)
             % This function returns a Gaussian smoothed version
