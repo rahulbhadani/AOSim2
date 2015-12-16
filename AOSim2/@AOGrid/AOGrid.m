@@ -39,6 +39,9 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         % optimize storage, while Offset is a user control.
         nanmap = 0;      % If when interpolating we get NaNs, this settable value is used to fill.
         verbosity = 0;  % set this to >0 for info and intermediate plots.
+    
+        interpolate_method = 'quick'; % quick or normal cubic.  Only checks for 'quick' ATM.
+        seed = []; % Set this to empty for unseeded.  Set seed value for repeatable random numbers.
     end
     
     %     properties(GetAccess = 'protected', SetAccess = 'protected')
@@ -893,8 +896,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             G.center();
             [GX,GY] = COORDS(G);
-            g = qinterp2(GX,GY,G.grid,Xout,Yout);
-            %g = interp2(GX,GY,G.grid,Xout,Yout,'cubic');
+            if(G.interpolate_method == 'quick')
+                g = qinterp2(GX,GY,G.grid,Xout,Yout);
+            else
+                g = interp2(GX,GY,G.grid,Xout,Yout,'cubic');
+            end
             % g(isnan(g)) = 0;
         end
         
