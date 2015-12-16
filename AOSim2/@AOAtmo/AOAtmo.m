@@ -7,15 +7,15 @@ classdef AOAtmo < AOScreen
 	% Written by: Johanan L. Codona, Steward Observatory: CAAO
 	% Feb. 21, 2009
 	% 20090418, JLCodona.  AOSim2.
-    % 20150228, JLCodona Changed cladd parent to AOScreen.
+    % AOSim2 change log now recorded in the git log.
 	
 	% properties
 	properties(Access='public')
-		layers = {};
-		BEACON = [ 0 0 1.5e11 ]*100; % [x,y,z] a single point. Defaults to 100 AU.
-		time = 0;
-		GEOMETRY = true;
-		z = 0;
+		layers = {};                    % List of AOScreens.
+		BEACON = [ 0 0 1.5e11 ]*100;    % [x,y,z] a single point. Defaults to 100 AU.
+		time = 0;                       % Set this for the observation time.  Affects wind.
+		GEOMETRY = true;                % Include geometric OPL as well as aberrations.
+		z = 0;                          % Location of the OUTPUT for this object.
 	end
 
 	methods
@@ -286,9 +286,11 @@ classdef AOAtmo < AOScreen
 			end
         end
         
-        function r0 = totalFriedScale(ATMO,lambda)
-        % r0 = totalFriedScale(ATMO,lambda)
-
+        %% original function, works for a star.
+        function r0 = totalFriedScaleStar(ATMO,lambda)
+        % r0 = totalFriedScaleStar(ATMO,lambda)
+        % This returns the total r0 for a starlight beacon.
+        
             if(nargin<2)
                 lambda = AOField.VBAND;
             end
@@ -301,6 +303,33 @@ classdef AOAtmo < AOScreen
             
             r0 = (0.423*(2*pi/lambda)^2*SLABS)^(-3/5); % see e.g. Roddier or Fried or Tatarskii or ANYBODY!
         end
+        
+        %%
+        function r0 = totalFriedScale(ATMO,lambda)
+            % r0 = totalFriedScale(ATMO,lambda)
+            % This computes the Fried length 
+            
+            if(nargin<2)
+                lambda = AOField.VBAND;
+            end
+
+            SOURCE = [ 0 0 ATMO.BEACON(3)]; % measuring stick
+            
+            SLABS = 0;
+            
+            for n=1:length(ATMO.layers)
+                [rho,~] = ATMO.scaleCone(1,0,ATMO.z,ATMO.layers{n}.screen.altitude);
+                if(rho<=0 | ATMO.layers{n}.ignore )
+                    continue;
+                end
+                SLABS = SLABS + ATMO.layers{n}.screen.thickness * ATMO.layers{n}.screen.Cn2 * rho^(5/3);
+            end
+            
+            r0 = 0.1847 * lambda^(6/5) / SLABS^(3/5); 
+            
+            %r0 = (0.423*(2*pi/lambda)^2*SLABS)^(-3/5); % see e.g. Roddier or Fried or Tatarskii or ANYBODY!
+        end
+        
         
         function HEIGHTS = listHeights(ATMO)
         % HEIGHTS = listHeights(ATMO)
