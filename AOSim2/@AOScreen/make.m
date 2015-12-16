@@ -53,6 +53,7 @@ switch PS.TURBULENCE_MODEL
         K = sqrt(KR2);
         PSD = 0.033 * PS.Cn2 .* (kappa0^2+KR2).^(-PS.ALPHA/2); % Outer scale
         PSD = PSD .* (1 + 1.802*(K/kappal) - 0.254*(K/kappal).^(7/6)); % Hill bump.
+        PSD = PSD .* exp(-KR2./kappal^2); % Modified Inner scale
         
     otherwise % Use the Von Karman model as a default.
         PSD = 0.033 * PS.Cn2 .* (kappa0^2+KR2).^(-PS.ALPHA/2); % Outer scale
