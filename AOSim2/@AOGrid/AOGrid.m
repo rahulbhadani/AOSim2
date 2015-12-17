@@ -40,7 +40,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         nanmap = 0;      % If when interpolating we get NaNs, this settable value is used to fill.
         verbosity = 0;  % set this to >0 for info and intermediate plots.
     
-        interpolate_method = 'quick'; % quick or normal cubic.  Only checks for 'quick' ATM.
+        interpolate_method = []; % quick or selected method.  Empty [] sets to qinterp2. Otherwise use the named method.
         seed = []; % Set this to empty for unseeded.  Set seed value for repeatable random numbers.
     end
     
@@ -896,10 +896,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             G.center();
             [GX,GY] = COORDS(G);
-            if(G.interpolate_method == 'quick')
+            
+            if(isempty(G.interpolate_method))
                 g = qinterp2(GX,GY,G.grid,Xout,Yout);
             else
-                g = interp2(GX,GY,G.grid,Xout,Yout,'cubic');
+                g = interp2(GX,GY,G.grid,Xout,Yout,G.interpolate_method);
             end
             % g(isnan(g)) = 0;
         end
