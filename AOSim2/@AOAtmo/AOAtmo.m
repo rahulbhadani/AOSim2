@@ -346,5 +346,32 @@ classdef AOAtmo < AOScreen
                 CN2(n) = ATMO.layers{n}.screen.Cn2;
             end
         end
+        
+		function [xoffset, yoffset] = tracerays(ATMO, WFS, OBJECTZ, OBJECTD, SAMPLES)  % radians
+			OBJECTR = OBJECTD / 2.0;
+			BEACONR = linspace(-OBJECTR, OBJECTR, SAMPLES);
+
+			ATMO.useGeometry(false);   % Turning off the geometry is like focusing on the beacon
+
+			xoffset = zeros(SAMPLES);
+			yoffset = zeros(SAMPLES);
+			
+			totalrays = SAMPLES^2;
+			raycheckpoint = round(0.1 * totalrays);
+			raynum = 0;
+			for n = 1:SAMPLES
+				for m = 1:SAMPLES
+					raynum = raynum + 1;
+					% if (mod(raynum, raycheckpoint) == 0)
+						% fprintf('Ray trace percent complete: %d\n', round(100 * raynum / totalrays));
+					% end
+				
+					ATMO.setBeacon([BEACONR(n) BEACONR(m) OBJECTZ]);
+					[btip, btilt] = WFS.globalTipTilt(ATMO);
+					xoffset(m, n) = btip;
+					yoffset(m, n) = btilt;
+				end
+			end
+       end
     end
 end
