@@ -318,7 +318,7 @@ classdef AOAtmo < AOScreen
             SLABS = 0;
             
             for n=1:length(ATMO.layers)
-                [rho,~] = ATMO.scaleCone(1,0,ATMO.z,ATMO.layers{n}.screen.altitude);
+                [rho,~] = ATMO.scaleCone(1,0,ATMO.z,ATMO.layers{n}.screen.altitude,SOURCE);
                 if(rho<=0 | ATMO.layers{n}.ignore )
                     continue;
                 end
