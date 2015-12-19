@@ -721,6 +721,17 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 g = imag(A.grid_);
             end
         end
+
+        function A = rmMean(A)
+            % A = A.rmMean;
+            % Subtract the mean value from the grid.
+            % Boring way: A.grid_ = A.grid_ - A.mean;
+            % AOSim2 way: A - A.mean;
+            A - A.mean;
+        end
+        
+        
+        
         
         function g = phase(A)
             if(nargout<1)
