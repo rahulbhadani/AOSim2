@@ -13,6 +13,7 @@ r0 = ATMO.totalFriedScale;
 
 % STRIDE = max(1,round(r0/pixel_size));
 STRIDE = max(1,round(ATMO.lambdaRef/r0*max(0,(RANGE-ATMO.z))/pixel_size/2))
+STRIDE = 20
 
 IMG = squeeze(IMG(:,:,1)); % Only monochrome at the moment.
 CENTER = round(size(IMG)/2);
@@ -25,6 +26,8 @@ N1 = size(X1_,1);
 N2 = size(X1_,2);
 
 BINNING = round(r0./ATMO.dx)
+% BINNING = 10
+
 Q = downsampleCCD(ATMO.grid,BINNING,BINNING);
 
 CTILTS = zeros([size(Q),N1,N2]);
@@ -54,8 +57,10 @@ for na1=1:size(CTILTS,1)
         MORPH1 = min(max(1,round((X1 + real(CMORPH*DOWNRANGE))/pixel_size)+CENTER(1)),size(IMG,1));
         MORPH2 = min(max(1,round((X2 + imag(CMORPH*DOWNRANGE))/pixel_size)+CENTER(2)),size(IMG,2));
         
-        for n=1:numel(IMG1)
+        %dIMG1 = zeros(size(IMG));
+        for n=1:numel(IMG)
             IMG1(n) = IMG1(n) + IMG(MORPH1(n),MORPH2(n));
+            %imagesc(IMG1);sqar;drawnow;
         end
         %imagesc(IMG1);sqar;drawnow;
     end

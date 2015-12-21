@@ -65,12 +65,12 @@ ATMO.name = 'Layered Atmosphere';
 %     ATMO.layers{n}.Wind = WIND; % Uniform wind.
 % end    
 
-NSCREENS = 2
-THICKNESS = 1000
+NSCREENS = 5
+THICKNESS = 3000
 PSTHICK = THICKNESS/NSCREENS
 
 % Cn2 =  ATMO.setThickness(THICKNESS).setR0(r0).Cn2
-Cn2 = 3e-14
+Cn2 = 3e-13
 
 
 for n=1:NSCREENS
@@ -78,8 +78,8 @@ for n=1:NSCREENS
     ps.name = sprintf('Layer %d',n);
     ps.spacing(0.02);
     ps.setCn2(Cn2,PSTHICK);
-    %ps.interpolate_method = 'cubic';
-    ps.interpolate_method = 'linear';
+    ps.interpolate_method = 'cubic';
+    %ps.interpolate_method = 'linear';
     
     ATMO.addLayer(ps,PSTHICK*n);
     
