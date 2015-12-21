@@ -331,6 +331,15 @@ classdef AOAtmo < AOScreen
         end
         
         
+        function THICKNESSES = listThickness(ATMO)
+        % THICKNESSES = listThickness(ATMO)
+            THICKNESSES = nan(1,ATMO.nLayers);
+        
+            for n=1:ATMO.nLayers
+                THICKNESSES(n) = ATMO.layers{n}.screen.thickness;
+            end
+        end
+        
         function HEIGHTS = listHeights(ATMO)
         % HEIGHTS = listHeights(ATMO)
             HEIGHTS = nan(1,ATMO.nLayers);
