@@ -32,7 +32,10 @@ classdef AOAtmo < AOScreen
 			L.name = sprintf('Layer %d:%s',n,screen.name);
 			if(nargin>2)
 				screen.altitude = alt;
-			end
+            end
+            
+            screen.lambdaRef = ATMO.lambdaRef; % If this causes inconvenience, please tell JLCodona.
+            
 			L.screen = screen;
 			L.Wind = [0 0];
 			
@@ -80,7 +83,7 @@ classdef AOAtmo < AOScreen
         %ATMO = make(ATMO)
         
             for n=1:ATMO.nLayers
-                fprintf('Screen %d: ',n);
+                fprintf('Rendering screen %d: %s\n',n,ATMO.layers{n}.screen.name);
                  ATMO.layers{n}.screen.make;
             end
         
@@ -307,16 +310,16 @@ classdef AOAtmo < AOScreen
         %%
         function r0 = totalFriedScale(ATMO,lambda)
             % r0 = totalFriedScale(ATMO,lambda)
-            % This computes the Fried length 
+            % This computes the Fried length for the BEACON source.
             
             if(nargin<2)
-                lambda = AOField.VBAND;
+                lambda = ATMO.lambdaRef;
             end
 
             SOURCE = [ 0 0 ATMO.BEACON(3)]; % measuring stick
-            
+
             SLABS = 0;
-            
+
             for n=1:length(ATMO.layers)
                 [rho,~] = ATMO.scaleCone(1,0,ATMO.z,ATMO.layers{n}.screen.altitude,SOURCE);
                 if(rho<=0 | ATMO.layers{n}.ignore )
@@ -324,7 +327,7 @@ classdef AOAtmo < AOScreen
                 end
                 SLABS = SLABS + ATMO.layers{n}.screen.thickness * ATMO.layers{n}.screen.Cn2 * rho^(5/3);
             end
-            
+
             r0 = 0.1847 * lambda^(6/5) / SLABS^(3/5); 
             
             %r0 = (0.423*(2*pi/lambda)^2*SLABS)^(-3/5); % see e.g. Roddier or Fried or Tatarskii or ANYBODY!

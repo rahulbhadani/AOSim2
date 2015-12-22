@@ -4,7 +4,12 @@
 % 20151204 JLCodona... play version.
 
 THICKNESS = 1000;
-NSCREENS = 10;
+% THICKNESS = 3000
+% NSCREENS = 10;
+NSCREENS = 5
+
+% Cn2 =  ATMO.setThickness(THICKNESS).setR0(r0).Cn2
+Cn2 = 3e-13
 
 WIND = [0 5]; % All winds the same.
 
@@ -65,13 +70,7 @@ ATMO.name = 'Layered Atmosphere';
 %     ATMO.layers{n}.Wind = WIND; % Uniform wind.
 % end    
 
-NSCREENS = 5
-THICKNESS = 3000
 PSTHICK = THICKNESS/NSCREENS
-
-% Cn2 =  ATMO.setThickness(THICKNESS).setR0(r0).Cn2
-Cn2 = 3e-13
-
 
 for n=1:NSCREENS
     ps = AOScreen(1024);
