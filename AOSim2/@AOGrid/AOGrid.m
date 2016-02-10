@@ -16,7 +16,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
     % 20090415 JLCodona.  Added fft method and new fftgrid_ usage model.
     % 20100514 JLCodona.  Added a coordinates caching scheme.
     % 20141120 JLCodona.  Made the objects deep-copyable.
-    
+    % Change comments are in the git log from now on.
     
     %% Properties
     properties(Constant=true, GetAccess='protected')
@@ -801,6 +801,26 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % Returns the standard deviation of the grid.
             
             s = A.std;
+        end
+        
+        function CEN = centroid(A)
+        % CEN = A.centroid;
+        % Compute the centroid of the AOGrid in physical units.
+        
+        [X,Y] = A.COORDS;
+        M0 = mean(A.grid_(:));
+        dG = A.grid - M0;
+        M1x = mean(dG(:).*X(:))/M0;
+        M1y = mean(dG(:).*Y(:))/M0;
+        
+        CEN = [M1x,M1y];
+        end
+        
+        function s = sum(A)
+        % s = sum(A)
+        % Sum all of the pixels in the grid.
+        
+            s = sum(A.grid_(:));
         end
         
         function b = isX(G)
