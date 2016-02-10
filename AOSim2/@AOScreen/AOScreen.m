@@ -254,31 +254,40 @@ classdef AOScreen < AOGrid
             touch(S);
         end
 
-        function S = addZernike(S,n,m,amp,D,cenx,ceny)
-        % AOScreen S = S.addZernike(n,m,amp,D,cenx,ceny)
-        % Uses Noll normalization.
+        function S = addZernike(S,n,m,amp,D,cenx,ceny,NOLL)
+        % AOScreen S = S.addZernike(n,m,amp,D,[cenx],[ceny],[NOLL])
+        % The cen[x|y] variables defalt to zero. 
+        % If NOLL==true, use Noll normalization.
+        % Otherwise just use the basic Zernike formulae.
             if(nargin>4)
                 S.radius = D/2;
             end
             if(nargin>5)
-                Xcen=cenx;    %allows segment aberrations
-                Ycen=ceny;
+                Xcen = cenx;    %allows segment aberrations
+                Ycen = ceny;
             else	
-				Xcen=0;
-                Ycen=0;
-			end
+				Xcen = 0;
+                Ycen = 0;
+            end
+            if(nargin<8)
+                NOLL = true;
+            end
             
             [x,y] = S.COORDS(); % lowercase on purpose to match Zernike vars.
             %fprintf('Xcen=%d   YCen=%d \n',Xcen,Ycen);
             x = (x-Ycen)/S.radius;
             y = (y-Xcen)/S.radius;
             zern = ZernikeStringR(n,m);
-            if m == 0
-                norm = sqrt(n + 1);
+            if(NOLL)
+                if m == 0
+                    norm = sqrt(n + 1);
+                else
+                    norm = sqrt(2*(n + 1));
+                end
+                S + amp*norm*eval(zern);
             else
-                norm = sqrt(2*(n + 1));
+                S + amp*eval(zern);
             end
-            S + amp*norm*eval(zern);
             %touch(S);
         end
 
