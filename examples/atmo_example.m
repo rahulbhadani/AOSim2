@@ -50,9 +50,11 @@ for n=1:5
     ps = AOScreen(2*1024);
     ps.name = sprintf('Layer %d',n);
     ps.spacing(0.02);
-    ps.setCn2(1e-13);
+%     ps.setCn2(1e-16,1000);
+    ps.setCn2(0,1000);
     ATMO.addLayer(ps,1000.*n);
-    ATMO.layers{n}.Wind = randn([1 2])*5; % random wind layers.
+    ATMO.layers{n}.Wind = [0 1]; % random wind layers.
+%     ATMO.layers{n}.Wind = randn([1 2])*5; % random wind layers.
 end    
 
 % for n=1:ATMO.nLayers
@@ -128,12 +130,14 @@ PSFmax = max(PSF(:));
 
 fprintf('Use light from a finite-distance beacon.\n')
 
-ATMO.setBeacon([0 0 150000]);
+ATMO.setBeacon([0 0 5100]);
 
 % This includes the geometry as well as the OPD from the layers...
-ATMO.useGeometry(true);
+ATMO.useGeometry(false);
 
-for t=0:.01:1
+for t=0:.01:2
+%     ATMO.make;
+
     ATMO.setObsTime(t);
     F.planewave*ATMO*A;
     
@@ -169,7 +173,7 @@ fprintf('Focus on the beacon (only OPL variations).\n')
 
 ATMO.useGeometry(false);
 
-for t=0:.01:1
+for t=0:.01:0.25
     ATMO.setObsTime(t);
     F.planewave*ATMO*A;
     
@@ -203,7 +207,7 @@ end
 % sources, all at the same time.
 
 clf;
-N = 5;
+N = 20;
 
 
 fprintf('Beacon array Phase Maps focusing on beacons.\n')
