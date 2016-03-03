@@ -58,28 +58,23 @@ fid = fopen(RAW,'wb');
 fwrite(fid, phase(:), 'float');
 fclose(fid);
 
-% fprintf('/home/jlc/LAB/gold -input pengaha1.phase -format float -xsize 513 -ysize 513 -dipole no -output pengahaout1')
-% system('/home/jlc/LAB/gold -input pengaha1.phase -format float -xsize 513 -ysize 513 -dipole no -output pengahaout1')
-
-
-% if(USE_FFT)
-%     CMD = sprintf('/home/jlc/LAB/unwt -input "%s" -format float -xsize %d -ysize %d -output "%s"  > uwrap.out 2> uwrap.err',RAW,NX,NY,RESULT);
-% else
-%     CMD = sprintf('/home/jlc/LAB/gold -input "%s" -format float -xsize %d -ysize %d -output "%s" > uwrap.out 2> uwrap.err',RAW,NX,NY,RESULT);
-% end
-
 CMD = sprintf('%s/%s -input "%s" -format float -xsize %d -ysize %d -output "%s"  > uwrap.out 2> uwrap.err',...
     CODEDIR,ALGO,RAW,NX,NY,RESULT);
 
 % fprintf('CMD: %s\n',CMD);
 ret = system(CMD);
 
-% if(ret ~= 0)
-%     !cat uwrap.err
-%     error('The system call failed.');
-% end
+if(ret ~= 0)
+    !cat uwrap.err
+    error('The system call failed.');
+end
 
-fid = fopen(RESULT,'r');
+[fid,errmsg] = fopen(RESULT,'r');
+if(fid<0)
+    fprintf('ERROR: %s --> %s\n',RESULT,errmsg);
+    fprintf('Hint: make sure the ~/LAB/* routines exist from Gigglia & Pritt.\n');
+end
+
 uwphase = fread(fid,NX*NY,'float');
 uwphase = reshape(uwphase,NX,NY);
 uwphase = uwphase(1:nx,1:ny);
