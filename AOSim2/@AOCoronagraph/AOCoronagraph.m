@@ -80,18 +80,18 @@ classdef AOCoronagraph < AOSegment
             [Xp,Yp] = CORO.COORDS;
             [Xf,Yf] = CORO.FPM.COORDS;
             
-            k = 2*pi/lambda;
-
-            CORO.Fmatrix = exp(1i*k/CORO.FL*(Xf(:)*Xp(CORO.MASK)' ...
+            % Note that this doesn't include the measure factor.
+            CORO.Fmatrix = exp((1i*pi/lambda/CORO.FL)*(Xf(:)*Xp(CORO.MASK)' ...
                 + Yf(:)*Yp(CORO.MASK)'))...
                 ;
+            % / pi;
             %* sqrt(sum(CORO.MASK(:))*prod(CORO.FPM.size));            
         end
         
         function [Flyot,Ffp] = PPtoLP(CORO,Fpp)
             % WARNING: This breaks the usual design model for AOSim2.
             % [Flyot,Ffp] = PPtoLP(CORO,Fpp)
-            % 
+            % Note that Flyot is evaluated BEFORE the Lyot stop.
             
             Ffp = AOField(CORO.FPM);
             Ffp.name = 'Focal Plane Field';
@@ -99,19 +99,17 @@ classdef AOCoronagraph < AOSegment
             
             Fpp * CORO * CORO.APODIZER; % pass through pupil and apodizer.
            
-            %Ffp.grid(reshape(CORO.Fmatrix * Fpp.grid_(CORO.MASK),CORO.FPM.Nx_,CORO.FPM.Ny_));
-            Ffp.grid(reshape(CORO.Fmatrix * Fpp.grid_(CORO.MASK),CORO.FPM.size));
-
+            Ffp.grid(reshape(CORO.Fmatrix * Fpp.grid_(CORO.MASK(:)),CORO.FPM.size));
+            Ffp * (Fpp.lambda*CORO.FL); % Normalizing is confusing.
+            
+            COMPLEX_FPMASK = exp(1i*Ffp.k*CORO.FPM.grid_(:)) - 1;
             Flyot = Fpp.copy;
             Flyot.name = 'Lyot Plane Field';
             Q = zeros(Flyot.size);
-            Q(CORO.MASK) = CORO.Fmatrix' * Ffp.grid_(:);
-            Flyot.grid(Q);
             
+            Q(CORO.MASK(:)) = CORO.Fmatrix' * ( COMPLEX_FPMASK .* Ffp.grid_(:));
+            Flyot.grid(Flyot.grid + Q);
         end
-
-        
-        
     end
 end
 
