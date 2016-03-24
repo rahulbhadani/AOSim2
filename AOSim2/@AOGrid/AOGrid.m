@@ -894,6 +894,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function G = setPixel(G,n1,n2,value)
+        % G = setPixel(G,n1,n2,value)
             G.grid_(n1,n2) = value;
         end
         
