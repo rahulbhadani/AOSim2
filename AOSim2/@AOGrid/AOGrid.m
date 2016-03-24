@@ -336,14 +336,15 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         % 
         % F.grid(newarray).show;
         
-            if(nargin==1)
+            if(nargin==1) % Just read out the value.
                 g = obj.grid_;
-            else
+            else % Set the value to the input...
                 nugrid = squeeze(nugrid);
                 nugrid = nugrid(:,:,1);
                 nugrid = squeeze(nugrid);
-                if(size(obj)==size(nugrid))
-                    obj.grid_ = double(nugrid);
+                %if(size(obj)==size(nugrid))
+                if(prod(size(obj))==numel(nugrid))  %  Also allow vector assignments
+                    obj.grid_(:) = double(nugrid(:)); % Does not force shape.
                     obj.touch;
                 else
                     obj.resize(size(nugrid));
@@ -354,6 +355,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 g = obj; % Note
             end
         end
+        
         
         %% This is not really useful anymore.  Center is the default alignment.
         function A = center(A)
