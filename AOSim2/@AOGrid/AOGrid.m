@@ -324,38 +324,53 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         %%
-        function g = grid(obj,nugrid) % TODO: make this fancier.
-        %% function g = grid(obj,nugrid) 
-        % Returns the array insie of an AOGrid.
-        % e.g.
-        % grid = F.grid();
-        %
-        % You can set the grid to a new one by
-        % F.grid(newarray);
-        % The return value in the newgrid case is the object.
-        % 
-        % F.grid(newarray).show;
-        
+        function g = grid(obj,nugrid,mask) % TODO: make this fancier.
+            %% function g = grid(obj,nugrid,[mask])
+            % Returns the array inside of an AOGrid.
+            % e.g.
+            % grid = F.grid();
+            %
+            % You can set the grid to a new one by
+            % F.grid(newarray);
+            % The return value in the newgrid case is the object.
+            %
+            % Set the new value with a mask by
+            % F.grid(newarray,which_pixels);
+            %   >>> note that this does not coerce the shape.
+            %
+            % F.grid(newarray).show;
+            
             if(nargin==1) % Just read out the value.
                 g = obj.grid_;
             else % Set the value to the input...
-                nugrid = squeeze(nugrid);
-                nugrid = nugrid(:,:,1);
-                nugrid = squeeze(nugrid);
-                %if(size(obj)==size(nugrid))
-                if(prod(size(obj))==numel(nugrid))  %  Also allow vector assignments
-                    obj.grid_(:) = double(nugrid(:)); % Does not force shape.
-                    obj.touch;
-                else
-                    obj.resize(size(nugrid));
-                    obj.grid_ = double(nugrid);
-                    obj.touch;
-                    %error('different sized grid assignment not supported (yet)');
+                if(nargin<3) % the CLASSIC behavior...
+                    nugrid = squeeze(nugrid);
+                    nugrid = nugrid(:,:,1);
+                    nugrid = squeeze(nugrid);
+                    %if(size(obj)==size(nugrid))
+                    if(prod(size(obj))==numel(nugrid))  %  Also allow vector assignments
+                        obj.grid_(:) = double(nugrid(:)); % Does not force shape.
+                        obj.touch;
+                    else
+                        obj.resize(size(nugrid));
+                        obj.grid_ = double(nugrid);
+                        obj.touch;
+                        %error('different sized grid assignment not supported (yet)');
+                    end
+                else % This when a mask is specified...
+                    obj.grid_(mask(:)) = nugrid(:);
                 end
-                g = obj; % Note
+                g = obj; % Note that I return the object if setting the grid.
             end
         end
         
+        %% 
+        function G = justPhasor(G)
+            % G = justPhase(G)
+            % Replace the grid amplitudes with 1.  
+            % Only phase remains.
+            G.grid(exp(1i*angle(G.grid)));
+        end
         
         %% This is not really useful anymore.  Center is the default alignment.
         function A = center(A)
@@ -900,6 +915,25 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             G.grid_(n1,n2) = value;
         end
         
+        function G = bumpPixel(G,n1,n2,value)
+            % G.bumpPixel(n1,n2,value)
+            % Add to the (n1,n2) pixel value.
+            
+            G.grid_(n1,n2) = G.grid_(n1,n2) + value;
+        end
+
+        function G = setPixel1(G,n,value)
+        % G = G.setPixel1(n,value)
+        % Sets the nth pixel without coercing the shape.
+            G.grid_(n) = value;
+        end
+        
+        function G = bumpPixel1(G,n,value)
+        % G = G.bumpPixel1(n,value)
+        % Adds to the nth pixel without coercing the shape.
+            G.grid_(n(:)) = G.grid_(n(:)) + value(:);
+        end
+        
         function g = interpGrid(G,varargin)
             % g = interpGrid(G,varargin)
             % Returns a grid of G values interpolated to the spec'd coords.
@@ -960,6 +994,15 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 minI = min(I(:));
                 maxI = max(I(:));
                 
+                if(maxI == 0)
+                    maxI = 1;
+                end
+                
+                if(minI/maxI > 0.99)
+                    minI = 0;
+                end
+                
+                
                 I = (max(min(I,maxI),minI)-minI)/(maxI-minI);
                 % I should now be 0<I<1
                 
@@ -991,6 +1034,13 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             dxy = G.spacing;
             [Zx,Zy] = gradient(G.grid_);
             delZ = [Zx/dxy(1),Zy/dxy(2)];
+        end
+        
+        function NUM = numel(g)
+            % NUM = numel(g)
+            % Returns the number of elements in the grid.
+            
+            NUM = numel(g.grid_); 
         end
         
         %% Overloaded operators.
