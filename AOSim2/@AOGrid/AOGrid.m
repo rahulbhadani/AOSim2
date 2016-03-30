@@ -194,11 +194,24 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             c = obj.axis_;
         end
         
-        function sz = size(obj)
-            sz = size(obj.grid_);
+        function sz = size(obj,DIM)
+            % SIZE = AOGRID.size([dim])
+            % Return the size of the data grid in an AOGrid object.
+            
+            if(nargin<2)
+                sz = size(obj.grid_);
+            else
+                sz = size(obj.grid_,DIM);
+            end
         end
         
         function sz = resize(obj,varargin)
+            % newsize = OBJ.resize(newsize);
+            % Change the size of an AOGrid object's data grid.
+            % (Assigning a new data grid does this automatically.)
+            % Note that resize leaves the grid spacing unchanged.
+            % Use OBJ.spacing(dx) to set the new spacing.
+            
             switch length(varargin)
                 case 0
                 case 1
@@ -249,6 +262,14 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             o = obj.origin_;
         end
         
+        function G = downsample(G,DEMAG)
+            % AOGRID.downsample(DEMAG)
+            % Decrease the sampling and size of an AOGrid.
+            
+            G.grid(downsampleCCD(G.grid,DEMAG,DEMAG)/DEMAG^2);
+            G.spacing(G.spacing*DEMAG);
+        end
+        
         function G = setBBox(G,BBox,pad)
             % This makes a grid that is the size of the BBox and centered
             % on it.
@@ -284,7 +305,10 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             val = obj.spacing_(1);
         end
         
+        
         function s = spacing(obj,varargin)
+            % s = spacing(obj,varargin)
+            
             switch length(varargin)
                 case 0
                 case 1
