@@ -50,6 +50,8 @@ classdef AOCoronagraph < AOSegment
 
         Flyot = []; % The field at the Lyot plane, but before any Lyot Stop is applied.
         
+        Fscience = []; % The field at the final focal plane.
+
         % SELECTION MASKS
         
         FPM_ASSIGNED = [];
@@ -165,8 +167,8 @@ classdef AOCoronagraph < AOSegment
             % Use Fmatrix to find Ffp starting from Fpp_.
             % Make sure Ffp_ is defined and properly initialized before
             % calling this.
-            
-            CORO.Ffp.grid(reshape(CORO.Fmatrix * CORO.Fpp_.grid_(:),CORO.FPM.size));
+            CORO.Fpp_ = CORO.Fpp.copy * CORO * CORO.APODIZER;
+            CORO.Ffp.grid(CORO.Fmatrix * CORO.Fpp_.grid_(:));
         end
         
         function PPtoFPmask(CORO,usePPMask)
@@ -255,6 +257,38 @@ classdef AOCoronagraph < AOSegment
             CORO.Flyot.grid(psiL);
         end
 
+        
+        %% Coronagraph operations
+        
+        function CORO = response(CORO,ANGLE0)
+            % CORO.response(ANGLE0)
+            % Amplitude 1 response through the corograph.
+            
+            CORO.Fpp.planewave(1,ANGLE0);
+            CORO.PPtoFP;
+
+            CORO.Ffp_ = CORO.Ffp.copy;
+            CORO.Ffp_ * CORO.FPTM;
+            
+            CORO.Flyot.grid(CORO.Fmatrix' * CORO.Ffp_.grid_(:));
+            
+            if(isempty(CORO.LYOT))
+                CORO.Flyot * CORO;
+            else
+                CORO.Flyot * CORO.LYOT;
+            end
+            
+            CORO.Fscience = CORO.Ffp.copy;
+            CORO.Fscience.name = 'Science Cam';
+            CORO.Fscience.zero;
+            psi = CORO.Fscience.grid;
+            %psi(CORO.PPMASK(:)) = CORO.Fmatrix * CORO.Flyot.grid_(:);
+            psi(:) = CORO.Fmatrix * CORO.Flyot.grid_(:);
+            CORO.Fscience.grid(psi);
+        end
+        
+        
+        %%
         function LPvectors = LyotContribs(CORO,FPSELECT,JustPP)
          % LPvectors = CORO.LyotContribs([FPSELECT],[JustPP])
          % FPSELECT defaults to ALL PIXELS in FPM
@@ -303,8 +337,6 @@ classdef AOCoronagraph < AOSegment
             end
             
             CORO.FPM.zero;
-            
-            
         end
         
         %% First Incremental experiment.
@@ -560,7 +592,6 @@ classdef AOCoronagraph < AOSegment
             end
         end
 
-        
         %% UNUSED
         function COEFS = antiLyotCoefs(CORO,F)
             % COEFS = antiLyotCoefs(CORO,F)
@@ -605,6 +636,91 @@ classdef AOCoronagraph < AOSegment
             end
         end
         
+        %%
+        
+        function [VMODES,s] = LyotModes(CORO,FIELD0,ThreshNum)
+            % [MODES,s] = CORO.LyotModes(FIELD0,[ThreshNum]);
+            % Compute the FPM modes that maximize power in the Lyot stop
+            % pixels selected by CORO.PPMASK.
+            % MODES are the selected svd V-modes and s is the full list of singular values.
+            % ThreshNum determines how many modes to return.
+            % no entry returns all of the modes.
+            % ThreshNum > 1 returns that many modes.
+            % ThreshNum < 1 returns those modes where s/s(1) > ThreshNum.
+            
+            CORO.Fpp.grid(FIELD0.grid);
+            CORO.PPtoFP;
+            
+            MATRIX = CORO.RVmerge(CORO.Fmatrix',CORO.Ffp.grid_);
+            [~,S,VMODES] = svd(MATRIX(CORO.PPMASK(:)),'econ');
+            s = diag(S);
+            clear S
+            
+            if(nargin < 3)
+                return;
+            end
+            
+            if(ThreshNum > 1) 
+                VMODES = VMODES(:,1:round(ThreshNum));
+            else
+                VMODES = VMODES(:,s/s(1)>ThreshNum);
+            end
+        end
+        
+        function [VMODES,s] = FFPModes(CORO,FIELD0,ThreshNum)
+            % [MODES,s] = CORO.FFPModes(FIELD0,[ThreshNum]);
+            % Compute the FPM modes that maximize deliver power to the
+            % final focal plane (FFP).
+            %
+            % MODES are the selected svd V-modes and s is the full list of singular values.
+            % ThreshNum determines how many modes to return.
+            % no entry returns all of the modes.
+            % ThreshNum > 1 returns that many modes.
+            % ThreshNum < 1 returns those modes where s/s(1) > ThreshNum.
+            
+            fprintf('Setting up the coronagraph...\n');
+            CORO.Fpp.grid(FIELD0.grid);
+            CORO.PPtoFP;
+            
+            %SELECT = (normalize(CORO.Ffp.mag2)>0.002);
+            SELECT = (normalize(CORO.Ffp.mag2)>0);
+            
+            fprintf('Building the FP1-to-LYOT operator...\n');
+            MATRIX = AOGrid.RVmerge(CORO.Fmatrix',CORO.Ffp.grid_);
+            
+            fprintf('Folding in the Lyot stop.\n');
+            if(isempty(CORO.LYOT))
+                fprintf('...using the pupil mask as the Lyot stop.\n')
+                MATRIX = AOGrid.LVmerge(MATRIX,CORO.grid_(:));
+            else
+                fprintf('...using CORO.LYOT as the Lyot stop.\n')
+                MATRIX = AOGrid.LVmerge(MATRIX,CORO.LYOT.grid_(:));
+            end
+            
+            fprintf('Including the propagation to the final focal plane...\n');
+            MATRIX = CORO.Fmatrix(SELECT,:) * MATRIX ;
+
+            fprintf('Done building the operator.\n')
+
+            fprintf('SVD...\n')
+            %[~,S,VMODES] = svd(MATRIX,'econ');
+            %[~,S,VMODES] = svd(MATRIX(SELECT,:),'econ');
+            [~,S,VMODES] = svd(MATRIX,'econ');
+            s = diag(S);
+            clear S
+            
+            if(nargin < 3)
+                return;
+            end
+            
+            if(ThreshNum > 1) 
+                VMODES = VMODES(:,1:round(ThreshNum));
+            else
+                VMODES = VMODES(:,s/s(1)>ThreshNum);
+            end
+        end
+        
+        
         %% Utilities
         function CORO = setCentroid(CORO)
             % CORO = CORO.setCentroid();
@@ -612,8 +728,29 @@ classdef AOCoronagraph < AOSegment
             
             CORO.CENTROID = CORO.centroid;
         end
-        
-
     end
+    
+    %% Static methods (utils that I want to keep in this context)
+    methods(Static=true)
+        
+        function CTRANS = BBtrans(K,H)
+            % CTRANS = AOCoronagraph.BBtrans(FREQLIST,HEIGHTS);
+            % FREQLIST is the list of lambda0/lambda that you want.
+            % Heights is a list of NxM heights in units of lambda0.
+            % The calculation will include N pixels with M contributions each.
+            
+            H = sum(H,2);
+            K = K(:);
+            
+            CTRANS = 0;
+            for n=1:length(H)
+                CTRANS = CTRANS + exp(1i*K*H(n));
+            end
+            
+            CTRANS = CTRANS/length(H);
+        end
+        
+    end    
+    
 end
 
