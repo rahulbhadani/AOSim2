@@ -1203,6 +1203,101 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             AOGRID.grid(double(CUBE(:,:,FRAME)));
         end
         
+        function G = multiplyRows(G,vector)
+            % AOGrid G.multiplyRows(vector);
+            % 
+            % Multiply each row by the vector.
+            % Only works if the vector is the same size as the grid row
+            % size.
+            
+            vector = vector(:);
+            LV = length(vector);
+            SZ = G.size;
+
+            if(LV ~= SZ(2))
+                fprintf('AOGrid.multiplyRows Error: vector length (%d) and row size (%d) differ.\n',...
+                    LV,SZ(2));
+                return;
+            else
+                for n=1:SZ(1)
+                    G.grid_(n,:) = G.grid_(n,:) .* vector';
+                end
+            end
+        end
+        
+        function G = multiplyCols(G,vector)
+            % AOGrid G.multiplyCols(vector);
+            % 
+            % Multiply each column by the vector.
+            % Only works if the vector is the same size as the grid column size.
+            
+            vector = vector(:);
+            LV = length(vector);
+            SZ = G.size;
+
+            if(LV ~= SZ(1))
+                fprintf('AOGrid.multiplyCols Error: vector length (%d) and column size (%d) differ.\n',...
+                    LV,SZ(1));
+                return;
+            else
+                for n=1:SZ(2)
+                    G.grid_(:,n) = G.grid_(:,n) .* vector;
+                end
+            end
+        end
+        
+        %% Hilbert Space Operations 
+        
+        function G = rmModes(G,MODES)
+            % G = rmModes(G,MODES)
+            
+            if(size(MODES,1) ~= G.numel)
+                fprintf('AOGrid.rmModes: ERROR: MODES length (%d) is not the same as the grid (%d).\n',...
+                    size(MODES,1),G.numel);
+                return;
+            end
+            
+            G.grid(G.grid_(:)-MODES*(MODES'*G.grid_(:)));
+        end
+        
+        function G = shift0(G,SHIFT)
+            % G = shift0(G,SHIFT)
+            % Works like circshift on the grid but with zeros instead of
+            % circular values.
+            
+            
+            % Zero out the off-shift regions and then circshift.
+            
+            if(norm(SHIFT) == 0) % No shift required.
+                return;
+            end
+            
+            if(SHIFT(1)>0) % Lose the top
+                G.grid_(end-SHIFT(1):end,:) = 0;
+            else % Lose the bottom
+                G.grid_(1:1+SHIFT(1),:) = 0;
+            end
+            
+            if(SHIFT(2)>0) % Lose the RHS
+                G.grid_(:,end-SHIFT(2):end) = 0;
+            else % Lose the LHS
+                G.grid_(:,1:1+SHIFT(2)) = 0;
+            end
+            
+            G.grid_ = circshift(G.grid_,SHIFT);
+            
+        end
+        
+        function G = normalize(G)
+            % G.normalize: Normalize the grid so its max value is 1+0i.
+            
+            mx = max(G.grid_(:)); % Note this returns the max complex value 
+            if(mx~=0)
+                G.grid_ = G.grid_/mx;
+            end
+        end
+        
+                
     end % of methods
     
     %% static methods
@@ -1245,20 +1340,64 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             org = (n+2-mod(n,2))/2;
         end
         
-        function array = normalize(array)
-            % normalize: [static] Normalize an array so its max value is unity.
-            % USAGE: normed = AOGrid.normalize(array)
-            %
-            % Johanan L. Codona, Steward Observatory, CAAO
-            % August 27, 2002 - Got tired of doing this manually!
-            % 20090424 JLCodona: Added this as a static method.
+        function G = multRows(G,vector)
+            % G = multRows(G,vector);
+            % 
+            % Multiply each row by the vector.
+            % Only works if the vector is the same size as the grid row
+            % size.
             
-            mx = max(array(:));
-            if(mx~=0)
-                array = array/mx;
+            vector = vector(:);
+            LV = length(vector);
+            SZ = size(G);
+
+            if(LV ~= SZ(2))
+                fprintf('AOGrid.multRows Error: vector length (%d) and row size (%d) differ.\n',...
+                    LV,SZ(2));
+                return;
+            else
+                for n=1:SZ(1)
+                    G(n,:) = G(n,:) .* vector';
+                end
             end
         end
         
+        function G = multCols(G,vector)
+            % static G = AOGrid.multCols(G,vector);
+            % 
+            % Multiply each column by the vector.
+            % Only works if the vector is the same size as the grid column size.
+            
+            vector = vector(:);
+            LV = length(vector);
+            SZ = size(G);
+
+            if(LV ~= SZ(1))
+                fprintf('AOGrid.multCols Error: vector length (%d) and column size (%d) differ.\n',...
+                    LV,SZ(1));
+                return;
+            else
+                for n=1:SZ(2)
+                    G(:,n) = G(:,n) .* vector;
+                end
+            end
+        end
+        
+        function M = RVmerge(M,V)
+            % static MV = AOGrid.RVmerge(M,V)
+            %
+            % Merge the vector V into M in the combination M * (V .* X) = MV * X;
+            
+            M = AOGrid.multRows(M,V);
+        end
+        
+        function M = LVmerge(M,V)
+            % static VM = AOGrid.LVmerge(M,V)
+            %
+            % Merge the vector V into M in the combination V .* (M * X) = VM * X;
+            
+            M = AOGrid.multCols(M,V);
+        end
     end % static methods
 end % of classdef
 
