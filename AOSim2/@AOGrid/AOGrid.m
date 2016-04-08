@@ -1347,8 +1347,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % Only works if the vector is the same size as the grid row
             % size.
             
-            vector = vector(:);
-            LV = length(vector);
+            LV = numel(vector);
             SZ = size(G);
 
             if(LV ~= SZ(2))
@@ -1356,12 +1355,12 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     LV,SZ(2));
                 return;
             else
-                for n=1:SZ(1)
-                    G(n,:) = G(n,:) .* vector';
+                parfor n=1:LV
+                    G(:,n) = G(:,n) * vector(n); % Keep memory operations local.
                 end
             end
         end
-        
+
         function G = multCols(G,vector)
             % static G = AOGrid.multCols(G,vector);
             % 
@@ -1377,12 +1376,12 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     LV,SZ(1));
                 return;
             else
-                for n=1:SZ(2)
+                parfor n=1:SZ(2)
                     G(:,n) = G(:,n) .* vector;
                 end
             end
         end
-        
+
         function M = RVmerge(M,V)
             % static MV = AOGrid.RVmerge(M,V)
             %
