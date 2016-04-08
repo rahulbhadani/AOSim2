@@ -131,7 +131,7 @@ classdef AOCoronagraph < AOSegment
         % TODO: Fix the normalization so this is correct in Fourier Optics.
         
             fprintf('Initializing the Fourier operator...\n');
-            
+            tic;
             if(nargin<2)
                 lambda = CORO.lambdaRef;
             end
@@ -140,9 +140,10 @@ classdef AOCoronagraph < AOSegment
             [Xf,Yf] = CORO.FPM.COORDS;
             
             % Note that this isn't the proper measure factor.
-            CORO.Fmatrix = exp((1i*pi/lambda/CORO.FL)*...
+            CORO.Fmatrix = (prod(CORO.spacing)/CORO.numel) * exp((1i*pi/lambda/CORO.FL)*...
                 ( Xf(:)*Xp(:)' + Yf(:)*Yp(:)') );
-                %* prod(CORO.spacing);
+            
+            toc
         end
         
         function CORO = mkInvF(CORO,thresh)
@@ -154,25 +155,42 @@ classdef AOCoronagraph < AOSegment
                 thresh = 1e-8;
             end
             
+            tic;
             [U,S,V] = svd(CORO.Fmatrix,'econ');
             CORO.s = diag(S);
             CORO.invFmatrix = pseudoInv_rebuild2(U,CORO.s,V,CORO.s(1)*thresh);
             CORO.antiLyot_U = U;
+            toc
         end        
         
         %% Operators and tasks
         
-        function PPtoFP(CORO)
-            % CORO.PPtoFP()
+        function CORO = PPtoFP(CORO,F)
+            % CORO = CORO.PPtoFP([FIELD0])
             % Use Fmatrix to find Ffp starting from Fpp_.
             % Make sure Ffp_ is defined and properly initialized before
             % calling this.
-            CORO.Fpp_ = CORO.Fpp.copy * CORO * CORO.APODIZER;
+            %
+            % Note that I use literal element-by-element products of
+            % same-sized grids to avoid interpolate errors.
+            
+            if(nargin==2)
+                CORO.Fpp.grid(F.grid);
+            end
+            
+            CORO.Fpp_ = CORO.Fpp.copy;
+            CORO.Fpp_.name = 'Field post-pupil and apodizer';
+            if(isempty(CORO.APODIZER))
+                CORO.Fpp_.grid(CORO.Fpp.grid .* CORO.grid);
+            else
+                CORO.Fpp_.grid(CORO.Fpp.grid .* CORO.grid .* CORO.APODIZER.grid);
+            end
+            
             CORO.Ffp.grid(CORO.Fmatrix * CORO.Fpp_.grid_(:));
         end
         
-        function PPtoFPmask(CORO,usePPMask)
-            % CORO.PPtoFP([usePPMask])
+        function CORO = PPtoFPmask(CORO,usePPMask)
+            % CORO = CORO.PPtoFP([usePPMask])
             % Use Fmatrix to find Ffp starting from Fpp_.
             % Make sure Ffp_ is defined and properly initialized before
             % calling this.
@@ -200,15 +218,17 @@ classdef AOCoronagraph < AOSegment
             % 
             % WARNING: This breaks the usual design model for AOSim2.
             % All the resulting fields are kept in the CORO object.
-            
-            CORO.Fpp = Fpp;
+
+            if(nargin>1)
+                CORO.Fpp.grid(Fpp.grid);
+            CORO.Ffp.lambda = Fpp.lambda;
+            end
             
             CORO.Fpp_ = CORO.Fpp.copy; % For post=aperture and apodizer.
             CORO.Fpp_.name = 'post-APOD Field';
             
             CORO.Ffp = AOField(CORO.FPM); % Pre-FPM.
             CORO.Ffp.name = 'Focal Plane Field';
-            CORO.Ffp.lambda = Fpp.lambda;
 
             CORO.Ffp_ = CORO.Ffp.copy; % For post-FPM.
             
@@ -225,40 +245,31 @@ classdef AOCoronagraph < AOSegment
             
             %% Compute the focal plane fields
             
-            CORO.PPtoFP;
+            CORO.Ffp.grid(CORO.Fmatrix * CORO.Fpp_.grid_(:));
             
+            CORO.FPtoLP;
+        end
+        
+        function CORO = FPtoLP(CORO)
+            % CORO.FPtoLP();
+            % Propagate the pre-FPM field through to the Lyot Plane (pre-Lyot stop).
+            % NOTE: This breaks the old design experiments.  They have been
+            % removed from AOCronagraph.
+
             CORO.Ffp_.grid(CORO.Ffp.grid); % This keeps the Ffp from being modified.
-            CORO.Ffp_ * CORO.FPM * CORO.FPTM;
+            %CORO.Ffp_ * CORO.FPM * CORO.FPTM; % Uses interp2???
+            CORO.Ffp_.grid(CORO.Ffp_.grid .* CORO.FPTM.grid);  % WARNING: ignoring FPM 
             
             %% Compute the field in the Lyot plane.
             
             CORO.Flyot = CORO.Fpp.copy;  % Start with the relayed field.
-        end
+            CORO.Flyot.name = 'Lyot Plane Field';
+            
+            CORO.Flyot.grid(CORO.Fmatrix'*CORO.Ffp_.grid_(:));
         
-        function CORO = FPtoLP(CORO,FPSELECT)
-            % CORO.FPtoLP([FPSELECT])
-            % Carry selected FP pixels to LP.
-            % This currently goes to all points in LP, metrics should use PPMASK.
-            % FPSELECT overrides FPM_ASSIGNED which is the default.
-            
-            if(nargin<2)
-                FPSELECT = CORO.FPM_ASSIGNED;
-            end
-            
-            psiF = CORO.Ffp.grid_(FPSELECT(:));
-            psiF = psiF .* CORO.FPTM.grid_(FPSELECT(:));
-            psiF = psiF .* exp(1i*CORO.Ffp.k * CORO.FPM.grid_(FPSELECT(:)));
-            g = nan(CORO.Ffp_.size);
-            g(FPSELECT(:)) = psiF;
-            CORO.Ffp_.grid(g);
-            
-            psiL = CORO.Fmatrix(FPSELECT(:),:)' * psiF;
-            %CORO.Flyot.grid(reshape(psiL,CORO.Flyot.size));
-            CORO.Flyot.grid(psiL);
         end
 
-        
-        %% Coronagraph operations
+            %% Coronagraph operations
         
         function CORO = response(CORO,ANGLE0)
             % CORO.response(ANGLE0)
@@ -337,6 +348,7 @@ classdef AOCoronagraph < AOSegment
             end
             
             CORO.FPM.zero;
+            CORO.FPTM.constant(1);
         end
         
         %% First Incremental experiment.
@@ -648,11 +660,18 @@ classdef AOCoronagraph < AOSegment
             % ThreshNum > 1 returns that many modes.
             % ThreshNum < 1 returns those modes where s/s(1) > ThreshNum.
             
-            CORO.Fpp.grid(FIELD0.grid);
-            CORO.PPtoFP;
+            CORO.PPtoFP(FIELD0);
             
-            MATRIX = CORO.RVmerge(CORO.Fmatrix',CORO.Ffp.grid_);
-            [~,S,VMODES] = svd(MATRIX(CORO.PPMASK(:)),'econ');
+            fprintf('Folding in the focal plane field...\n');
+            tic;
+            MATRIX = CORO.RVmerge(CORO.Fmatrix',CORO.Ffp.grid_(:));
+            %MATRIX = CORO.Fmatrix' * sdiag(CORO.Ffp.grid_(:));
+            %spdiags(CORO.Ffp.grid_(:),0,n,n)
+            toc
+
+            fprintf('SVD of the FP2LP operator...\n'); tic;
+            [~,S,VMODES] = svd(MATRIX(CORO.PPMASK(:),:),'econ');
+            toc
             s = diag(S);
             clear S
             
@@ -661,7 +680,8 @@ classdef AOCoronagraph < AOSegment
             end
             
             if(ThreshNum > 1) 
-                VMODES = VMODES(:,1:round(ThreshNum));
+                Nmax = min(round(ThreshNum),size(VMODES,2));
+                VMODES = VMODES(:,1:Nmax);
             else
                 VMODES = VMODES(:,s/s(1)>ThreshNum);
             end
@@ -679,22 +699,27 @@ classdef AOCoronagraph < AOSegment
             % ThreshNum < 1 returns those modes where s/s(1) > ThreshNum.
             
             fprintf('Setting up the coronagraph...\n');
-            CORO.Fpp.grid(FIELD0.grid);
-            CORO.PPtoFP;
+            %CORO.Fpp.grid(FIELD0.grid);
+            CORO.PPtoFP(FIELD0);
             
             %SELECT = (normalize(CORO.Ffp.mag2)>0.002);
             SELECT = (normalize(CORO.Ffp.mag2)>0);
             
-            fprintf('Building the FP1-to-LYOT operator...\n');
+            fprintf('Building the FP1-to-LYOT operator...\n'); tic;
             MATRIX = AOGrid.RVmerge(CORO.Fmatrix',CORO.Ffp.grid_);
+            toc
             
             fprintf('Folding in the Lyot stop.\n');
             if(isempty(CORO.LYOT))
                 fprintf('...using the pupil mask as the Lyot stop.\n')
+                tic;
                 MATRIX = AOGrid.LVmerge(MATRIX,CORO.grid_(:));
+                toc
             else
                 fprintf('...using CORO.LYOT as the Lyot stop.\n')
+                tic;
                 MATRIX = AOGrid.LVmerge(MATRIX,CORO.LYOT.grid_(:));
+                toc
             end
             
             fprintf('Including the propagation to the final focal plane...\n');
@@ -704,8 +729,8 @@ classdef AOCoronagraph < AOSegment
 
             fprintf('SVD...\n')
             %[~,S,VMODES] = svd(MATRIX,'econ');
-            %[~,S,VMODES] = svd(MATRIX(SELECT,:),'econ');
-            [~,S,VMODES] = svd(MATRIX,'econ');
+            [~,S,VMODES] = svd(MATRIX(SELECT,:),'econ');
+            %[~,S,VMODES] = svd(MATRIX,'econ');
             s = diag(S);
             clear S
             
@@ -714,7 +739,8 @@ classdef AOCoronagraph < AOSegment
             end
             
             if(ThreshNum > 1) 
-                VMODES = VMODES(:,1:round(ThreshNum));
+                Nmax = min(round(ThreshNum),size(VMODES,2));
+                VMODES = VMODES(:,1:Nmax);
             else
                 VMODES = VMODES(:,s/s(1)>ThreshNum);
             end
