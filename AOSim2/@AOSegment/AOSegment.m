@@ -184,6 +184,15 @@ classdef AOSegment < AOGrid
             
         end
 
+        function A = apodize(A,param)
+            % A = A.apodize(param);
+            % Set the grid to an apodizing function.
+            % Right now it only supports chebyshev, which is very close to
+            % the Slepian solution ("Generalize prolate spheroidal").
+            
+            A.grid(chebwin(A.nx,param)*chebwin(A.ny,param)');
+        end
+        
     end
     
     methods(Static=true)
