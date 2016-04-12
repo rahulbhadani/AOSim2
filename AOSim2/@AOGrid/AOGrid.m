@@ -998,6 +998,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function G = plotC(G,gamma)
+        % G = G.plotC(gamma)
+        % Plot an AOGrid in complex.
             
             g = G.grid;
             if(isreal(g))
@@ -1048,6 +1050,38 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
         end
         
+        function G = plotI(G,LIMS)
+        % G = G.plotI([LIMS])
+        % Plot an AOGrid intensity.
+            
+                [x,y] = G.coords;
+                if(nargin<2)
+                    imagesc(x,y,G.mag2);
+                else
+                    imagesc(x,y,G.mag2,LIMS);
+                end
+
+                axis square;
+                axis xy;
+                colorbar;
+        end
+        
+        function G = plotDex(G,LIMS)
+        % G = G.plotDex([LIMS])
+        % Plot an AOGrid log10 intensity.
+            
+                [x,y] = G.coords;
+                if(nargin<2)
+                    imagesc(x,y,G.dex);
+                else
+                    imagesc(x,y,G.dex,LIMS);
+                end
+
+                axis square;
+                axis xy;
+                colorbar;
+        end
+        
         function delZ = del(G)
             % delZ = G.del()
             %
@@ -1060,11 +1094,50 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             delZ = [Zx/dxy(1),Zy/dxy(2)];
         end
         
+        function RESULT = convolve(G,KERNEL)
+            % RESULT = G.convolve(KERNEL);
+        
+            RESULT = conv2(G.grid_,KERNEL,'same');
+        end
+        
         function NUM = numel(g)
             % NUM = numel(g)
             % Returns the number of elements in the grid.
             
             NUM = numel(g.grid_); 
+        end
+        
+        function G = add_rand(G,scale)
+            % G = G.add_rand(scale)
+            % Add uniform random real values to grid.
+            
+            if(nargin<2)
+                scale = 1;
+            end
+            
+            G + scale*(rand(G.size)-0.5);
+        end
+            
+        function G = add_randn(G,scale)
+            % G = G.add_rand(sigma)
+            % Add Gaussian random real values to grid.
+            
+            if(nargin<2)
+                scale = 1;
+            end
+            
+            G + scale*randn(G.size);
+        end
+        
+        function G = add_crandn(G,sigma)
+            % G = G.add_rand(sigma)
+            % Add Gaussian random complex values to grid.
+            
+            if(nargin<2)
+                scale = 1;
+            end
+            
+            G + (scale/sqrt(2))*(randn(G.size)+1i*randn(G.size));
         end
         
         %% Overloaded operators.
@@ -1265,35 +1338,37 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % Works like circshift on the grid but with zeros instead of
             % circular values.
             
-            
             % Zero out the off-shift regions and then circshift.
             
             if(norm(SHIFT) == 0) % No shift required.
                 return;
             end
             
-            if(SHIFT(1)>0) % Lose the top
-                G.grid_(end-SHIFT(1):end,:) = 0;
-            else % Lose the bottom
-                G.grid_(1:1+SHIFT(1),:) = 0;
+            if(SHIFT(1)~=0)
+                if(SHIFT(1)>0) % Lose the top
+                    G.grid_(end-SHIFT(1)+1:end,:) = 0;
+                else % Lose the bottom
+                    G.grid_(1:1-SHIFT(1)-1,:) = 0;
+                end
             end
             
-            if(SHIFT(2)>0) % Lose the RHS
-                G.grid_(:,end-SHIFT(2):end) = 0;
-            else % Lose the LHS
-                G.grid_(:,1:1+SHIFT(2)) = 0;
+            if(SHIFT(2)~=0)
+                if(SHIFT(2)>0) % Lose the RHS
+                    G.grid_(:,end-SHIFT(2)+1:end) = 0;
+                else % Lose the LHS
+                    G.grid_(:,1:1-SHIFT(2)-1) = 0;
+                end
             end
             
-            G.grid_ = circshift(G.grid_,SHIFT);
-            
+            G.grid_ = circshift(G.grid_,SHIFT); 
         end
         
         function G = normalize(G)
             % G.normalize: Normalize the grid so its max value is 1+0i.
             
-            mx = max(G.grid_(:)); % Note this returns the max complex value 
+            [mx,loc] = max(abs(G.grid_(:))); % Note this returns the max complex value 
             if(mx~=0)
-                G.grid_ = G.grid_/mx;
+                G.grid_ = G.grid_/G.grid_(loc);
             end
         end
         
