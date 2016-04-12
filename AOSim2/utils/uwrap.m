@@ -8,7 +8,7 @@ function uwphase = uwrap(phase,ALGO)
 % PROGRAMS=uwdiff flyn fmg gold jump lpno mcut pcg qual unmg unwt
 
 PROGRAMS = {'gold','unwt','unmg','flyn','fmg','lpno','mcut','pcg','qual'};
-CODEDIR = '/home/jlc/LAB/'; 
+CODEDIR = '/home/jlc/LAB'; 
 
 uwphase = [];
 
@@ -68,15 +68,16 @@ fclose(fid);
 %     CMD = sprintf('/home/jlc/LAB/gold -input "%s" -format float -xsize %d -ysize %d -output "%s" > uwrap.out 2> uwrap.err',RAW,NX,NY,RESULT);
 % end
 
-CMD = sprintf('%s/%s -input "%s" -format float -xsize %d -ysize %d -output "%s"  > uwrap.out 2> uwrap.err',...
+CMD = sprintf('%s/%s -input "%s" -format float -xsize %d -ysize %d -output "%s"  > /tmp/uwrap.out 2> /tmp/uwrap.err',...
     CODEDIR,ALGO,RAW,NX,NY,RESULT);
 
-% fprintf('CMD: %s\n',CMD);
-ret = system(CMD);
+fprintf('CMD: %s\n',CMD);
+[ret,cmdout] = unix(CMD);
 
 if(ret ~= 0)
-    !cat uwrap.err
-    error('The system call failed.');
+    fprintf('COMMAND: %s\nOUTPUT: %s\n',CMD,cmdout);
+    !cat /tmp/uwrap.err
+    %error('The system call failed.');
 end
 
 [fid,errmsg] = fopen(RESULT,'r');
