@@ -189,27 +189,26 @@ classdef AOCoronagraph < AOSegment
             CORO.Ffp.grid(CORO.Fmatrix * CORO.Fpp_.grid_(:));
         end
         
-        function CORO = PPtoFPmask(CORO,usePPMask)
-            % CORO = CORO.PPtoFP([usePPMask])
-            % Use Fmatrix to find Ffp starting from Fpp_.
-            % Make sure Ffp_ is defined and properly initialized before
-            % calling this.
-            % The optional flag usePPMask (defaults true) determines use of
-            % PPMASK.
-            
-            if(nargin<2)
-                usePPMask = true;
-            end
-
-            if(usePPMask)
-                CORO.Ffp.grid(...
-                    reshape(CORO.Fmatrix(:,CORO.PPMASK(:)) * CORO.Fpp_.grid_(CORO.PPMASK(:)),...
-                    CORO.FPM.size));
-            else
-                CORO.Ffp.grid(reshape(CORO.Fmatrix * CORO.Fpp_.grid_(:),CORO.FPM.size));
-            end
-        end
-        
+        %         function CORO = PPtoFPmask(CORO,usePPMask)
+        %             % CORO = CORO.PPtoFP([usePPMask])
+        %             % Use Fmatrix to find Ffp starting from Fpp_.
+        %             % Make sure Ffp_ is defined and properly initialized before
+        %             % calling this.
+        %             % The optional flag usePPMask (defaults true) determines use of
+        %             % PPMASK.
+        %
+        %             if(nargin<2)
+        %                 usePPMask = true;
+        %             end
+        %
+        %             if(usePPMask)
+        %                 CORO.Ffp.grid(...
+        %                     reshape(CORO.Fmatrix(:,CORO.PPMASK(:)) * CORO.Fpp_.grid_(CORO.PPMASK(:)),...
+        %                     CORO.FPM.size));
+        %             else
+        %                 CORO.Ffp.grid(reshape(CORO.Fmatrix * CORO.Fpp_.grid_(:),CORO.FPM.size));
+        %             end
+        %         end
         
         function CORO = PPtoLP(CORO,Fpp)
             % CORO.PPtoLP(Fpp)
@@ -218,19 +217,28 @@ classdef AOCoronagraph < AOSegment
             % 
             % WARNING: This breaks the usual design model for AOSim2.
             % All the resulting fields are kept in the CORO object.
-
-            if(nargin>1)
-                CORO.Fpp.grid(Fpp.grid);
-            CORO.Ffp.lambda = Fpp.lambda;
-            end
             
+            if(nargin>1) % Fpp is provided
+                CORO.Fpp = Fpp.copy;
+            else
+                if(isempty(CORO.Fpp))
+                    CORO.Fpp = AOField(CORO);
+                end
+            end
+            CORO.Ffp.lambda = CORO.lambdaRef;
+
             CORO.Fpp_ = CORO.Fpp.copy; % For post=aperture and apodizer.
             CORO.Fpp_.name = 'post-APOD Field';
             
             CORO.Ffp = AOField(CORO.FPM); % Pre-FPM.
+            CORO.Ffp.lambda = CORO.lambdaRef;
             CORO.Ffp.name = 'Focal Plane Field';
 
-            CORO.Ffp_ = CORO.Ffp.copy; % For post-FPM.
+            %CORO.Ffp_ = CORO.Ffp.copy; % For post-FPM.
+            %CORO.Ffp_.name = 'post-FPM Field';
+
+            % Fields are set up and initialized.
+            % Now do the coronagraph calculations...
             
             CORO.Fpp_ * CORO; % pass through pupil.
 
@@ -239,7 +247,7 @@ classdef AOCoronagraph < AOSegment
             end
 
             if(isempty(CORO.Fmatrix))
-                CORO.initF(CORO.Fpp_.lambda);
+                CORO.initF(CORO.lambdaRef);
                 %CORO.initF(CORO.Fpp_.lambda).mkInvF(1e-8);
             end
             
@@ -255,18 +263,22 @@ classdef AOCoronagraph < AOSegment
             % Propagate the pre-FPM field through to the Lyot Plane (pre-Lyot stop).
             % NOTE: This breaks the old design experiments.  They have been
             % removed from AOCronagraph.
+            % NOTE: This only uses FPTM (i.e. not FPM) ATM.
 
+            if(isempty(CORO.Ffp_))
+                CORO.Ffp_ = CORO.Ffp.grid(CORO.Ffp.grid).copy; % This keeps the Ffp from being modified.
+                CORO.Ffp_.name = 'post FPTM Field';
+            end
             CORO.Ffp_.grid(CORO.Ffp.grid); % This keeps the Ffp from being modified.
             %CORO.Ffp_ * CORO.FPM * CORO.FPTM; % Uses interp2???
             CORO.Ffp_.grid(CORO.Ffp_.grid .* CORO.FPTM.grid);  % WARNING: ignoring FPM 
             
-            %% Compute the field in the Lyot plane.
+            % Compute the field in the Lyot plane.
             
             CORO.Flyot = CORO.Fpp.copy;  % Start with the relayed field.
             CORO.Flyot.name = 'Lyot Plane Field';
-            
+
             CORO.Flyot.grid(CORO.Fmatrix'*CORO.Ffp_.grid_(:));
-        
         end
 
             %% Coronagraph operations
@@ -276,12 +288,12 @@ classdef AOCoronagraph < AOSegment
             % Amplitude 1 response through the corograph.
             
             CORO.Fpp.planewave(1,ANGLE0);
-            CORO.PPtoFP;
+            CORO.PPtoFP.FPtoLP;
 
-            CORO.Ffp_ = CORO.Ffp.copy;
-            CORO.Ffp_ * CORO.FPTM;
-            
-            CORO.Flyot.grid(CORO.Fmatrix' * CORO.Ffp_.grid_(:));
+%             CORO.Ffp_ = CORO.Ffp.copy;
+%             CORO.Ffp_ * CORO.FPTM;
+%             
+%             CORO.Flyot.grid(CORO.Fmatrix' * CORO.Ffp_.grid_(:));
             
             if(isempty(CORO.LYOT))
                 CORO.Flyot * CORO;
@@ -332,8 +344,6 @@ classdef AOCoronagraph < AOSegment
          
         end
         
-        %% MAGIC!
-        
         function CORO = reset(CORO,FPSELECT)
             % CORO.reset([FPSELECT]);
             % Reset the FPM to the starting value.
@@ -350,305 +360,6 @@ classdef AOCoronagraph < AOSegment
             CORO.FPM.zero;
             CORO.FPTM.constant(1);
         end
-        
-        %% First Incremental experiment.
-        function CORO = algo1(CORO,FPSELECT)
-            % CORO.algo1([FPSELECT]);
-            % First test algorithm
-            % If no FPSELECT, just use what is in CORO.FPM_ASSIGNED.
-
-            if(nargin>1)
-                if(size(FPSELECT) == CORO.FPM.size)
-                    CORO.FPM_ASSIGNED = FPSELECT;
-                else
-                    fprintf('ERROR: FPSELECT must be the same size as the FPM');
-                    return;
-                end
-            end
-            
-            BRANCH_CUT = sqrt(5); % Move to a less popular spot.
-
-            % Initializing the Lyot field response vectors
-            LPvectors = CORO.Fmatrix';
-            for n=1:size(LPvectors,2)
-                LPvectors(:,n) = LPvectors(:,n) * CORO.Ffp.grid_(n);
-            end
-
-            % For reference...
-            NORMS = zeros(1,CORO.FPM.numel);
-            for n=1:size(LPvectors,2)
-                NORMS(n) = norm(LPvectors(CORO.PPMASK(:),n));
-            end
-            
-            NORMS = NORMS(:);
-            
-            % Check solvability....
-            V0 = LPvectors(:,CORO.FPM_ASSIGNED(:)) * exp(1i*CORO.Ffp.k*CORO.FPM.grid_(CORO.FPM_ASSIGNED(:)));
-            CORO.Flyot.grid(V0).plotC(2);
-
-            NormV0 = norm(V0);
-            Usable = sum(NORMS(~CORO.FPM_ASSIGNED(:)));
-
-            fprintf('Triangle check: \nStart=%.3g, Remainder Sum=%.3g\n',NormV0,Usable);
-            if(Usable>NormV0)
-                fprintf('We might be able to do this!\n');
-            else
-                fprintf('The triangle inequality says this is impossible.\n');
-            end
-            
-            Nremain = sum(~CORO.FPM_ASSIGNED(:));
-            ALL_NORMS = zeros(Nremain,2);
-            
-            while(sum(~CORO.FPM_ASSIGNED(:))>0)
-                Nremain = sum(~CORO.FPM_ASSIGNED(:));
-                modprint(Nremain,20);
-                
-                UNSELECTED = find(~CORO.FPM_ASSIGNED); % Lists numbers out of ALL pixels in the FPM.
-
-                V0 = LPvectors(:,CORO.FPM_ASSIGNED(:)) * exp(1i*CORO.Ffp.k*CORO.FPM.grid_(CORO.FPM_ASSIGNED(:)));
-                CORO.Flyot.grid(V0);
-                %CORO.Flyot.plotC(4);
-                %title('Partial Lyot Field (gamma 4)');
-
-                Norm2V0 = norm(V0)^2;
-
-                ALL_NORMS(Nremain,:) = [norm(V0),sum(NORMS(~CORO.FPM_ASSIGNED(:)))];
-
-                if(ALL_NORMS(Nremain,1)>ALL_NORMS(Nremain,2))
-                    fprintf('Triangle Inequality says IMPOSSIBLE!\n');
-                    break;
-                end
-                
-                %LPvectors = CORO.LyotContribs(~CORO.FPM_ASSIGNED); 
-                PROJECT = LPvectors(CORO.PPMASK(:),UNSELECTED)'*V0(CORO.PPMASK(:));
-                
-                METRIC = (Norm2V0 + NORMS(UNSELECTED).^2 - 2*abs(PROJECT))./Norm2V0;
-                
-                %[~,best_pixel] = max(abs(PROJECT));
-                %[~,best_pixel] = max(abs(PROJECT).*(abs(angle(PROJECT))>1e-3));
-
-                [BestMetric,best_pixel] = min(METRIC);
-                
-                if(BestMetric>=1)
-                    fprintf('Hmmmm.  All of my choices see to make things worse. Quitting.\n');
-                    break;
-                end
-                
-                NEW_PHASE = angle(-exp(-1i*BRANCH_CUT)*PROJECT(best_pixel))+BRANCH_CUT;
-                fprintf('PHASE: %.3f pi. Best Metric is %f\n',NEW_PHASE/pi,BestMetric);
-                
-                CORO.FPM.bumpPixel1(UNSELECTED(best_pixel),NEW_PHASE/CORO.Ffp.k);
-                CORO.FPM_ASSIGNED(UNSELECTED(best_pixel)) = true;
-
-                %if(mod(sum(~CORO.FPM_ASSIGNED(:)),100)==0)
-                if(true)
-                    subplot(2,2,1);
-                    %imagesc(CORO.FPM_ASSIGNED);sqar;axis xy;
-                    %plot(ALL_NORMS','o');
-                    %plot(Nremain:size(ALL_NORMS,1),ALL_NORMS(Nremain:end,:),'-');
-                    semilogy(Nremain:size(ALL_NORMS,1),ALL_NORMS(Nremain:end,:),'-');
-                    title('Norms');
-                    subplot(2,2,2);
-                    CORO.FPM.show;
-                    title('FPM');
-                    
-                    subplot(2,2,3);
-                    %CORO.Ffp_.grid(CORO.Ffp.grid())*CORO.FPM;
-                    %CORO.Ffp_.plotC(4);
-                    %title('post FPM field');
-                    CORO.Ffp_.constant(nan).grid_(UNSELECTED)=METRIC;
-                    CORO.Ffp_.show;
-                    title('METRIC (and nans)');
-                    
-                    subplot(2,2,4);
-                    CORO.Flyot * CORO;
-                    %CORO.Flyot.plotC(2);
-                    [x,y] = CORO.Flyot.coords;
-                    imagesc(x,y,CORO.Flyot.mag2);sqar;axis xy;
-                    colorbar;
-                    title('Lyot Field');
-                    
-                    drawnow;
-                end
-            end
-        end
-
-        %% Taking apart the whole vector (subtraction approach).
-        function CORO = algo2(CORO,FPSELECT)
-            % CORO.algo1([FPSELECT]);
-            % Always start from the total Lyot vector and try to reduce it
-            % to zero.
-            %
-            % If no FPSELECT, just use what is in CORO.FPM_ASSIGNED.
-            % 
-            % Usage: CORO.reset(Rld>3 | Rld<0.1).algo2;
-
-            if(nargin>1)
-                if(size(FPSELECT) == CORO.FPM.size)
-                    CORO.FPM_ASSIGNED = FPSELECT;
-                else
-                    fprintf('ERROR: FPSELECT must be the same size as the FPM');
-                    return;
-                end
-            end
-            
-            % Initialize the fields for an on-axis source.
-            CORO.PPtoLP(CORO.Fpp.planewave);
-            %CORO.FPtoLP;
-            %CORO.Flyot*CORO;
-            
-            BRANCH_CUT = sqrt(5); % Move to a less popular spot.
-
-            % Initializing the Lyot field response vectors
-            LPvectors = CORO.LyotContribs();
-
-            % For reference...
-            NORMS = normCols(LPvectors(CORO.PPMASK(:),:))';
-            
-            % Check solvability....
-            % Initial Lyot Field
-            V0 = LPvectors * exp(1i*CORO.Ffp.k*CORO.FPM.grid_(:));
-            CORO.Flyot.grid(V0).plotC(2);
-
-            NormV0 = norm(V0);
-            Usable = sum(NORMS(~CORO.FPM_ASSIGNED(:)));
-
-            fprintf('Triangle check: \nStart=%.3g, Remainder Sum=%.3g\n',NormV0,Usable);
-            if(Usable>NormV0)
-                fprintf('We might be able to do this!\n');
-            else
-                fprintf('The triangle inequality says this is impossible.\n');
-            end
-            
-            Nremain = sum(~CORO.FPM_ASSIGNED(:));
-            ALL_NORMS = zeros(Nremain,2);
-            
-            while(sum(~CORO.FPM_ASSIGNED(:))>0)
-                Nremain = sum(~CORO.FPM_ASSIGNED(:));
-                modprint(Nremain,20);
-                
-                UNSELECTED = find(~CORO.FPM_ASSIGNED); % Lists numbers out of ALL pixels in the FPM.
-
-                V0 = LPvectors * exp(1i*CORO.Ffp.k*CORO.FPM.grid_(:));
-                CORO.Flyot.grid(V0);
-                %CORO.Flyot.plotC(4);
-                %title('Partial Lyot Field (gamma 4)');
-
-                Norm2V0 = norm(V0)^2;
-
-                ALL_NORMS(Nremain,:) = [norm(V0),sum(NORMS(~CORO.FPM_ASSIGNED(:)))];
-
-                if(ALL_NORMS(Nremain,1)>ALL_NORMS(Nremain,2))
-                    fprintf('Triangle Inequality says IMPOSSIBLE!\n');
-                    fprintf('RELEASING ALL PIXELS.\n');
-                    
-                    CORO.FPM_ASSIGNED(:) = false;
-                    
-                    %break;
-                end
-                
-                %PROJECT = LPvectors(CORO.PPMASK(:),UNSELECTED)'*V0(CORO.PPMASK(:));
-                PROJECT = LPvectors(CORO.PPMASK(:),:)'*V0(CORO.PPMASK(:));
-                %METRIC = (Norm2V0 + NORMS(UNSELECTED).^2 - 2*abs(PROJECT))./Norm2V0;
-                METRIC = (Norm2V0 + NORMS.^2 - 2*abs(PROJECT))./Norm2V0;
-                [BestMetric,best_pixel] = min(METRIC(UNSELECTED));
-                
-                if(BestMetric>=1)
-                    fprintf('Hmmmm.  All of my choices see to make things worse. Quitting.\n');
-                    break;
-                end
-                
-                %NEW_PHASE = angle(-exp(-1i*BRANCH_CUT)*PROJECT(best_pixel))+BRANCH_CUT;
-                NEW_PHASE = angle(-exp(-1i*BRANCH_CUT)*PROJECT)+BRANCH_CUT;
-                fprintf('PHASE: %.3f pi. Best Metric is %f\n',NEW_PHASE/pi,BestMetric);
-                
-                %CORO.FPM.bumpPixel1(UNSELECTED(best_pixel),NEW_PHASE/CORO.Ffp.k);
-                CORO.FPM.bumpPixel1(UNSELECTED,NEW_PHASE(UNSELECTED)/CORO.Ffp.k);
-                
-                CORO.FPM.grid(mod(CORO.FPM.grid()-CORO.Ffp.lambda/2,CORO.Ffp.lambda))+CORO.Ffp.lambda/2;
-                
-                %CORO.FPM_ASSIGNED(UNSELECTED(best_pixel)) = true;
-                % Allow repeated updates.
-                
-                %if(mod(sum(~CORO.FPM_ASSIGNED(:)),100)==0)
-                if(true)
-                    subplot(2,2,1);
-                    %imagesc(CORO.FPM_ASSIGNED);sqar;axis xy;
-                    %plot(ALL_NORMS','o');
-                    %plot(Nremain:size(ALL_NORMS,1),ALL_NORMS(Nremain:end,:),'-');
-                    semilogy(Nremain:size(ALL_NORMS,1),ALL_NORMS(Nremain:end,:),'-');
-                    title('Norms');
-                    subplot(2,2,2);
-                    CORO.FPM.show;
-                    title('FPM');
-                    
-                    subplot(2,2,3);
-                    %CORO.Ffp_.grid(CORO.Ffp.grid())*CORO.FPM;
-                    %CORO.Ffp_.plotC(4);
-                    %title('post FPM field');
-                    %CORO.Ffp_.constant(nan).grid_(UNSELECTED) = METRIC;
-                    CORO.Ffp_.constant(nan).grid_(:) = METRIC(:);
-                    CORO.Ffp_.show;
-                    title('METRIC (and nans)');
-                    
-                    subplot(2,2,4);
-                    CORO.Flyot * CORO;
-                    %CORO.Flyot.plotC(2);
-                    [x,y] = CORO.Flyot.coords;
-                    imagesc(x,y,CORO.Flyot.mag2);sqar;axis xy;
-                    colorbar;
-                    title('Lyot Field');
-                    
-                    drawnow;
-                end
-            end
-        end
-
-        %% UNUSED
-        function COEFS = antiLyotCoefs(CORO,F)
-            % COEFS = antiLyotCoefs(CORO,F)
-            % NOTE!!! This is currently unused.
-            % COEFS = antiLyotCoefs([F])
-            % Compute antiLyot coefs for Ffp_ unless F is given.
-            
-            if(nargin<2)
-                COEFS = CORO.antiLyot_U' * CORO.Ffp_.grid_(:);
-            else
-                COEFS = CORO.antiLyot_U' * F.grid_(:);
-            end
-        end
-        
-        function rmFfp = rm_antiLyotModes(CORO,REMOVE,F)
-            % rmFfp = CORO.rm_antiLyotModes(REMOVE,[F]);
-            % Remove the selected modes from Ffp_ unless F is given.
-            % Does not change any internal states.
-            % REMOVE may be a boolean mask or a list of mode numbers.
-
-            if(nargin<3)
-                rmFfp = CORO.Ffp_.copy;
-                rmFfp.name = 'post-FPM field without selected anti-Lyot modes';
-                
-                
-                % Project Ffp_ onto anti-Lyot modes and remove selected set.
-                rmFfp.grid(reshape(CORO.Ffp_.grid_(:) ...
-                    - CORO.antiLyot_U(:,REMOVE) * ...
-                    (CORO.antiLyot_U(:,REMOVE)' * CORO.Ffp_.grid_(:)),...
-                    rmFfp.size));
-                
-            else
-                rmFfp = F.copy;
-                rmFfp.name = [F.name ' without selected anti-Lyot modes'];
-                
-                
-                % Project Ffp_ onto anti-Lyot modes and remove selected set.
-                rmFfp.grid(reshape(F.grid_(:) ...
-                    - CORO.antiLyot_U(:,REMOVE) * ...
-                    (CORO.antiLyot_U(:,REMOVE)' * F.grid_(:)),...
-                    rmFfp.size));
-            end
-        end
-        
-        %%
         
         function [VMODES,s] = LyotModes(CORO,FIELD0,ThreshNum)
             % [MODES,s] = CORO.LyotModes(FIELD0,[ThreshNum]);
@@ -670,7 +381,8 @@ classdef AOCoronagraph < AOSegment
             toc
 
             fprintf('SVD of the FP2LP operator...\n'); tic;
-            [~,S,VMODES] = svd(MATRIX(CORO.PPMASK(:),:),'econ');
+            %[~,S,VMODES] = svd(MATRIX(CORO.PPMASK(:),:),'econ');
+            [~,S,VMODES] = svd(MATRIX(CORO.PPMASK(:),:));
             toc
             s = diag(S);
             clear S
@@ -687,8 +399,8 @@ classdef AOCoronagraph < AOSegment
             end
         end
         
-        function [VMODES,s] = FFPModes(CORO,FIELD0,ThreshNum)
-            % [MODES,s] = CORO.FFPModes(FIELD0,[ThreshNum]);
+        function [VMODES,s,SELECT,MATRIX] = FFPModes(CORO,FIELD0,ThreshNum)
+            % [MODES,s,FFPMASK,CFPM2FFP_MATRIX] = CORO.FFPModes(FIELD0,[ThreshNum]);
             % Compute the FPM modes that maximize deliver power to the
             % final focal plane (FFP).
             %
@@ -697,13 +409,17 @@ classdef AOCoronagraph < AOSegment
             % no entry returns all of the modes.
             % ThreshNum > 1 returns that many modes.
             % ThreshNum < 1 returns those modes where s/s(1) > ThreshNum.
+            %
+            % A non-Guru shouldn't need the FFPMASK and CFPM2FFP_MATRIX.
+            % Save time and memory by calling as 
+            % [MODES,s] = CORO.FFPModes(FIELD0);
             
             fprintf('Setting up the coronagraph...\n');
             %CORO.Fpp.grid(FIELD0.grid);
             CORO.PPtoFP(FIELD0);
             
-            %SELECT = (normalize(CORO.Ffp.mag2)>0.002);
-            SELECT = (normalize(CORO.Ffp.mag2)>0);
+            SELECT = (normalize(CORO.Ffp.mag2)>0.02);
+            SELECT = SELECT(:);
             
             fprintf('Building the FP1-to-LYOT operator...\n'); tic;
             MATRIX = AOGrid.RVmerge(CORO.Fmatrix',CORO.Ffp.grid_);
@@ -711,7 +427,7 @@ classdef AOCoronagraph < AOSegment
             
             fprintf('Folding in the Lyot stop.\n');
             if(isempty(CORO.LYOT))
-                fprintf('...using the pupil mask as the Lyot stop.\n')
+                fprintf('...using the PUPIL mask as the Lyot stop.\n')
                 tic;
                 MATRIX = AOGrid.LVmerge(MATRIX,CORO.grid_(:));
                 toc
@@ -723,14 +439,18 @@ classdef AOCoronagraph < AOSegment
             end
             
             fprintf('Including the propagation to the final focal plane...\n');
-            MATRIX = CORO.Fmatrix(SELECT,:) * MATRIX ;
+            tic;
+            MATRIX = CORO.Fmatrix(SELECT,:) * MATRIX;
+            toc
 
             fprintf('Done building the operator.\n')
 
-            fprintf('SVD...\n')
+            fprintf('SVD...\n');
+            tic;
             %[~,S,VMODES] = svd(MATRIX,'econ');
-            [~,S,VMODES] = svd(MATRIX(SELECT,:),'econ');
+            [~,S,VMODES] = svd(MATRIX,'econ');
             %[~,S,VMODES] = svd(MATRIX,'econ');
+            toc
             s = diag(S);
             clear S
             
