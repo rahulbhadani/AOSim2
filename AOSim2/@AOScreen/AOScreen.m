@@ -180,9 +180,19 @@ classdef AOScreen < AOGrid
 			end
 
 			PHASE = (2*pi/lambda) * PS.grid;
-		end
-		
-		function Rf = fresnel(a)
+        end
+        
+        function RESULT = convPhasors(PS,KERNEL,lambda)
+            % RESULT = PS.convPhasors(KERNEL,lambda);
+            
+            if(nargin<3)
+                lambda = PS.lambdaRef;
+            end
+            
+            RESULT = conv2(PS.phasor(lambda),KERNEL,'same');
+        end
+        
+        function Rf = fresnel(a)
 		% Rf = fresnel(a)
         % Compute the Fresnel scale assuming lambdaRef and the screen
         % altitude.
