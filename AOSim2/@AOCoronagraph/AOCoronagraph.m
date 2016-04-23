@@ -10,6 +10,7 @@ classdef AOCoronagraph < AOSegment
         APODIZER    = [];
         FPM         = []; % Focal plane Phase mask
         FPTM        = []; % Focal plane Transmission mask
+        APCMLC      = []; % Defines FP region that defines apodization.
         
         LYOT        = []; % If null, then use the AOCoronagraph grid.
         Fnumber     = 1;
@@ -115,10 +116,14 @@ classdef AOCoronagraph < AOSegment
             CORO.FPTM = AOSegment(CORO.FPM);
             
             CORO.FPTM.constant(1.0);  % All pixels transmit.
-            CORO.FPTM.name = 'FPM Transmission';
+            CORO.FPTM.name = 'CFPM';
             
             CORO.FPM_ASSIGNED = false(CORO.FPM.size); % Nothing is assigned.
             
+            CORO.APCMLC = AOSegment(CORO.FPTM);
+            CORO.APCMLC.name = 'APCMLC FP Region';
+            AXIS = CORO.APCMLC.AXIS_PIXEL;
+            CORO.APCMLC.zero.setPixel(AXIS(1),AXIS(2),1); % No apodization.
         end
         
         %%
@@ -128,7 +133,6 @@ classdef AOCoronagraph < AOSegment
         % NOTE: I use the FULL extent of Fp_ and Ffp for Fmatrix.
         % You may want to downselect rows and columns later with boolean
         % filters.
-        % TODO: Fix the normalization so this is correct in Fourier Optics.
         
             fprintf('Initializing the Fourier operator...\n');
             tic;
@@ -140,10 +144,25 @@ classdef AOCoronagraph < AOSegment
             [Xf,Yf] = CORO.FPM.COORDS;
             
             % Note that this isn't the proper measure factor.
-            CORO.Fmatrix = (prod(CORO.spacing)/CORO.numel) * exp((1i*pi/lambda/CORO.FL)*...
-                ( Xf(:)*Xp(:)' + Yf(:)*Yp(:)') );
+            %CORO.Fmatrix = (prod(CORO.spacing)/CORO.numel) * exp((1i*2*pi/lambda/CORO.FL)*...
+            %    ( Xf(:)*Xp(:)' + Yf(:)*Yp(:)') );
+            CORO.Fmatrix = exp((1i*2*pi/lambda/CORO.FL)*( Xf(:)*Xp(:)'+Yf(:)*Yp(:)'));
+            %toc
             
+            if(isempty(CORO.Fpp))
+                FIELD = CORO.Fpp.copy;
+            else
+                FIELD = AOField(CORO);
+                FIELD.lambda = CORO.lambdaRef;
+            end
+            
+            %fprintf('Normalizing...\n');
+            
+            FIELD.zero.setPixel(FIELD.AXIS_PIXEL(1),FIELD.AXIS_PIXEL(2),1);
+            NORM2 = norm(CORO.Fmatrix' * (CORO.Fmatrix * CORO.Fpp.vec));
+            CORO.Fmatrix = CORO.Fmatrix/sqrt(NORM2);
             toc
+            
         end
         
         function CORO = mkInvF(CORO,thresh)
@@ -175,6 +194,8 @@ classdef AOCoronagraph < AOSegment
             % same-sized grids to avoid interpolate errors.
             
             if(nargin==2)
+                CORO.Fpp = F.copy;
+                CORO.Fpp.name = 'Pupil Plane Field';
                 CORO.Fpp.grid(F.grid);
             end
             
@@ -185,7 +206,16 @@ classdef AOCoronagraph < AOSegment
             else
                 CORO.Fpp_.grid(CORO.Fpp.grid .* CORO.grid .* CORO.APODIZER.grid);
             end
+
+            if(isempty(CORO.Ffp))
+                CORO.Ffp = AOField(CORO.FPTM);
+                CORO.Ffp.lambda =CORO.lambdaRef;
+                CORO.Ffp.name = 'Pre-FPM focal plane field';
+            end
             
+            if(isempty(CORO.Fmatrix))
+                CORO.initF;
+            end
             CORO.Ffp.grid(CORO.Fmatrix * CORO.Fpp_.grid_(:));
         end
         
@@ -281,7 +311,102 @@ classdef AOCoronagraph < AOSegment
             CORO.Flyot.grid(CORO.Fmatrix'*CORO.Ffp_.grid_(:));
         end
 
-            %% Coronagraph operations
+        
+        function CORO = findAPCMLC(CORO,count)
+            % CORO.findAPCMLC(count);
+            % Find the CORO.APODIZER that goes with the CORO.APCMLC spot.
+            % Initialize the CORO.APODIZER before starting or it will
+            % continue iterating for count times.
+            
+            %CORO.APODIZER.constant(1);
+            if(isempty(CORO.Fpp))
+                CORO.Fpp = AOField(CORO);
+                CORO.Fpp.lambda = CORO.lambdaRef;
+            end
+
+            for n=1:count
+                CORO.PPtoFP(CORO.Fpp.planewave);
+                CORO.Ffp_ = CORO.Ffp.copy;
+                CORO.Ffp_ * CORO.APCMLC;
+                
+                if(isempty(CORO.Flyot))
+                    CORO.Flyot = CORO.Fpp.copy;
+                    CORO.Flyot.name = 'Lyot Field';
+                end
+                
+                CORO.Flyot.grid(CORO.Fmatrix'*CORO.Ffp_.grid_(:)).plotC(2);
+                
+                CORO.APODIZER.grid(abs(CORO.Flyot.grid));
+                CORO.APODIZER.normalize;
+                
+                if(CORO.APCMLC.verbosity)                    
+                    CORO.showCoro(4);
+                    drawnow;
+                end
+            end
+        end
+        
+        function CORO = showCoro(CORO,gamma)
+            % CORO = showCoro(CORO,gamma)
+            
+            if(nargin<2)
+                gamma = 4;
+            end
+            
+            N1 = 3; N2 = 2;
+            frame = 0;
+            
+            clf
+            frame=frame+1;
+            subplot(N1,N2,frame);
+            CORO.APODIZER.show;
+            title('Apodizer');
+            axis off;
+            
+            frame=frame+1;
+            subplot(N1,N2,frame);
+            CORO.Fpp_.plotC(1);
+            title('F_{pp}');
+            axis off;
+            
+            frame=frame+1;
+            subplot(N1,N2,frame);
+            CORO.Ffp.plotC(gamma);
+            title('F_{fp} (before masks)');
+            axis off;
+            
+            frame=frame+1;
+            subplot(N1,N2,frame);
+            CORO.FPTM.plotC(gamma);
+            colorbar off;
+            title('CFPM');
+            axis off;
+            
+            frame=frame+1;
+            subplot(N1,N2,frame);
+            if(~isempty(CORO.Ffp_))
+                CORO.Ffp_.plotC(gamma);
+            end
+            title('F_{fp} (after masks)');
+            axis off;
+            
+            frame=frame+1;
+            subplot(N1,N2,frame);
+            if(~isempty(CORO.Flyot))
+                CORO.Flyot.plotC(2);
+                title('F_{Lyot}');
+            else
+                title('F_{Lyot} (undefined)');
+            end
+            axis off;
+            drawnow;
+            
+        end
+        
+        
+        
+        
+        %% Coronagraph operations
         
         function CORO = response(CORO,ANGLE0)
             % CORO.response(ANGLE0)
