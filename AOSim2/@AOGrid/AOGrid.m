@@ -958,6 +958,30 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             G.grid_(n(:)) = G.grid_(n(:)) + value(:);
         end
         
+        function G = stampCircle(G,CENTER,radius,value,INVERT)
+            % G.stampCircle(CENTER,radius,[value=1],[INVERT=false])
+            % Imprints a cirrcle on the grid.
+            % CENTER is in real units (i.e. not pixels).
+            % Note that the edge is smoothed by G.smooth.
+           
+            if(nargin<5)
+                INVERT = false;
+            end
+            if(nargin<4)
+                value = 1;
+            end
+            
+            [X1,X2] = G.COORDS;
+            R = sqrt((X1-CENTER(1)).^2+(X2-CENTER(2)).^2);
+            if(INVERT)
+                STAMP = value * smoothedge(R-radius,G.smooth);
+            else
+                STAMP = value * smoothedge(radius-R,G.smooth);
+            end
+            
+            G.grid_ = G.grid_ .* STAMP;
+        end
+        
         function g = interpGrid(G,varargin)
             % g = interpGrid(G,varargin)
             % Returns a grid of G values interpolated to the spec'd coords.
@@ -1372,7 +1396,26 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
         end
         
-                
+        function g_ = vec(G,MASK)
+            % g_ = vec(G,[MASK])
+            % G.vec returns the contents of the AOGrid grid as a column vector. 
+            % G.vec(MASK) does the same but only selected values.
+           
+            if(nargin<2)
+                g_ = G.grid_(:);
+            else
+                g_ = G.grid_(MASK(:));
+            end
+        end
+
+        function N = norm(G)
+            % N = norm(G)
+            % Compute the L2 norm of the AOGrid data.
+           
+            N = norm(G.grid_);
+        end
+        
+        
     end % of methods
     
     %% static methods
