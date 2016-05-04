@@ -149,11 +149,12 @@ classdef AOCoronagraph < AOSegment
             CORO.Fmatrix = exp((1i*2*pi/lambda/CORO.FL)*( Xf(:)*Xp(:)'+Yf(:)*Yp(:)'));
             %toc
             
-            if(isempty(CORO.Fpp))
+            if(~isempty(CORO.Fpp))
                 FIELD = CORO.Fpp.copy;
             else
                 FIELD = AOField(CORO);
                 FIELD.lambda = CORO.lambdaRef;
+                CORO.Fpp = FIELD;
             end
             
             %fprintf('Normalizing...\n');
