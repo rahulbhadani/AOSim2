@@ -2,6 +2,16 @@ function uwphase = uwrap(phase,ALGO)
 
 % function uwphase = uwrap(phase,[algorithm])
 % Unwrap phase using fancy external programs.
+% Available algorithms are 
+% 1 gold,
+% 2 unwt,
+% 3 unmg,
+% 4 flyn,
+% 5 fmg,
+% 6 lpno,
+% 7 mcut,
+% 8 pcg,
+% 9 qual.
 %
 % 20110628 JLC generalized this to use all of the unwrapping algorithms.
 
@@ -71,14 +81,14 @@ fclose(fid);
 CMD = sprintf('%s/%s -input "%s" -format float -xsize %d -ysize %d -output "%s"  > /tmp/uwrap.out 2> /tmp/uwrap.err',...
     CODEDIR,ALGO,RAW,NX,NY,RESULT);
 
-fprintf('CMD: %s\n',CMD);
+% fprintf('CMD: %s\n',CMD);
 [ret,cmdout] = unix(CMD);
 
-if(ret ~= 0)
-    fprintf('COMMAND: %s\nOUTPUT: %s\n',CMD,cmdout);
-    !cat /tmp/uwrap.err
-    %error('The system call failed.');
-end
+% if(ret ~= 0)
+%     fprintf('COMMAND: %s\nOUTPUT: %s\n',CMD,cmdout);
+%     !cat /tmp/uwrap.err
+%     %error('The system call failed.');
+% end
 
 [fid,errmsg] = fopen(RESULT,'r');
 if(fid<0)
