@@ -363,11 +363,12 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             %   >>> note that this does not coerce the shape.
             %
             % F.grid(newarray).show;
+            % TODO: Fix the masked version of the call.
             
             if(nargin==1) % Just read out the value.
                 g = obj.grid_;
             else % Set the value to the input...
-                if(nargin<3) % the CLASSIC behavior...
+                if(nargin==2) % the CLASSIC behavior...
                     nugrid = squeeze(nugrid);
                     nugrid = nugrid(:,:,1);
                     nugrid = squeeze(nugrid);
@@ -386,6 +387,15 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 end
                 g = obj; % Note that I return the object if setting the grid.
             end
+        end
+        
+        function G = setMaskedGrid(G,NEWVALS,MASK)
+            % G = setMaskedGrid(G,NEWVALS,MASK)
+            % This should be part of how the G.grid(NEWVALS,MASK) function
+            % works, but it is broken at the moment.
+            
+            G.grid_(MASK(:)) = NEWVALS(:);
+            
         end
         
         %% 
@@ -1505,7 +1515,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             %
             % Merge the vector V into M in the combination M * (V .* X) = MV * X;
             
-            M = AOGrid.multRows(M,V);
+            M = bsxfun(@times,M,V.');
         end
         
         function M = LVmerge(M,V)
@@ -1513,7 +1523,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             %
             % Merge the vector V into M in the combination V .* (M * X) = VM * X;
             
-            M = AOGrid.multCols(M,V);
+            M = bsxfun(@times,M,V);
         end
     end % static methods
 end % of classdef

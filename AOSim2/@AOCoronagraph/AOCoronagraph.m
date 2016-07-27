@@ -69,10 +69,8 @@ classdef AOCoronagraph < AOSegment
             CORO.initAPODIZER();
             CORO.setupPPMASK(1e-5);
         end
-        
-        
+          
         %% 
-        
         function CORO = setupPPMASK(CORO,thresh)
             % CORO = setupPPMASK(CORO,thresh)
             % Use grid>thresh defines PUPIL boolean mask.
