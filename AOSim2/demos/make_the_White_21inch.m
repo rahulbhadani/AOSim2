@@ -8,23 +8,23 @@
 % clear classes
 
 D = 21.0 * 0.0254;
-dx = 0.01;
+dx = 0.005;
 PUPIL = [
-            0            0          D            1         dx            0            0            0            0            0
-            0            0         0.2*D       0         dx/2            0            0            0            0            0
-%             0            0        0.012           -2     dx            4            0            0            0            0
-];
+      0 0 D        1  dx    0   0    0   0    0
+      0 0 0.2*D    0  dx/4  0   0    0   0    0
+      %0 0 0.01    -2  dx    4   0    0   0    0
+    ];
 
 Seg = AOSegment;
 Seg.name = 'SO White Primary';
 Seg.pupils = PUPIL;
-Seg.spacing(0.01);
+Seg.spacing(dx);
 Seg.make;
 
 clf;
 % Seg.touch.make.show;
 A = AOAperture;
-A.spacing(0.01);
+A.spacing(dx);
 A.name = 'Steward White Telescope (21 inch)';
 A.addSegment(Seg);
 A.show;
