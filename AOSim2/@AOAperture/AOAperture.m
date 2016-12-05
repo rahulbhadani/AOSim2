@@ -10,7 +10,7 @@ classdef AOAperture < AOSegment
     
     methods
         function BB = BBox(S,n)
-			% Return the BBox of segment n or the BBox hull if no n.
+            % Return the BBox of segment n or the BBox hull if no n.
             BB = zeros(2);
             if(nargin<2)
                 for n=1:length(S.segList)
@@ -49,87 +49,87 @@ classdef AOAperture < AOSegment
             A.segList{end+1} = s;
             fprintf('Aperture now has %d segments.\n',length(A.segList));
             A.combined = [];
-		end
-		
-		function A = removeSegment(A,n)
+        end
+        
+        function A = removeSegment(A,n)
             A.segList(n) = [];
             fprintf('Aperture now has %d segments.\n',length(A.segList));
             A.combined = [];
-		end
-		
-		function A = setTipTilts(A,TT) % TT is Nx2 list of radian tilts.
-			if(size(TT,1) ~= length(A.segList))
-				error('setTipTilts:Mismatched number of TipTilts and segments.');
-			end
-			if(size(TT,2) ~= 2)
+        end
+        
+        function A = setTipTilts(A,TT) % TT is Nx2 list of radian tilts.
+            if(size(TT,1) ~= length(A.segList))
+                error('setTipTilts:Mismatched number of TipTilts and segments.');
+            end
+            if(size(TT,2) ~= 2)
                 whos TT
-				error('setTipTilts:TipTilts have to be a list of 2D vectors.');
-			end
-			
-			for n=1:length(A.segList)
-				A.segList{n}.tiptilt = TT(n,:);
-			end
-			
-			touch(A);
-		end
-		
-		function A = bumpTipTilts(A,TT) % TT is Nx2 list of radian tilts.
-			if(size(TT,1) ~= length(A.segList))
-				error('setTipTilts:Mismatched number of TipTilts and segments.');
-			end
-			
-			for n=1:length(A.segList)
-				A.segList{n}.tiptilt = A.segList{n}.tiptilt + TT(n,:);
-			end
-			
-			touch(A);
-		end
-		
-		function A = setPistons(A,PISTON) % PISTONS is a list of PISTON in m.
-			if(size(PISTON,1) ~= length(A.segList))
-				error('setPistons:Mismatched number of PISTONS (%d) and segments (%d).',...
+                error('setTipTilts:TipTilts have to be a list of 2D vectors.');
+            end
+            
+            for n=1:length(A.segList)
+                A.segList{n}.tiptilt = TT(n,:);
+            end
+            
+            touch(A);
+        end
+        
+        function A = bumpTipTilts(A,TT) % TT is Nx2 list of radian tilts.
+            if(size(TT,1) ~= length(A.segList))
+                error('setTipTilts:Mismatched number of TipTilts and segments.');
+            end
+            
+            for n=1:length(A.segList)
+                A.segList{n}.tiptilt = A.segList{n}.tiptilt + TT(n,:);
+            end
+            
+            touch(A);
+        end
+        
+        function A = setPistons(A,PISTON) % PISTONS is a list of PISTON in m.
+            if(size(PISTON,1) ~= length(A.segList))
+                error('setPistons:Mismatched number of PISTONS (%d) and segments (%d).',...
                     size(PISTON,1),length(A.segList));
-			end
-			
-			for n=1:length(A.segList)
-				A.segList{n}.piston = PISTON(n);
-			end
-			
-			touch(A);
-		end
-		
-		function A = bumpPistons(A,PISTON) % PISTONS is a list of PISTON in m.
-			if(size(PISTON,1) ~= length(A.segList))
-				error('setPistons:Mismatched number of PISTONS (%d) and segments (%d).',...
+            end
+            
+            for n=1:length(A.segList)
+                A.segList{n}.piston = PISTON(n);
+            end
+            
+            touch(A);
+        end
+        
+        function A = bumpPistons(A,PISTON) % PISTONS is a list of PISTON in m.
+            if(size(PISTON,1) ~= length(A.segList))
+                error('setPistons:Mismatched number of PISTONS (%d) and segments (%d).',...
                     size(PISTON,1),length(A.segList));
-			end
-			
-			for n=1:length(A.segList)
-				A.segList{n}.piston = A.segList{n}.piston + PISTON(n);
-			end
-			
-			touch(A);
-		end
-		
-		function A = setTipTilt(A,n,TT) % set ONE segment TipTilt.
-			if(n > length(A.segList) || n<1)
-				error('setTipTilt:segment number (%d) out of range.',n);
-			end
-			
-			A.segList{n}.tiptilt = TT;
-			touch(A);
-		end
-		
-		function A = setPiston(A,n,PISTON) % Set ONE segment PISTON.
-			if(n > length(A.segList))
-				error('setPistons:segment number (%d) out of range.',n);
-			end
-			
-			A.segList{n}.piston = PISTON;
-			touch(A);
-		end
-		
-		function S = plotBBoxes(S)
+            end
+            
+            for n=1:length(A.segList)
+                A.segList{n}.piston = A.segList{n}.piston + PISTON(n);
+            end
+            
+            touch(A);
+        end
+        
+        function A = setTipTilt(A,n,TT) % set ONE segment TipTilt.
+            if(n > length(A.segList) || n<1)
+                error('setTipTilt:segment number (%d) out of range.',n);
+            end
+            
+            A.segList{n}.tiptilt = TT;
+            touch(A);
+        end
+        
+        function A = setPiston(A,n,PISTON) % Set ONE segment PISTON.
+            if(n > length(A.segList))
+                error('setPistons:segment number (%d) out of range.',n);
+            end
+            
+            A.segList{n}.piston = PISTON;
+            touch(A);
+        end
+        
+        function S = plotBBoxes(S)
             hold on;
             for n=1:length(S.segList)
                 S.plotBox(S.BBox(n));
@@ -147,9 +147,9 @@ classdef AOAperture < AOSegment
             else
                 error('segCoords: There is no segment %d.',n);
             end
-		end
-		
-		function g = segGrid(A,n)
+        end
+        
+        function g = segGrid(A,n)
             if(n<=length(A.segList))
                 A.segList{n}.Segment.piston = A.segList{n}.piston;
                 A.segList{n}.Segment.tiptilt = A.segList{n}.tiptilt;
@@ -166,41 +166,41 @@ classdef AOAperture < AOSegment
         function BIGSEG = render(A)
             if(~isempty(A.combined))
                 BIGSEG = A.combined;
-				%fprintf('DEBUG: A.render: using cached value.\n');
+                %fprintf('DEBUG: A.render: using cached value.\n');
                 return;
-			end
-			
+            end
+            
             %fprintf('DEBUG: A.render: Rebuilding complex aperture mask.\n');
             % Build the cached version for the current wavelength.
-			
-			A.cleanup();
+            
+            A.cleanup();
             A.combined = AOSegment;
             A.combined.name = [A.name ' combined grid'];
             A.combined.spacing(A.spacing);
             A.combined.setBBox(A.BBox,2*A.dx); % WARNING: padding is hardwired here.
             A.combined.zero;
             
-			% Note: This has to be done every time since the Segments can be
-			% shared.  Think of it as a special purpose shared calculator 
-			% that needs to be tailored for each case and may have been
-			% used by someone else since the last time.
+            % Note: This has to be done every time since the Segments can be
+            % shared.  Think of it as a special purpose shared calculator
+            % that needs to be tailored for each case and may have been
+            % used by someone else since the last time.
             for n=1:length(A.segList)
                 A.segList{n}.Segment.piston = A.segList{n}.piston;
                 A.segList{n}.Segment.tiptilt = A.segList{n}.tiptilt;
                 A.segList{n}.Segment.lambdaRef = A.lambdaRef;
-				
-				offset_save = A.segList{n}.Segment.Offset; % save in case important.
+                
+                offset_save = A.segList{n}.Segment.Offset; % save in case important.
                 A.segList{n}.Segment.Offset   = A.segList{n}.Offset;
                 %fprintf('AOAperture.render: segment %d Offset = [%f %f]\n',n,A.segList{n}.Segment.Offset);
                 
-				A.combined + A.segList{n}.Segment; % This actually does the rendering.
+                A.combined + A.segList{n}.Segment; % This actually does the rendering.
                 % plotCAmpl(A.combined.grid_); sqar; % DEBUG!!!
-				A.segList{n}.Segment.Offset = offset_save; % This just returns the zero from cleanup.
+                A.segList{n}.Segment.Offset = offset_save; % This just returns the zero from cleanup.
             end
-
+            
             BIGSEG = A.combined;
-			A.AXIS_PIXEL = A.combined.AXIS_PIXEL;
-		end
+            A.AXIS_PIXEL = A.combined.AXIS_PIXEL;
+        end
         
         function g = grid(A,nugrid) % TODO: make this fancier.
             if(nargin>2)
@@ -218,38 +218,38 @@ classdef AOAperture < AOSegment
         function sz = size(A)
             A.render;
             sz = A.combined.size;
-		end
-
-		function nx_ = nx(A)
-			sz = size(A);
-			nx_ = sz(2);
-		end
-		
-		function ny_ = ny(A)
-			sz = size(A);
-			ny_ = sz(2);
-		end
-		
-		function A = trueUp(A) % Align all segments.
+        end
+        
+        function nx_ = nx(A)
+            sz = size(A);
+            nx_ = sz(2);
+        end
+        
+        function ny_ = ny(A)
+            sz = size(A);
+            ny_ = sz(2);
+        end
+        
+        function A = trueUp(A) % Align all segments.
             for n=1:length(A.segList)
                 A.segList{n}.piston = 0;
                 A.segList{n}.tiptilt = [0 0];
-			end
-			touch(A);
+            end
+            touch(A);
         end
         
         function NXY = axisPixel(G,NXY)
             if(isempty(G.combined))
-               
+                
                 if(nargin>1)
                     G.combined.middlePixel(NXY);
                 end
             end
-
+            
             NXY = G.combined.axisPixel;
-		end
-		
-		function [x,y] = coords(A,local)
+        end
+        
+        function [x,y] = coords(A,local)
             % Sorry, but this local business is confusing.  I don't think I
             % ever used it.  I should probably strip it out and deprecate
             % it. JLC 20090428.
@@ -263,21 +263,21 @@ classdef AOAperture < AOSegment
             else
                 [x,y] = coords(A.combined);
             end
-			x = x + A.Offset(2);
-			y = y + A.Offset(1);
-		end
-		
-		function A = cleanup(A) 
-			
-			% Make sure all the individual defining segments are centered
-			% relative to their own coordinate systems.  render() moves
-			% them around.
-			for n=1:length(A.segList)
-				A.segList{n}.Segment.Offset = [0 0]; 
-			end
-			touch(A);
+            x = x + A.Offset(2);
+            y = y + A.Offset(1);
         end
-
+        
+        function A = cleanup(A)
+            
+            % Make sure all the individual defining segments are centered
+            % relative to their own coordinate systems.  render() moves
+            % them around.
+            for n=1:length(A.segList)
+                A.segList{n}.Segment.Offset = [0 0];
+            end
+            touch(A);
+        end
+        
         function SEGCOORDS = segCoordList(A)
             % SEGCOORDS = AOAperture.segCoordList(A)
             % List the centers of all the segments in the AOAperture.
@@ -289,7 +289,7 @@ classdef AOAperture < AOSegment
                 SEGCOORDS(n,:) = A.segList{n}.Offset;
             end
         end
-
+        
         function PTT = PTT(A,PTT)
             % PTT = PTT(A)
             % Return or set the [Piston,Tip,Tilt] for all the segments in the AOAperture.
@@ -307,25 +307,23 @@ classdef AOAperture < AOSegment
                 PTT(n,2:3) = A.segList{n}.tiptilt;
             end
         end
-
         
+        function show(A) % overloading the AOGrid function.
+            A.center.plotC;
+            % plotCAmpl(A.grid,1/2);
+            title([class(A) ' ' A.name ': axis:' A.axis ' domain:' A.domain ],...
+                'FontSize',14);
+            % 		drawnow;
+        end
         
-		function show(A) % overloading the AOGrid function.
-			A.center.plotC;
-			% plotCAmpl(A.grid,1/2);
-			title([class(A) ' ' A.name ': axis:' A.axis ' domain:' A.domain ],...
-				'FontSize',14);
-% 			drawnow;
-		end
-		
-		function inside = isInside(A,POINTS,thresh)
-			% This takes a list of [x1 x2] coordinates.
-			if(nargin<3)
-				thresh = 0.9;
-			end
-			
-			vals = A.interpGrid(POINTS(:,1),POINTS(:,2));
-			inside = vals>=thresh;
-		end
-	end
+        function inside = isInside(A,POINTS,thresh)
+            % This takes a list of [x1 x2] coordinates.
+            if(nargin<3)
+                thresh = 0.9;
+            end
+            
+            vals = A.interpGrid(POINTS(:,1),POINTS(:,2));
+            inside = vals>=thresh;
+        end
+    end
 end
