@@ -32,9 +32,9 @@ classdef AOSegment < AOGrid
                 nxy = 1;
             end
             obj = obj@AOGrid(nxy);
-			
-			obj.nanmap = 0;  % make opaque beyond the pupil region.
-			
+            
+            obj.nanmap = 0;  % make opaque beyond the pupil region.
+            
         end
         
         %% Other methods
@@ -52,20 +52,20 @@ classdef AOSegment < AOGrid
         function S = addPupil(S,pupil)
             fprintf('Appending another pupil defn.\n');
             S.pupilDef_ = {pupil};
-		end
+        end
         
-		function S = touch(S)
-			touch@AOGrid(S);
-			S.touched = true;
-		end
-		
+        function S = touch(S)
+            touch@AOGrid(S);
+            S.touched = true;
+        end
+        
         function g = grid(obj,nugrid) % TODO: make this fancier.
             if(obj.isMirror)
                 OPL = 2*obj.piston;
             else
                 OPL = obj.piston;
             end
-
+            
             if(nargin==1)
                 if(obj.tiptilt==0)
                     if(obj.piston==0)  % no TT,no piston
@@ -88,13 +88,13 @@ classdef AOSegment < AOGrid
         end
         
         function BB = BBox(S,local)
-			% BBox is [x1min, x2min; x1max, x2max];
-			% In other words...
-			% [ ymin  xmin
-			%   ymax  xmax ];
-			% 
-			% local is a flag that returns the BBox relative to the object
-			% without the user Offset.  
+            % BBox is [x1min, x2min; x1max, x2max];
+            % In other words...
+            % [ ymin  xmin
+            %   ymax  xmax ];
+            %
+            % local is a flag that returns the BBox relative to the object
+            % without the user Offset.
             if(S.version == 1)
                 if(isempty(S.pupils)) % for externally rendered segments.
                     [x,y] = S.coords;
@@ -107,8 +107,8 @@ classdef AOSegment < AOGrid
                 end
                 
                 P = S.pupils;
-				% Assume that the x y order in P is conventional (x,y).
-				
+                % Assume that the x y order in P is conventional (x,y).
+                
                 minX = min(P(:,1) - P(:,3)/2);
                 maxX = max(P(:,1) + P(:,3)/2);
                 
@@ -141,7 +141,7 @@ classdef AOSegment < AOGrid
                 BBOX(1,2),BBOX(1,1);];
             
             hold on;
-			AOSegment.plotBox(S.BBox);
+            AOSegment.plotBox(S.BBox);
             hold off;
         end
         
@@ -161,29 +161,29 @@ classdef AOSegment < AOGrid
         end
         
         function D = estimateD(a)
-        % D = estimateD(a)
-        % Estimate the pupil diameter from the grid.
-        
-        CUTOFF = 0.1;
-        
-        PRJ = find(max((a.abs>CUTOFF),[],2));
-        D1 = (max(PRJ)-min(PRJ))*a.dx;
-        
-        PRJ = find(max((a.abs>CUTOFF),[],1));
-        D2 = (max(PRJ)-min(PRJ))*a.dy;
-
-        D = max(D1,D2);
-        
+            % D = estimateD(a)
+            % Estimate the pupil diameter from the grid.
+            
+            CUTOFF = 0.1;
+            
+            PRJ = find(max((a.abs>CUTOFF),[],2));
+            D1 = (max(PRJ)-min(PRJ))*a.dx;
+            
+            PRJ = find(max((a.abs>CUTOFF),[],1));
+            D2 = (max(PRJ)-min(PRJ))*a.dy;
+            
+            D = max(D1,D2);
+            
         end
         
-
+        
         function AREA = estimateArea(a)
             % AREA = estimateArea(a)
             
             AREA = sum(abs(a.grid_(:)))*a.dx*a.dy;
             
         end
-
+        
         function A = apodize(A,param)
             % A = A.apodize(param);
             % Set the grid to an apodizing function.
@@ -193,17 +193,19 @@ classdef AOSegment < AOGrid
             A.grid(chebwin(A.nx,param)*chebwin(A.ny,param)');
         end
         
-		function inside = isInside(A,POINTS,thresh)
-			% This takes a list of [x1 x2] coordinates.
-			if(nargin<3)
-				thresh = 0.9;
-			end
-			
-			vals = A.interpGrid(POINTS(:,1),POINTS(:,2));
-			inside = vals>=thresh;
-		end
-        
+        function inside = isInside(A,POINTS,thresh)
+            % This takes a list of [x1 x2] coordinates.
+            % (duplicated routine from AOAperture)
+            if(nargin<3)
+                thresh = 0.9;
+            end
+            
+            vals = A.interpGrid(POINTS(:,1),POINTS(:,2));
+            inside = vals>=thresh;
+        end
+
     end
+    
     
     methods(Static=true)
         function plotBox(BBOX)

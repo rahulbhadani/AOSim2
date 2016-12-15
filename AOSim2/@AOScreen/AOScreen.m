@@ -483,15 +483,18 @@ classdef AOScreen < AOGrid
             end
             
             %semilogy
-            loglog(s,dPhase_meanSquare,'.',...
-                s,dPhase_meanSquare+dPhase_meanSquareSigma,'r--',...
-                s,dPhase_meanSquare-dPhase_meanSquareSigma,'r--');
-            hold on;
-            plot(s([1 end]),[1 1]*6.88,'k--');
-            plot([1 1]*PS.r0,[0.1 100],'k-');            
-            plot(s,6.88*(s/PS.r0).^(5/3),'g--');
-            hold off;
-            drawnow;
+%             loglog(s,dPhase_meanSquare,'.',...
+%                 s,dPhase_meanSquare+dPhase_meanSquareSigma,'r--',...
+%                 s,dPhase_meanSquare-dPhase_meanSquareSigma,'r--');
+%             hold on;
+%             plot(s([1 end]),[1 1]*6.88,'k--');
+%             plot([1 1]*PS.r0,[0.1 100],'k-');            
+%             plot(s,6.88*(s/PS.r0).^(PS.ALPHA-2),'g--');
+%             hold off;
+%             xlabel('spacing (m)');
+%             ylabel('phase structure function');
+%             ylim(10.^[-3 1]);
+            %drawnow;
         end
     
         function SF = SFtheo(PS,x)
