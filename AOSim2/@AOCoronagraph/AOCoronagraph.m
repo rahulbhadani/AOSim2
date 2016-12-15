@@ -165,7 +165,7 @@ classdef AOCoronagraph < AOSegment
         end
         
         function CORO = mkInvF(CORO,thresh)
-            % CORO = mkInvF(CORO,thresh)
+        % CORO = mkInvF(CORO,thresh)
             % I don't think I need this anymore.
             
             fprintf('Building the pseudo-inverse...\n');
@@ -252,6 +252,7 @@ classdef AOCoronagraph < AOSegment
             else
                 if(isempty(CORO.Fpp))
                     CORO.Fpp = AOField(CORO);
+                    CORO.Fpp.constant(1);
                 end
             end
             CORO.Ffp.lambda = CORO.lambdaRef;
@@ -277,6 +278,12 @@ classdef AOCoronagraph < AOSegment
 
             if(isempty(CORO.Fmatrix))
                 CORO.initF(CORO.lambdaRef);
+                %CORO.initF(CORO.Fpp_.lambda).mkInvF(1e-8);
+            end
+
+            if(isempty(CORO.invFmatrix))
+                fprintf('Computing inverse F for first use...\n');
+                CORO.mkInvF();
                 %CORO.initF(CORO.Fpp_.lambda).mkInvF(1e-8);
             end
             
@@ -322,21 +329,31 @@ classdef AOCoronagraph < AOSegment
                 CORO.Fpp = AOField(CORO);
                 CORO.Fpp.lambda = CORO.lambdaRef;
             end
+            
+            if(isempty(CORO.Flyot))
+                CORO.Flyot = CORO.Fpp.copy;
+                CORO.Flyot.name = 'Lyot Field';
+            end
+                
+            %             if(isempty(CORO.invFmatrix))
+            %                 fprintf('Computing inverse F for first use...\n');
+            %                 CORO.mkInvF();
+            %                 %CORO.initF(CORO.Fpp_.lambda).mkInvF(1e-8);
+            %             end
+            CORO.Ffp.planewave;
 
             for n=1:count
-                CORO.PPtoFP(CORO.Fpp.planewave);
-                CORO.Ffp_ = CORO.Ffp.copy;
-                CORO.Ffp_ * CORO.APCMLC;
-                
-                if(isempty(CORO.Flyot))
-                    CORO.Flyot = CORO.Fpp.copy;
-                    CORO.Flyot.name = 'Lyot Field';
-                end
-                
-                CORO.Flyot.grid(CORO.Fmatrix'*CORO.Ffp_.grid_(:)).plotC(2);
-                
-                CORO.APODIZER.grid(abs(CORO.Flyot.grid));
-                CORO.APODIZER.normalize;
+                CORO.Fpp_.grid(CORO.APODIZER.vec().*CORO.vec());
+                % Forward...
+                CORO.Ffp.grid(CORO.Fmatrix*(CORO.APODIZER.vec().*CORO.vec()));
+                CORO.Flyot.grid(CORO.vec().*(CORO.invFmatrix*CORO.Ffp.vec()));
+                %CORO.Flyot.grid(CORO.vec().*(CORO.Fmatrix'*CORO.Ffp.vec()));
+                % Back...
+                CORO.Ffp_.grid(CORO.APCMLC.vec() .* (CORO.Fmatrix*CORO.Flyot.vec()));
+                CORO.APODIZER.grid(CORO.invFmatrix*CORO.Ffp_.vec());
+                CORO.APODIZER.grid(CORO.Fmatrix'*CORO.Ffp_.vec());
+                CORO.APODIZER.normalize();
+                %CORO.APODIZER.plotC(2);
                 
                 if(CORO.APCMLC.verbosity)                    
                     CORO.showCoro(4);
@@ -376,7 +393,8 @@ classdef AOCoronagraph < AOSegment
             
             frame=frame+1;
             subplot(N1,N2,frame);
-            CORO.FPTM.plotC(gamma);
+            %CORO.FPTM.plotC(gamma);
+            CORO.APCMLC.plotC(gamma);
             colorbar off;
             title('CFPM');
             axis off;
