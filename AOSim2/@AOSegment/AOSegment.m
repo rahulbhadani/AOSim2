@@ -193,6 +193,16 @@ classdef AOSegment < AOGrid
             A.grid(chebwin(A.nx,param)*chebwin(A.ny,param)');
         end
         
+		function inside = isInside(A,POINTS,thresh)
+			% This takes a list of [x1 x2] coordinates.
+			if(nargin<3)
+				thresh = 0.9;
+			end
+			
+			vals = A.interpGrid(POINTS(:,1),POINTS(:,2));
+			inside = vals>=thresh;
+		end
+        
     end
     
     methods(Static=true)
