@@ -42,9 +42,11 @@ for iloop=1:nloops
             %colorbar;
         else
             %plotCAmpl(squeeze(dcube(:,:,iframe)),.5,[MIN MAX]);
-            plotCAmpl(squeeze(dcube(:,:,iframe)),1/2);
+            %plotCAmpl(squeeze(dcube(:,:,iframe)),1/2);
+            plotComplex(squeeze(dcube(:,:,iframe)),4);
         end
         %daspect([1 1 1]);
+        axis xy
         title(sprintf('frame %d',iframe));
         
         drawnow;
