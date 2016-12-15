@@ -85,7 +85,8 @@ DM.plotRegions; daspect([1 1 1]); drawnow;
 
 %% Build the Shack-Hartmann WFS.
 
-WFS = AOWFS(A,D/12);
+% WFS = AOWFS(A,D/12);
+WFS = AOWFS(A,D/12,false,[],D);
 WFS.name = 'Omega SHWFS';
 A.show; WFS.quiver(1); drawnow; % Show them.
 
