@@ -83,3 +83,5 @@ function F = propagate(F,dz,REGULARIZE,PADDED)
   field = ifft2(F.PROPAGATOR.*fft2(field));
   F.grid_ = field(1:SZ(1),1:SZ(2));
   F.z = F.z - dz;
+  
+  F.touch;
