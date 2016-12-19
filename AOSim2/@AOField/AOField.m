@@ -28,6 +28,10 @@ classdef AOField < AOGrid
 	properties(Access='public')
 		lambda = AOField.HBAND;
 		z = 0;
+        
+        PROPAGATOR = [];  % Cached propagator.
+        lastLambda = 0;
+        lastDistance = 0;
 	end
 	
 	% Private
