@@ -21,6 +21,7 @@ classdef AOWFS < AOGrid & AODetector
     methods
         % Constructor
         function WFS = AOWFS(APER,spacing,usePyramid,maskName,D)
+            % WFS = AOWFS(APER,spacing,usePyramid,maskName,D)
             if nargin < 5, D = APER.estimateD(); end     % Should provide D for globalTipTilt method
             if nargin < 4  || isempty(maskName), maskName=0;end
             if nargin < 3  || isempty(usePyramid), usePyramid=0; end
