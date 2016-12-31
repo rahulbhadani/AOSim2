@@ -66,7 +66,7 @@ function F = propagate(F,dz,REGULARIZE,PADDED)
   end
 
   if((F.lastLambda~=F.lambda) || (F.lastDistance~=dz) || isempty(F.PROPAGATOR))      
-      fprintf('Computing a new propagator.\n');
+      %fprintf('Computing a new propagator.\n');
       
       dK = 2*pi./(size(field) .* DX);
       
