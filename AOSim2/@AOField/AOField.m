@@ -234,5 +234,50 @@ classdef AOField < AOGrid
             
             F.grid_ = F.grid_ * bandIntFlux * pixelArea;
         end
+        
+        function Rf = FresnelScale(F,RANGE,LAMBDA)
+            % Rf = FresnelScale(F,[RANGE],[LAMBDA])
+            % Compute the Fresnel scale for the field or in general.
+            % Returns a matrix of Fresnel scales (LAMBDAS x RANGES) if
+            % the inputs are both vectors.
+            
+            if(nargin<2 || isempty(RANGE))
+                RANGE = F.z;
+            end
+            
+            if(nargin<3)
+                LAMBDA = F.lambda;
+            end
+            
+            Rf = sqrt(LAMBDA(:)'*abs(RANGE(:)));
+        end
+        
+        function Fnumber = FresnelNumber(F,D,RANGE,LAMBDA)
+            % Fnumber = FresnelNumber(F,D,RANGE,LAMBDA)
+            % Compute the Fresnel Number for the field or in general.
+            % https://en.wikipedia.org/wiki/Fresnel_number
+            % Returns a matrix of Fresnel Numbers (LAMBDAS x RANGES) if
+            % the inputs are both vectors.
+            
+            % If D not given, use the AOGrid extent.
+            if(nargin<2 || isempty(D))
+                D = max(F.extent);
+            end
+
+            if(nargin<3 || isempty(RANGE))
+                RANGE = F.z;
+            end
+            
+            if(nargin<4)
+                LAMBDA = F.lambda;
+            end
+            
+            Fnumber = (D/2)^2./(LAMBDA(:)'*abs(RANGE(:)));
+        end
+    end
+    
+    %% static methods
+    methods(Static=true)
+        
     end
 end
