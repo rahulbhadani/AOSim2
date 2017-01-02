@@ -18,7 +18,10 @@ classdef AOAtmo2 < AOAtmo
             % nesting.
             ATMO2 = ATMO2@AOAtmo(varargin{1});
             
-            ATMO2.physics.gain = 1;
+            % Put in some default physics values.  (Not real units.)
+            ATMO2.physics.gain = 1e-3;
+            ATMO2.physics.dt = 1e-5;
+            ATMO2.physics.csound = 340;
             
         end
         
@@ -53,6 +56,11 @@ classdef AOAtmo2 < AOAtmo
                 ATMO.layers{n}.shadow.zero;
             end
             ATMO.touched = true;
+        end
+        
+        function ATMO2 = tick(ATMO2)
+            % Bump the clock by physics.dt
+            ATMO2.setObsTime(ATMO2.time+ATMO2.physics.dt);
         end
         
         function ATMO = setObsTime(ATMO,t) % set observation time.
