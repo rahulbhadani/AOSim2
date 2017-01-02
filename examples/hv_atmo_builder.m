@@ -9,7 +9,7 @@ if(~exist('WIND'))
 end
 
 if(~exist('Cn2_Ground'))
-    Cn2_Ground = 30;
+    Cn2_Ground = 1e-14;
 end
 
 LAMBDA = AOField.VBAND;
