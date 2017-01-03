@@ -348,11 +348,17 @@ classdef AOScreen < AOGrid
             
             [X,Y] = S.COORDS();
             R2 = X.^2+Y.^2;
-            if(FL>0)
-                S + (FL-sqrt(max(0,FL^2-R2)));
-            else
-                S + (FL+sqrt(max(0,FL^2-R2)));
+            
+            if(FL/R2(1)<1e4)
+                if(FL>0)
+                    S + (FL-sqrt(max(0,FL^2-R2)));
+                else
+                    S + (FL+sqrt(max(0,FL^2-R2)));
+                end 
+            else % Use paraxial approximation
+                S + R2/FL;
             end
+            
             touch(S);
         end
 

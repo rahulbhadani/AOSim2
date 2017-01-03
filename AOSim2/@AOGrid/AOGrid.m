@@ -42,6 +42,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
     
         interpolate_method = []; % quick or selected method.  Empty [] sets to qinterp2. Otherwise use the named method.
         seed = []; % Set this to empty for unseeded.  Set seed value for repeatable random numbers.
+    
+        gpu = []; % Support for NVidia GPUs.  Set this.gpu = gpuDevice(n) to enable.
     end
     
     %     properties(GetAccess = 'protected', SetAccess = 'protected')
