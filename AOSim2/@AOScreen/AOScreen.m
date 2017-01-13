@@ -510,6 +510,24 @@ classdef AOScreen < AOGrid
             SF = 6.88 * (x/PS.r0).^(5/3);
         end
         
+        function PS = simpleAO(PS,SmoothSize,WindLag)
+            % PS = simpleAO(PS,SmoothSize,WindLag)
+            % Modifies the phase screen to simulate a post-AO wavefront.
+            % WindLag is tau*wind in pixels.
+            
+            dx = mean(PS.spacing);
+            Kwidth = 5*SmoothSize;
+            SMOOTH = fspecial('gaussian',ceil(Kwidth/dx),SmoothSize/dx);
+            
+            g = PS.grid;
+            g = conv2(g,SMOOTH,'same');
+            
+            if(nargin>2)
+                g = circshift(g,WindLag);
+            end
+            
+            PS.grid(PS.grid-g);
+        end
         
     end % public methods.
 end
