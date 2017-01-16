@@ -28,7 +28,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         AXIS_CORNER = 'corner';  % FFT mode.
         AXIS_FACE = 'face'; % fftshift mode.
         AXIS_ARBITRARY = 'arb';  % use ORIGIN_ to find the center.
-        
     end
     properties(GetAccess='public',SetAccess='public')
         name;
@@ -42,10 +41,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
     
         interpolate_method = []; % quick or selected method.  Empty [] sets to qinterp2. Otherwise use the named method.
         seed = []; % Set this to empty for unseeded.  Set seed value for repeatable random numbers.
-    
-        gpu = []; % Support for NVidia GPUs.  Set this.gpu = gpuDevice(n) to enable.
+        gpu = 0; % Support for NVidia GPUs.  Set this.gpu = gpuDevice(n) to enable.
     end
-    
     %     properties(GetAccess = 'protected', SetAccess = 'protected')
     properties(GetAccess = 'public', SetAccess = 'protected')
         grid_;  % the actual array.
@@ -68,7 +65,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         Yextremes = [];
         Nx_ = nan;
         Ny_ = nan;
-        
     end
     
     %% Methods
@@ -135,10 +131,16 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         function [X,Y] = COORDS(A,local)
             % [X,Y] = COORDS(A,local)
             % Returns the 2D coordinates of the grid A.
+            
             if(nargin>1)
-                [x,y] = coords(A,local);
+                [x,y] = A.coords(local);
             else
-                [x,y] = coords(A);
+                [x,y] = A.coords();
+            end
+            
+            if(A.useGPU)
+                x = gpuArray(x);
+                y = gpuArray(y);
             end
             
             % Okay.  Try to not have to compute this.
@@ -375,12 +377,13 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     nugrid = nugrid(:,:,1);
                     nugrid = squeeze(nugrid);
                     %if(size(obj)==size(nugrid))
-                    if(prod(size(obj))==numel(nugrid))  %  Also allow vector assignments
-                        obj.grid_(:) = double(nugrid(:)); % Does not force shape.
+                    if(numel(obj)==numel(nugrid))  %  Also allow vector assignments
+                        %obj.grid_(:) = nugrid(:); % Does not force shape.
+                        obj.grid_ = reshape(nugrid(:),size(obj.grid_)); % Does not force shape.
                         obj.touch;
                     else
                         obj.resize(size(nugrid));
-                        obj.grid_ = double(nugrid);
+                        obj.grid_ = nugrid;
                         obj.touch;
                         %error('different sized grid assignment not supported (yet)');
                     end
@@ -480,7 +483,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 return;
             end
             
-            g = corner(g);
+            g = g.corner();
             g.grid_ = fft2(g.grid_)/prod(g.extent);
             g.domain_ = AOGrid.DOMAIN_SPACE;
             
@@ -501,7 +504,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 return;
             end
             
-            g = corner(g);
+            g = g.corner();
             g.grid_ = ifft2(g.grid_)*prod(g.extent);
             g.domain_ = AOGrid.DOMAIN_FREQ;
             
@@ -1003,13 +1006,16 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % g = G.interpGrid(XARRAY,YARRAY);
             % g = G.interpGrid(AOGRID);
 
+            USE_GPU = strcmp(class(G.grid_),'gpuArray');
+            
             switch length(varargin)
                 case 0
                     error('No coordinates to interpolate to?');
                 case 1
                     arg1 = varargin{1};
                     if(isa(arg1,'AOGrid'))
-                        [Xout,Yout] = COORDS(arg1);
+                        [Xout,Yout] = arg1.COORDS;
+                        USE_GPU = USE_GPU | arg1.useGPU;
                     else
                         error('I do not understand what you want to do with a single %s',class(arg1));
                     end
@@ -1019,16 +1025,41 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 otherwise
                     Xout = varargin{1};
                     Yout = varargin{2};
-                    
+            end
+
+            if(USE_GPU)
+                Xout = gpuArray(Xout);
+                Yout = gpuArray(Yout);
             end
             
             G.center();
-            [GX,GY] = COORDS(G);
+            [GX,GY] = G.COORDS;
+
+            if(USE_GPU)
+                Xout = gpuArray(Xout);
+                Yout = gpuArray(Yout);
+                GX = gpuArray(GX);
+                GY = gpuArray(GY);
+            end
             
             if(isempty(G.interpolate_method))
-                g = qinterp2(GX,GY,G.grid,Xout,Yout);
+                if(USE_GPU)
+                    g = interp2(GX,GY,G.grid,Xout,Yout);
+                else
+                    % gather is in case something goes wrong. That would be
+                    % a bug.
+                    g = qinterp2(gather(GX),gather(GY),gather(G.grid),...
+                        gather(Xout),gather(Yout));
+                end
             else
-                g = interp2(GX,GY,G.grid,Xout,Yout,G.interpolate_method);
+                if(strcmp(USE_GPU))
+                    g = G.grid_.interp2(GX,GY,G.grid,Xout,Yout,G.interpolate_method);
+                else
+                    % gather is in case something goes wrong. 
+                    % That would be a bug.  At least this won't crash.
+                    g = interp2(gather(GX),gather(GY),gather(G.grid),...
+                        gather(Xout),gather(Yout),G.interpolate_method);
+                end
             end
             % g(isnan(g)) = 0;
         end
@@ -1425,6 +1456,19 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % Compute the L2 norm of the AOGrid data.
            
             N = norm(G.grid_);
+        end
+        
+        %% GPU Methods
+        
+        function G = gpuify(G)
+            % G.gpuify()
+            % Make GPU-ready.
+            
+            G.grid(gpuArray(G.grid_));
+        end
+        
+        function yesno = useGPU(G)
+            yesno = strcmp(class(G.grid_),'gpuArray');
         end
         
         

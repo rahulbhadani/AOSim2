@@ -18,6 +18,10 @@ function PS = make(PS,L0,fixLF)
 %                           scale enhancement.
 % All models now have a variable power law PHI_n index ALPHA.  Set this in
 % the AOScreen before make()'ing it.
+%
+% I put the phase screen in GPU memory if grid_ is a gpuArray, but I always
+% compute it in the CPU.  This is a fairly rare operation, so it is
+% probably okay.  I'll review when I have more experience.
 
 % Start with the envelope, the random part is common to all models.
 
@@ -27,8 +31,9 @@ if(nargin>1)
    
    PS.L0 = L0;
    PS.LF_FRACTAL_PATCH = fixLF;
-   
 end
+
+USE_GPU = PS.useGPU;
 
 [KX,KY] = PS.KCOORDS;
 KR2 = KX.^2 + KY.^2;
@@ -58,12 +63,13 @@ switch PS.TURBULENCE_MODEL
     otherwise % Use the Von Karman model as a default.
         PSD = 0.033 * PS.Cn2 .* (kappa0^2+KR2).^(-PS.ALPHA/2); % Outer scale
         PSD = PSD .* exp(-KR2./kappam^2); % Inner scale
-        
 end
 
 PSD(PS.FAXIS_PIXEL(1),PS.FAXIS_PIXEL(2)) = 0;  % Kill DC for zero mean.
 
+
 PS.zero.addNoise(1);
+
 PS.grid(PS.grid.*sqrt(PSD));
 
 PS.grid(PS.fft);
@@ -79,4 +85,8 @@ end
 PS.real; % Throw away the imaginary part.  
 
 PS.touched = false;
+
+if(USE_GPU)
+    PS.gpuify;
+end
 

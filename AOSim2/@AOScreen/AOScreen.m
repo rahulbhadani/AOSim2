@@ -378,13 +378,15 @@ classdef AOScreen < AOGrid
             % To add lag error, shift z1 by some pixels of length
             % wind*lagtime.
         
-            grid = S.grid;
             N = round(2*scale/S.dx);
             N = N + mod(N+1,2);
             filter1d = chebwin(N);
             FILTER = filter1d*filter1d';
             FILTER = FILTER / sum(FILTER(:));
-            grid = conv2(grid,FILTER,'same');
+            if(S.useGPU)
+                FILTER = gpuArray(FILTER);
+            end
+            grid = conv2(S.grid_,FILTER,'same');
             
         end
         

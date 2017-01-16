@@ -127,5 +127,14 @@ classdef AOAtmo2 < AOAtmo
                 opl = opl + geomDistances(ATMO,X,Y,z);
             end
         end
+    
+        function A = gpuify(A)
+            for n=1:A.nLayers
+                A.layers{n}.screen.gpuify;
+                A.layers{n}.shadow.gpuify;
+            end
+        end
+        
+        
     end
 end
