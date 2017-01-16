@@ -112,7 +112,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % BLURB = describe(G)
             % Returns a one-line description of the object.
             
-            BLURB = sprintf('%s [%s: %dx%d]',G.name,class(G),G.size);
+            if(G.useGPU)
+                BLURB = sprintf('%s [%s: %dx%d GPU]',G.name,class(G),G.size);
+            else
+                BLURB = sprintf('%s [%s: %dx%d]',G.name,class(G),G.size);
+            end
         end
         
         function G = touch(G)
@@ -1464,15 +1468,24 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         %% GPU Methods
         
-        function G = gpuify(G)
-            % G.gpuify()
+        function G = gpuify(G,useGPU)
+            % G.gpuify([useGPU])
             % Make GPU-ready.
+            % Optional Boolean allows reverting to non-GPU.
             
-            G.grid(gpuArray(G.grid_));
+            if(nargin<2)
+                useGPU = true;
+            end
+            
+            if(useGPU)
+                G.grid(gpuArray(G.grid_));
+            else
+                G.grid(gather(G.grid_));
+            end
         end
         
         function yesno = useGPU(G)
-            yesno = strcmp(class(G.grid_),'gpuArray');
+            yesno = isa(G.grid_,'gpuArray');
         end
         
         
