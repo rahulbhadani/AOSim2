@@ -740,7 +740,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         function A = zero(A)
             % ZERO: Set an AOGrid to zero.
-            A.grid_ = zeros(A.size);
+            if(A.useGPU)
+                A.grid_ = gpuArray(zeros(A.size));
+            else
+                A.grid_ = zeros(A.size);
+            end
             A.fftgrid_ = [];
         end
         
