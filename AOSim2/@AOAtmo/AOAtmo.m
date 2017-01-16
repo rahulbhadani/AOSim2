@@ -16,12 +16,14 @@ classdef AOAtmo < AOScreen
         time = 0;                       % Set this for the observation time.  Affects wind.
         GEOMETRY = true;                % Include geometric OPL as well as aberrations.
         z = 0;                          % Location of the OUTPUT for this object.
+        physics = struct;  % Put physics model params here.
     end
     
     methods
         % Constructor
         function ATMO = AOAtmo(varargin)
             ATMO = ATMO@AOScreen(varargin);
+            ATMO.physics.dt = 1e-5;
         end
         
         % Operations
@@ -117,6 +119,11 @@ classdef AOAtmo < AOScreen
             end
         end
         
+        function ATMO = tick(ATMO)
+            % Bump the clock by physics.dt
+            ATMO.setObsTime(ATMO.time+ATMO.physics.dt);
+        end
+        
         function ATMO = setObsAltitude(ATMO,z) % set default observation altitude.
             %ATMO = setObsAltitude(ATMO,z) % set default observation altitude.
             ATMO.z = z;
@@ -170,6 +177,7 @@ classdef AOAtmo < AOScreen
         end
         
         function g = grid(ATMO,nugrid)
+        % g = ATMO.grid(nugrid)
             % g = grid(ATMO,nugrid)
             if(ATMO.nLayers == 0)
                 g = grid@AOScreen(ATMO,nugrid);
@@ -270,7 +278,6 @@ classdef AOAtmo < AOScreen
                     elseif(isfloat(arg1) && isfloat(arg2) )
                         opl = ATMO.OPL_(arg1,arg2,ATMO.z,ATMO.BEACON);
                     else
-                        
                         error('I dont know what to do with this argument yet.');
                     end
                     
@@ -335,7 +342,6 @@ classdef AOAtmo < AOScreen
             %r0 = (0.423*(2*pi/lambda)^2*SLABS)^(-3/5); % see e.g. Roddier or Fried or Tatarskii or ANYBODY!
         end
         
-        
         function THICKNESSES = listThickness(ATMO)
             % THICKNESSES = listThickness(ATMO)
             THICKNESSES = nan(1,ATMO.nLayers);
@@ -360,6 +366,23 @@ classdef AOAtmo < AOScreen
             for n=1:ATMO.nLayers
                 CN2(n) = ATMO.layers{n}.screen.Cn2;
             end
+        end
+
+        function ATMO = listLayers(ATMO)
+            % ATMO.listLayers()
+            % Print out info about the ATMO.
+            
+            for n=1:ATMO.nLayers
+                fprintf('Layer %d: <%s> thickness=%.1f Cn2=%.2g (r0=%.3f) height=%.0f Wind=[%.1f %.1f]\n',...
+                    n,ATMO.layers{n}.screen.name,...
+                    ATMO.layers{n}.screen.thickness,...
+                    ATMO.layers{n}.screen.Cn2,...
+                    ATMO.layers{n}.screen.r0,...
+                    ATMO.layers{n}.screen.altitude,...
+                    ATMO.layers{n}.Wind);
+            end
+            
+            fprintf('The total Fried Scale for a star would be %.3f m.\n',ATMO.totalFriedScale);
         end
         
         function [xoffset, yoffset] = tracerays(ATMO, WFS, OBJECTZ, OBJECTD, SAMPLES)  % radians
@@ -386,6 +409,12 @@ classdef AOAtmo < AOScreen
                     xoffset(m, n) = btip;
                     yoffset(m, n) = btilt;
                 end
+            end
+        end
+        
+        function A = gpuify(A)
+            for n=1:A.nLayers
+                A.layers{n}.screen.gpuify;
             end
         end
     end

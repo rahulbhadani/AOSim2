@@ -6,7 +6,6 @@ classdef AOAtmo2 < AOAtmo
     % properties
     properties(Access='public')
         shadowUpdate = []; % function ref: error = shadowUpdate(atmo,nscreen,field)
-        physics = struct;  % Put physics model params here.
     end
     
     methods
@@ -19,10 +18,9 @@ classdef AOAtmo2 < AOAtmo
             ATMO2 = ATMO2@AOAtmo(varargin{1});
             
             % Put in some default physics values.  (Not real units.)
-            ATMO2.physics.gain = 1e-3;
-            ATMO2.physics.dt = 1e-5;
+            ATMO2.physics.dt = 1e-3;
             ATMO2.physics.csound = 340;
-            
+            ATMO2.physics.gain = 1e-3;
         end
         
         % Operations
@@ -58,10 +56,10 @@ classdef AOAtmo2 < AOAtmo
             ATMO.touched = true;
         end
         
-        function ATMO2 = tick(ATMO2)
-            % Bump the clock by physics.dt
-            ATMO2.setObsTime(ATMO2.time+ATMO2.physics.dt);
-        end
+%         function ATMO2 = tick(ATMO2)
+%             % Bump the clock by physics.dt
+%             ATMO2.setObsTime(ATMO2.time+ATMO2.physics.dt);
+%         end
         
         function ATMO = setObsTime(ATMO,t) % set observation time.
             %ATMO = setObsTime(ATMO,t) % set observation time.
@@ -72,7 +70,6 @@ classdef AOAtmo2 < AOAtmo
                 ATMO.layers{n}.shadow.Offset = ATMO.layers{n}.Wind*ATMO.time;
             end
         end
-        
         
         function g = grid(ATMO,nugrid)
             % g = grid(ATMO,nugrid)
@@ -133,8 +130,6 @@ classdef AOAtmo2 < AOAtmo
                 A.layers{n}.screen.gpuify;
                 A.layers{n}.shadow.gpuify;
             end
-        end
-        
-        
+        end        
     end
 end
