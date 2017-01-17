@@ -415,9 +415,19 @@ classdef AOAtmo < AOScreen
             end
         end
         
-        function A = gpuify(A)
+        function A = gpuify(A,useGPU)
+            if(nargin<2)
+                useGPU = true;
+            end
+            
             for n=1:A.nLayers
-                A.layers{n}.screen.gpuify;
+                A.layers{n}.screen.gpuify(useGPU);
+            end
+            
+            if(useGPU)
+                A.grid_ = gpuArray(A.grid_);
+            else
+                A.grid_ = gather(A.grid_);
             end
         end
         
