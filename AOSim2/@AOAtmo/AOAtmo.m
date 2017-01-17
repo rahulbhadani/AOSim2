@@ -79,6 +79,8 @@ classdef AOAtmo < AOScreen
             for n=1:ATMO.nLayers
                 ATMO.layers{n}.screen.touch;
             end
+            
+            ATMO.touched = true;
         end
         
         function ATMO = make(ATMO)
@@ -373,12 +375,12 @@ classdef AOAtmo < AOScreen
             % Print out info about the ATMO.
             
             for n=1:ATMO.nLayers
-                fprintf('Layer %d: <%s> thickness=%.1f\tCn2=%.2g (r0=%.3f)\theight=%.0f\tWind=[%.1f %.1f]\tOffset=[%.3f %.3f]\n',...
+                fprintf('Layer %d: <%s>\theight=%.0f\tthickness=%.1f\tCn2=%.2g (r0=%.3f)\tWind=[%.1f %.1f]\tOffset=[%.3f %.3f]\n',...
                     n,ATMO.layers{n}.screen.name,...
+                    ATMO.layers{n}.screen.altitude,...
                     ATMO.layers{n}.screen.thickness,...
                     ATMO.layers{n}.screen.Cn2,...
                     ATMO.layers{n}.screen.r0,...
-                    ATMO.layers{n}.screen.altitude,...
                     ATMO.layers{n}.Wind,...
                     ATMO.layers{n}.screen.Offset);
             end
@@ -416,6 +418,16 @@ classdef AOAtmo < AOScreen
         function A = gpuify(A)
             for n=1:A.nLayers
                 A.layers{n}.screen.gpuify;
+            end
+        end
+        
+        function BLURB = describe(G)
+            % BLURB = AOAtmo.describe()
+
+            BLURB = sprintf('%s [%s: %dx%d] Layers=%d time=%f',G.name,class(G),G.size,G.nLayers,G.time);
+            
+            if(G.useGPU)
+                BLURB = [BLURB ' GPU'];
             end
         end
     end

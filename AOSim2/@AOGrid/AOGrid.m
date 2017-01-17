@@ -384,11 +384,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     if(numel(obj)==numel(nugrid))  %  Also allow vector assignments
                         %obj.grid_(:) = nugrid(:); % Does not force shape.
                         obj.grid_ = reshape(nugrid(:),size(obj.grid_)); % Does not force shape.
-                        obj.touch;
+                        %obj.touch;
                     else
                         obj.resize(size(nugrid));
                         obj.grid_ = nugrid;
-                        obj.touch;
+                        %obj.touch;
                         %error('different sized grid assignment not supported (yet)');
                     end
                 else % This when a mask is specified...
@@ -404,7 +404,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % works, but it is broken at the moment.
             
             G.grid_(MASK(:)) = NEWVALS(:);
-            
         end
         
         %% 
@@ -793,9 +792,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % AOSim2 way: A - A.mean;
             A - A.mean;
         end
-        
-        
-        
         
         function g = phase(A)
             if(nargout<1)
