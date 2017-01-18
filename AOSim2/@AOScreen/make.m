@@ -37,6 +37,9 @@ USE_GPU = PS.useGPU;
 
 [KX,KY] = PS.KCOORDS;
 KR2 = KX.^2 + KY.^2;
+if(USE_GPU)
+    KR2 = gpuArray(KR2);
+end
 
 kappa0 = 2*pi/PS.L0;
 kappam = 5.92/PS.inner_scale;
@@ -66,7 +69,6 @@ switch PS.TURBULENCE_MODEL
 end
 
 PSD(PS.FAXIS_PIXEL(1),PS.FAXIS_PIXEL(2)) = 0;  % Kill DC for zero mean.
-
 
 PS.zero.addNoise(1);
 
