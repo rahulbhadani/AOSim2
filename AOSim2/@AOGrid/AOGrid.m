@@ -1056,8 +1056,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                         gather(Xout),gather(Yout));
                 end
             else
-                if(strcmp(USE_GPU))
-                    g = G.grid_.interp2(GX,GY,G.grid,Xout,Yout,G.interpolate_method);
+                if(USE_GPU)
+                    g = interp2(GX,GY,G.grid,Xout,Yout);
                 else
                     % gather is in case something goes wrong. 
                     % That would be a bug.  At least this won't crash.
