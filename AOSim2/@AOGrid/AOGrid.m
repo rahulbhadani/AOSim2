@@ -41,7 +41,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
     
         interpolate_method = []; % quick or selected method.  Empty [] sets to qinterp2. Otherwise use the named method.
         seed = []; % Set this to empty for unseeded.  Set seed value for repeatable random numbers.
+        % For GPU performance I am going to take into account precision.  
+        % Single precision is the default.
+        double_precision = false;  
         gpu = 0; % Support for NVidia GPUs.  Set this.gpu = gpuDevice(n) to enable.
+        cache = []; % General purpose cache.  It gets initialized as an empty struct.
     end
     %     properties(GetAccess = 'protected', SetAccess = 'protected')
     properties(GetAccess = 'public', SetAccess = 'protected')
@@ -77,7 +81,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % or it can be another AOGrid in which case it is used as a
             % template.  In that case no data is copied, just dimensions.
             if(nargin==0)
-                obj.grid_ = zeros(obj.defaultSize);
+                obj.grid_ = zeros(obj.defaultSize,'single');
             else
                 if(iscell(nxy))
                     nxy = nxy{1};
@@ -96,12 +100,14 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     obj.Offset = nxy.Offset;
                 else
                     if(isscalar(nxy))
-                        obj.grid_ = zeros(nxy,nxy);
+                        obj.grid_ = zeros(nxy,nxy,'single');
                     else
-                        obj.grid_ = zeros(nxy(1:2));
+                        obj.grid_ = zeros(nxy(1:2),'single');
                     end
                 end
             end
+            
+            obj.cache = struct;
             
             obj.center; % default to center-faced.
         end
