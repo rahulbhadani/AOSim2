@@ -37,17 +37,22 @@ function F = propagate2(F,Z,MaxTheta)
   
   [K1,K2] = meshgrid(DK(1)*n1,DK(2)*n2);
   KR2 = K1.^2 + K2.^2;
-
+  Knyquist = min(DK .* F.size / 2);
   
   %[KX2,KX1] = F.KCOORDS;
   %KR2 = KX1.^2 + KX2.^2;
   % Note that this is corner-centered by construction.
   PROPAGATOR = exp(-1i*Z/2/F.k*KR2);
   
-  MaxKappa = MaxTheta/206265*F.k;
-%  MaxKappa = MaxKappa/2; % Be conservative.
+  % MaxKappa = MaxTheta/206265*F.k;
+  % MaxKappa = MaxKappa/2; % Be conservative.
   
-  PROPAGATOR = PROPAGATOR .* smoothUP(1-KR2/MaxKappa^2 ,1);
+  if(isempty(F.cache.LPF))
+      %F.cache.LPF = smoothUP(1-KR2/MaxKappa^2 ,0.1);
+      F.cache.LPF = smoothUP(0.85^2-KR2/Knyquist^2 ,0.1);
+  end
+
+  PROPAGATOR = PROPAGATOR .* F.cache.LPF;
   
   F.grid(ifftshift(ifft2(PROPAGATOR.*fft2(fftshift(F.grid))))); 
   F.z = F.z - Z;

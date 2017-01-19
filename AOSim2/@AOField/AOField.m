@@ -42,6 +42,8 @@ classdef AOField < AOGrid
 	methods
 		function obj = AOField(ref)
 			obj = obj@AOGrid(ref);
+            obj.cache.LPF = [];
+            obj.cache.Propagators = {};
         end
 
         function [HALO,thx,thy] = mkHALO(F,FoV,dth) % angles in arcsecs.
