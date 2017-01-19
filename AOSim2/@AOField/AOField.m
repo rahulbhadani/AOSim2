@@ -82,8 +82,8 @@ classdef AOField < AOGrid
             
             halo = halo(SELx,SELy);
             
-            HALO = qinterp2(THX_,THY_,halo,THX,THY);
-            %HALO = interp2(THX_,THY_,halo,THX,THY,'cubic');
+            %HALO = qinterp2(THX_,THY_,halo,THX,THY);
+            HALO = interp2(THX_,THY_,halo,THX,THY,'cubic');
             
         end
         
