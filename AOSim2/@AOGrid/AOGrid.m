@@ -740,6 +740,10 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             kx = ((1:SZ(1))-CEN(1))*dk(1);
             ky = ((1:SZ(2))-CEN(2))*dk(2);
+            if(~A.double_precision)
+                kx = single(kx);
+                ky = single(ky);
+            end
         end
         
         function [KX,KY] = KCOORDS(A)
