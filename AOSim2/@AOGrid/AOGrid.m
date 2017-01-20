@@ -225,6 +225,12 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % (Assigning a new data grid does this automatically.)
             % Note that resize leaves the grid spacing unchanged.
             % Use OBJ.spacing(dx) to set the new spacing.
+            % You can resize to fit another AOGrid object with a different
+            % size.  The current object will be resized to be able to
+            % contain it, assuming they are aligned.  
+            % sz = obj.resize(obj2);
+            
+            useGPU = obj.useGPU; % Remember if it is a GPU object.
             
             switch length(varargin)
                 case 0
@@ -235,7 +241,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     if(isscalar(arg))
                         obj.grid_ = zeros([1 1]*arg);
                     else
-                        obj.grid_ = zeros(arg(1:2));
+                        if(isa(arg,'AOGrid'))
+                            obj.grid_ = zeros(ceil(arg.extent./obj.spacing));
+                        else
+                            obj.grid_ = zeros(arg(1:2));
+                        end
                     end
                     
                     obj.AXIS_PIXEL = AOGrid.middlePixel(size(obj.grid_));
@@ -251,6 +261,9 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             sz = size(obj);
             obj.fftgrid_ = [];
+            if(useGPU)
+                obj.gpuify(true); % Return data to GPU if appropriate.
+            end
         end
         
         function o = origin(obj,varargin)
@@ -280,7 +293,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % AOGRID.downsample(DEMAG)
             % Decrease the sampling and size of an AOGrid.
             
-            G.grid(downsampleCCD(G.grid,DEMAG,DEMAG)/DEMAG^2);
+            G.grid(downsampleCCD(G.grid_,DEMAG,DEMAG)/DEMAG^2);
             G.spacing(G.spacing*DEMAG);
         end
         
