@@ -125,11 +125,30 @@ classdef AOAtmo2 < AOAtmo
             end
         end
     
-        function A = gpuify(A)
-            for n=1:A.nLayers
-                A.layers{n}.screen.gpuify;
-                A.layers{n}.shadow.gpuify;
+        %         function A = gpuify(A)
+        %             for n=1:A.nLayers
+        %                 A.layers{n}.screen.gpuify;
+        %                 A.layers{n}.shadow.gpuify;
+        %             end
+        %         end
+        
+        function A = gpuify(A,useGPU)
+            if(nargin<2)
+                useGPU = true;
             end
-        end        
+            
+            for n=1:A.nLayers
+                A.layers{n}.screen.gpuify(useGPU);
+                A.layers{n}.shadow.gpuify(useGPU);
+            end
+            
+            if(useGPU)
+                A.grid_ = gpuArray(A.grid_);
+            else
+                A.grid_ = gather(A.grid_);
+            end
+        end
+
+    
     end
 end
