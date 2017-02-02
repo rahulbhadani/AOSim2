@@ -546,6 +546,13 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             DEFAULT = (g.FFTSize==0);
             g.FFTSize(DEFAULT) = SZ(DEFAULT);
             % there should no longer be any zeros in FFTSize.
+
+            % FFTSize is smaller than the actual grid. 
+            if(sum(g.size > g.FFTSize)>0)
+                g.FFTSize = [1 1]*max(g.size);
+            end
+            
+            
         end
         
         function fgrid = fft(g,FFTSize)
@@ -1506,8 +1513,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         function yesno = useGPU(G)
             yesno = isa(G.grid_,'gpuArray');
         end
-        
-        
+
+        function F = conj(F)
+            F.grid_ = conj(F.grid_);
+        end
+
     end % of methods
     
     %% static methods
