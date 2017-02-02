@@ -71,6 +71,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         Ny_ = nan;
     end
     
+    % Static (GLOBAL) Constants
+    properties(Constant=true, SetAccess = 'private')
+        policy = struct('useGPU',false);
+    end
+    
     %% Methods
     methods
         %% Constructors
