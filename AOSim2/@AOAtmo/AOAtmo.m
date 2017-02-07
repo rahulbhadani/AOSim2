@@ -132,31 +132,23 @@ classdef AOAtmo < AOScreen
         end
         
         function R = geomDistances(ATMO,X,Y,z) % Distances from the BEACON.
-            %R = geomDistances(ATMO,X,Y,z) % Distances from the BEACON.
+            % R = geomDistances(ATMO,X,Y,z) 
+            % Compute distances from the BEACON.
+            
             if(nargin<4)
                 z = 0;
             end
-            % if(nargin<3)
-            % error('not enough input coordinates.');
-            % end
             
             if(isempty(ATMO.BEACON))
                 fprintf('The BEACON is undefined. Using FLAT wavefront.');
             end
             
-            Rmachine = 1e-10/eps; % max distance with Angstrom accuracy and machine resolution.
-            
-            dz = abs(z-ATMO.BEACON(3));
             if(isa(X,'AOGrid'))
                 [X,Y] = X.COORDS;
             end
             
-            dX2 = (X-ATMO.BEACON(1)).^2+(Y-ATMO.BEACON(2)).^2;
-            if(abs(dz)<Rmachine) % near machine distances
-                R = sqrt(dX2 + dz^2)-dz; % remove the main part.
-            else % far machine distances.
-                R = dX2/2/abs(dz);
-            end
+            dz = abs(z-ATMO.BEACON(3));
+            R = AOField.dsphere(dz,X-ATMO.BEACON(1),Y-ATMO.BEACON(2));
         end
         
         function [X,Y] = scaleCone(ATMO,X,Y,z,znew,SOURCE) % Shrink to the SOURCE (defaults to BEACON).
