@@ -223,8 +223,7 @@ classdef AOAtmo < AOScreen
                         if(ATMO.layers{n}.screen.touched)
                             ATMO.layers{n}.screen.make;
                         end
-                        opl_ = interpGrid(ATMO.layers{n}.screen,...
-                            XLayer-W(2)*t,YLayer-W(1)*t);
+                        opl_ = interpGrid(ATMO.layers{n}.screen,XLayer,YLayer);
                         opl_(isnan(opl_)) = 0;
                         opl = opl + opl_;
                     end
