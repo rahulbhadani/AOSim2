@@ -1622,6 +1622,52 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             M = bsxfun(@times,M,V);
         end
+        
+        function S = dsphere(R,X,Y,N)
+            % S = dsphere(R,X,Y,[N])
+            % 
+            % S = sqrt(R.^2 + X.^2 + Y.^2) - R;
+            % This takes care of the sqrt branch and ensures that the
+            % smallest changes in S are at least N(100) times the machine eps.
+            %
+            % I assume that R is a constant, X and Y are arrays.
+            
+            if(nargin<4)
+                N = 100;
+            end
+            
+            signum = sign(R); % Determines branch.
+            R = abs(R);
+            
+            sample = gather(X(1)); % in case it is a GPU variable.
+            machine_eps = eps(class(sample));
+            
+            if(dims(X)>1)
+                T = gather(X(1:2,1:2));
+                dX = max(abs(X(1,2)-X(1,1)),abs(X(2,1)-X(1,1)));
+            else
+                T = gather(X(1:2));
+                dX = abs(X(2)-X(1));
+            end
+            
+            if(dims(Y)>1)
+                T = gather(Y(1:2,1:2));
+                dY = max(abs(T(1,2)-T(1,1)),abs(T(2,1)-T(1,1)));
+            else
+                T = gather(Y(1:2));
+                dY = abs(T(2)-T(1));
+            end
+
+            delta = max(dX,dY);
+
+            if(delta^2 > 2*N*R*machine_eps)
+                %fprintf('Pythagoras (%d).\n',signum);
+                S = signum*(sqrt(R.^2 + X.^2 + Y.^2) - R);
+            else
+                %fprintf('Taylor (%d).\n',signum);
+                S = signum*(X.^2+Y.^2)./R/2;
+            end
+        end
     end % static methods
 end % of classdef
 
