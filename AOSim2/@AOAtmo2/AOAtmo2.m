@@ -71,6 +71,18 @@ classdef AOAtmo2 < AOAtmo
             end
         end
         
+       function ATMO = zero(ATMO)
+            % ZERO: Set all grids of an AOAtmo2 to zero.
+            
+            for n=1:ATMO.nLayers
+                ATMO.layers{n}.screen.zero;
+                ATMO.layers{n}.shadow.zero;
+            end
+            
+            ATMO.grid_(:) = 0;
+            ATMO.fftgrid_ = [];
+        end        
+        
         function g = grid(ATMO,nugrid)
             % g = grid(ATMO,nugrid)
             if(ATMO.nLayers == 0)
@@ -78,16 +90,20 @@ classdef AOAtmo2 < AOAtmo
                 return;
             end
             
-            if(ATMO.touched)
-                ATMO.make;
-            end
-            
             [X,Y] = COORDS(ATMO);
             g = ATMO.OPL(X,Y,ATMO.z);
             ATMO.grid_ = g;
         end
+
+        function A = sumOPL(A)
+            % A = A.sumOPL()
+            % Sum all of the screens from the BEACON.
+            
+            [X,Y] = A.COORDS;
+            A.grid(A.OPL_(X,Y,A.z,A.BEACON));
+        end
         
-        % path integration functions
+        %% path integration functions
         function opl = OPL_(ATMO,X,Y,z,BEACON)
             % opl = OPL_(ATMO,X,Y,z,BEACON)
             opl = zeros(size(X));
@@ -108,20 +124,19 @@ classdef AOAtmo2 < AOAtmo
                         if(ATMO.layers{n}.screen.touched)
                             ATMO.layers{n}.screen.make;
                         end
-                        opl_ = interpGrid(ATMO.layers{n}.screen,XLayer-W(2)*t,YLayer-W(1)*t);
+                        opl_ = interpGrid(ATMO.layers{n}.screen,XLayer,YLayer);
                         opl_(isnan(opl_)) = 0;
                         opl = opl + opl_;
-                        opl_ = interpGrid(ATMO.layers{n}.shadow,XLayer-W(2)*t,YLayer-W(1)*t);
+                        opl_ = interpGrid(ATMO.layers{n}.shadow,XLayer,YLayer);
                         opl_(isnan(opl_)) = 0;
                         opl = opl + opl_;
-                        
                     end
                 end
             end
             %fprintf('\n');
             
             if(ATMO.GEOMETRY)
-                opl = opl + geomDistances(ATMO,X,Y,z);
+                opl = opl + ATMO.geomDistances(X,Y,z);
             end
         end
     
@@ -132,6 +147,37 @@ classdef AOAtmo2 < AOAtmo
         %             end
         %         end
         
+        
+        %%
+        function A = addGaussian(A,CENTER,amp,width,whichOnes)
+            % AOAtmo2 = AOAtmo2.addGaussian(CENTER,amp,width,[whichOnes])
+            % Add a Gaussian bump to each screen.
+            % whichOnes is a list of bools saying whether to affect
+            % [screen,shadow].
+            % i.e. whichOnes = [true,false]; means add to screen but not to
+            % shadow.
+            % The default is whichOnes = [true,false].
+            
+            if(nargin<5)
+                whichOnes = [true,false];
+            end
+            
+            if(length(whichOnes) < 2)
+                whichOnes(2) = ~whichOnes(1);
+            end
+            
+            for n=1:A.nLayers
+                if(whichOnes(1))
+                   A.layers{n}.screen.addGaussian(CENTER,amp,width);
+                end
+                
+                if(whichOnes(2))
+                   A.layers{n}.shadow.addGaussian(CENTER,amp,width);
+                end
+            end
+            %touch(A);
+        end        
+                
         function A = gpuify(A,useGPU)
             if(nargin<2)
                 useGPU = true;
@@ -148,7 +194,5 @@ classdef AOAtmo2 < AOAtmo
                 A.grid_ = gather(A.grid_);
             end
         end
-
-    
     end
 end
