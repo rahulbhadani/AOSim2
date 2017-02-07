@@ -45,6 +45,7 @@ classdef AOScreen < AOGrid
         VON_KARMAN      = 3; % Kolmogorov with an outer scale and an inner scale.
         MODIFIED_ATMO   = 4; % VON_KARMAN with the "Hill Bump."
         HILL_MODEL      = 4; % An alias for MODIFIED_ATMO.
+        DISABLED        = 5; % Don't add any turbulence.  (For other physics problems.)
 	end
     
 	%% Methods
@@ -347,17 +348,8 @@ classdef AOScreen < AOGrid
             FL = 1/DIOPTERS;
             
             [X,Y] = S.COORDS();
-            R2 = X.^2+Y.^2;
-            
-            if(FL/R2(1)<1e4)
-                if(FL>0)
-                    S + (FL-sqrt(max(0,FL^2-R2)));
-                else
-                    S + (FL+sqrt(max(0,FL^2-R2)));
-                end 
-            else % Use paraxial approximation
-                S + R2/FL;
-            end
+
+            S + S.dsphere(FL,X,Y);
             
             touch(S);
         end
