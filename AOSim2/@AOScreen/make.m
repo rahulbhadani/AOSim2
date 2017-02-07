@@ -25,6 +25,25 @@ function PS = make(PS,L0,fixLF)
 
 % Start with the envelope, the random part is common to all models.
 
+% This effectively turns off the automatic machinery of turbulence screens.
+% It actually just short-circuits the "touch" mechanism.  You can still
+% "manually" use turbulence screens.  
+% If you want to do that, set 
+% PS.TURBULENCE_MODEL = AOScreen.DISABLED;
+% during normal use, but before calling PS.make, do this...
+%
+% PS.TURBULENCE_MODEL = AOScreen.VON_KARMAN;
+% PS.make();
+% PS.TURBULENCE_MODEL = AOScreen.DISABLED;
+%
+% Now you will have a phase screen that doesn't respond to touches.  This
+% is useful for shadow screen models.
+
+if(PS.TURBULENCE_MODEL == AOScreen.DISABLED)
+    PS.touched = false;
+    return;
+end
+
 if(nargin>1)
    fprintf('WARNING: Setting the outer scale and fixLF flag in the make args is deprecated.\n');
    fprintf('WARNING: Set these params in the AOScreen object first and then call make.\n');
