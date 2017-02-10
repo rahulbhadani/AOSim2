@@ -44,7 +44,10 @@ function F = propagate2(F,Z,MaxTheta)
   PROPAGATOR = exp(-1i*Z*F.dsphere(F.k,K1,K2)); 
   
   if(isempty(F.cache.LPF))
-      F.cache.LPF = (abs(K1)<Kcutoff).*(abs(K2)<Kcutoff);
+      KR2 = K1.^2 + K2.^2;
+      %F.cache.LPF = (abs(K1)<Kcutoff).*(abs(K2)<Kcutoff);
+      %F.cache.LPF = exp(-((K1.^2+K2.^2)/Kcutoff^2).^(4/2)); % Super Gaussian.
+      F.cache.LPF = exp(-((KR2)/Kcutoff^2).^(4/2)); % Super Gaussian.
   end
 
   PROPAGATOR = PROPAGATOR .* F.cache.LPF;
