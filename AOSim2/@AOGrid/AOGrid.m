@@ -363,7 +363,24 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             s = obj.spacing_;
         end
         
-        function D = extent(obj)
+        function D = extent(obj,sz)
+            % D = obj.extent(new_extent)
+            % No argument returns the spatial extent of the grid.
+            % If the argument is a scalar, the object will be resized to
+            % contain the new_extent.  
+            % If the argument is an AOGrid, the new extent is changed to
+            % contain the object.
+            
+            if(nargin>1)
+                if(isscalar(sz))
+                    obj.resize(ceil(sz./obj.spacing));
+                else
+                    if(isa(sz,'AOGrid'))
+                        obj.resize(ceil(sz.extent./obj.spacing));
+                    end
+                end
+            end
+                        
             D = size(obj.grid_) .* obj.spacing_;
         end
         
@@ -1240,10 +1257,10 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % Add Gaussian random complex values to grid.
             
             if(nargin<2)
-                scale = 1;
+                sigma = 1;
             end
             
-            G + (scale/sqrt(2))*(randn(G.size)+1i*randn(G.size));
+            G + (sigma/sqrt(2))*(randn(G.size)+1i*randn(G.size));
         end
         
         function S = addGaussian(S,CENTER,amp,width)
@@ -1533,6 +1550,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
 
         function F = clearCache(F)
             F.fftgrid_ = [];
+            F.FFTSize = 0;
+            
             F.cache.LPF = [];
             F.cache.Propagators = {};
         end
