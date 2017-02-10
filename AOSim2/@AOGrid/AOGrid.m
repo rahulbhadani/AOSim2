@@ -275,7 +275,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             switch length(varargin)
                 case 0
                 case 1
-                    arg = varargin{1};
+                    arg = ceil(varargin{1});
                     if(isscalar(arg))
                         obj.origin_ = [1 1]*arg;
                     else
@@ -284,7 +284,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     end
                     
                 case 2
-                    obj.origin_ = [varargin{1} varargin{2}];
+                    obj.origin_ = ceil([varargin{1} varargin{2}]);
                     obj.fftgrid_ = [];
                     
                 otherwise
@@ -1246,6 +1246,14 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             G + (scale/sqrt(2))*(randn(G.size)+1i*randn(G.size));
         end
         
+        function S = addGaussian(S,CENTER,amp,width)
+            % S = addGaussian(S,CENTER,amp,width)
+            [X,Y] = S.COORDS();
+            S + amp*exp(-((X-CENTER(1)).^2 + (Y-CENTER(2)).^2)/width^2);
+            touch(S);
+        end
+
+        
         %% Overloaded operators.
         function a = plus(a,b)
             % a = plus(a,b)
@@ -1523,6 +1531,12 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             F.grid_ = conj(F.grid_);
         end
 
+        function F = clearCache(F)
+            F.fftgrid_ = [];
+            F.cache.LPF = [];
+            F.cache.Propagators = {};
+        end
+        
     end % of methods
     
     %% static methods
