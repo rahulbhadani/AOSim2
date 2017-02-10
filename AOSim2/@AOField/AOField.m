@@ -32,10 +32,14 @@ classdef AOField < AOGrid
         PROPAGATOR = [];  % Cached propagator.
         lastLambda = 0;
         lastDistance = 0;
-	end
-	
+    end
+    
+    properties(GetAccess = 'public', SetAccess = 'protected')
+        direction = -1; % initial propagation direction is toward -z.
+    end
+    
 	% Private
-	properties(Access='private')
+	properties(Access='private' )
 	end
 	
 	%% Methods
@@ -235,6 +239,32 @@ classdef AOField < AOGrid
             pixelArea = fieldArea/numPixels;
             
             F.grid_ = F.grid_ * bandIntFlux * pixelArea;
+        end
+        
+        function F = setDirection(F,direction)
+            % F = setDirection(F,direction)
+            % Set the propagation direction.
+            % Propagation direction is sign(direction).
+            % If direction==0, reverse the direction.
+            
+            if(sign(direction) == sign(F.direction)) % Already going that way.
+                if(F.verbosity>0)
+                    fprintf('WARNING: AOField.setDirection set to the current direction (NOOP).');
+                end
+
+                return;
+            end
+            
+            if(direction==0)
+                direction = -F.direction;
+            else
+                F.direction = sign(direction);
+            end
+            
+            
+            F.PROPAGATOR = [];  % Need to compute a new propagator.  
+            % (TODO: May be okay to just conjugate.)
+            
         end
         
         function Rf = FresnelScale(F,RANGE,LAMBDA)
