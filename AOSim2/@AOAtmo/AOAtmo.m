@@ -355,12 +355,39 @@ classdef AOAtmo < AOScreen
         
         function CN2 = listCn2(ATMO)
             % CN2 = listCn2(ATMO)
-            CN2 = zeros(ATMO.nLayers);
+
+            CN2 = zeros(ATMO.nLayers,1);
+            
             for n=1:ATMO.nLayers
                 CN2(n) = ATMO.layers{n}.screen.Cn2;
             end
         end
+        
+        function FRIED = listFried(ATMO)
+            % r0_list = ATMO.listFried()
+            % List the Fried lengths for each phase screen.
+            % Note that this uses whatever the lambdaRef value is for each
+            % screen.
+            
+            FRIED = zeros(ATMO.nLayers,1);
+            
+            for n=1:ATMO.nLayers
+                FRIED(n) = ATMO.layers{n}.screen.r0;
+            end
+        end
 
+        function LAMBDAS = listLambdaRefs(ATMO)
+            % LAMBDAS = ATMO.listLambdaRefs()
+            % List the lambdaRef values for each phase screen.
+            
+            LAMBDAS = zeros(ATMO.nLayers,1);
+            
+            for n=1:ATMO.nLayers
+                LAMBDAS(n) = ATMO.layers{n}.screen.lambdaRef;
+            end
+        end
+
+        
         function ATMO = listLayers(ATMO)
             % ATMO.listLayers()
             % Print out info about the ATMO.
@@ -379,6 +406,24 @@ classdef AOAtmo < AOScreen
             fprintf('The total Fried Scale for a star would be %.3f m.\n',ATMO.totalFriedScale);
         end
         
+        %%
+        function [SPOT,THETAS] = scatteringDisk(ATMO,zstart,zend)
+            % [SPOT,THETAS] = ATMO.scatteringDisk(zstart,zend)
+            % Estimate the size of the scattering disk (just from scattering).
+            % Note that the scattering is not reversable (try it).
+            
+            ZSCREENS = ATMO.listHeights;
+            KEEP = isBetween(ZSCREENS,zstart,zend);
+            
+            FRIED = ATMO.listFried;
+            LAMBDAS = ATMO.listLambdaRefs;
+            RANGES = abs(zend - ZSCREENS);
+            
+            THETAS = LAMBDAS ./ FRIED;
+            SPOT = norm(KEEP .* THETAS .* RANGES);
+        end
+        
+        %%
         function [xoffset, yoffset] = tracerays(ATMO, WFS, OBJECTZ, OBJECTD, SAMPLES)  % radians
             OBJECTR = OBJECTD / 2.0;
             BEACONR = linspace(-OBJECTR, OBJECTR, SAMPLES);
