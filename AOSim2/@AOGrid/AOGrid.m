@@ -455,6 +455,13 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             G.grid(exp(1i*angle(G.grid)));
         end
         
+        %%
+        function G = transpose(G)
+            % Transpose the grid.  G.transpose();
+           
+            G.grid(G.grid_.'); % No complex conjugate, just flip.
+        end
+        
         %% This is not really useful anymore.  Center is the default alignment.
         function A = center(A)
             
