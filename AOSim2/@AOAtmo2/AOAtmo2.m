@@ -177,7 +177,8 @@ classdef AOAtmo2 < AOAtmo
             end
             %touch(A);
         end        
-                
+
+        %%
         function A = gpuify(A,useGPU)
             if(nargin<2)
                 useGPU = true;
