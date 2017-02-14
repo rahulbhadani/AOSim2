@@ -46,7 +46,9 @@ classdef AOAtmo2 < AOAtmo
             ATMO.layers{end+1} = L;
             ATMO.touch;
             
-            fprintf('AOAtmo2 now has %d layers.\n',length(ATMO.layers));
+            if(ATMO.verbosity>0)
+                fprintf('AOAtmo now has %d layers.\n',length(ATMO.layers));
+            end
         end
         
         function ATMO = clearShadows(ATMO)
