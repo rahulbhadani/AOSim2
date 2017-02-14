@@ -74,7 +74,7 @@ switch PS.TURBULENCE_MODEL
     case AOScreen.VON_KARMAN
         PSD = 0.033 * PS.Cn2 .* (kappa0^2+KR2).^(-PS.ALPHA/2); % Outer scale
         PSD = PSD .* exp(-KR2./kappam^2); % Inner scale
-                
+
     case AOScreen.MODIFIED_ATMO
         kappal = 3.3/PS.inner_scale;
         K = sqrt(KR2);
@@ -88,6 +88,7 @@ switch PS.TURBULENCE_MODEL
 end
 
 PSD(PS.FAXIS_PIXEL(1),PS.FAXIS_PIXEL(2)) = 0;  % Kill DC for zero mean.
+PSD = PSD * PS.thickness* 1.25; % The 1.25 is a fudge factor.  I'll have to figure that out later.  
 
 PS.zero.addNoise(1);
 
