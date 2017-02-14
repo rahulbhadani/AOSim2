@@ -25,9 +25,7 @@ classdef AOScreen < AOGrid
         TURBULENCE_MODEL = AOScreen.VON_KARMAN;
         ALPHA = 11/3;      % This is the PSD exponent.  Change it for non-standard turbulence.
         
-        LOW_FREQ_FIX = 0;  % Flag if we want to compensate for the Fourier synthesis error.
-        %fixLF = false; % This is to patch the FFT generation using fractal scaling.
-
+        LOW_FREQ_FIX = false;  % Flag if we want to compensate for the Fourier synthesis error.
     end
 	
 	% Private

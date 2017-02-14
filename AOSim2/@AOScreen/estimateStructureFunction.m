@@ -9,9 +9,10 @@ function [SF,x] = estimateStructureFunction(S,NN,dim)
 % Plot loglog(x,SF) to see the result.  The Fried length, r0, is where
 % SF=6.88.
 
-if(nargin<2)
+if(nargin<3)
     dim = 1;
 end
+
 if(dim~=2)
     dim = 1;
 end
