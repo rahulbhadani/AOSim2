@@ -23,7 +23,7 @@ You really only need the AOSim2 subdir and AOSim2/utils to make this go.  The re
 I will eventually provide a more complete manual and tutorial.  I don't include a GUI because I am a strong believer in 
 the power of a consise descriptive language over gratuitous pictograms. (http://catb.org/esr/writings/unix-koans/gui-programmer.html)
 
-I am developing this as my own personal tool as my needs evolve.  I have used it to model many interesting physical situations that would 
+I am developing this as my own personal toolbox as my needs change.  I have used it to model many interesting physical situations that would 
 have been very difficult otherwise.  I have also used it to explore physical situations that have led to important theoretical insights.
 
 I also recently have looked at what I can do with AOSim2 in comparison with commercial software from dedicated wave optics modeling 
@@ -37,7 +37,7 @@ If you want to contribute code, it would be welcomed.  I do insist that the spir
 what they would have access to in a physical context.  For example, an AOField have a wavelength, but not an AOAperture, unless it referred 
 to a stop/pass-band.  Code written from a physics perspective should be fine.
 
-I am adding things as I work on projects.  I recently added support for GPUs, in the most non-invasive way.  As always, it helps to know 
+I'm adding things as I work on projects.  I recently added support for GPUs, in the most non-invasive way.  As always, it helps to know 
 what you're doing, but if you create an AOField F, just call F.useGPU(true) to get started.  All AOGrids and their children have the support.
 
 I'm pretty much making a living off using this software at this point, which is remarkable.  I would be happy to see it do the same for 
