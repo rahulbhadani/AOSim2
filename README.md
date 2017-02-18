@@ -40,10 +40,10 @@ to a stop/pass-band.  Code written from a physics perspective should be fine.
 I am adding things as I work on projects.  I recently added support for GPUs, in the most non-invasive way.  As always, it helps to know 
 what you're doing, but if you create an AOField F, just call F.useGPU(true) to get started.  All AOGrids and their children have the support.
 
-I think I could pretty much make a living off using this software at this point, which is remarkable.  I would be happy to see it do the same for 
-others, use the features of github to start discussions or ask questions.
+I'm pretty much making a living off using this software at this point, which is remarkable.  I would be happy to see it do the same for 
+others.  Use the features of github to start discussions or ask questions.
 
-I am currently working in the branch jlc1.4.
+I'm currently working in the branch jlc1.4.
 
-Johanan (John) Codona
+Johanan (John) Codona<br>
 Tucson, AZ.
