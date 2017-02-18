@@ -1,4 +1,6 @@
+<H1>
 AOSim2: MATLAB-based paraxial wave optics, random media, and Adaptive Optics (AO) simulation.
+</H1>
 
 Most of this code is the property of Johanan L. Codona, Ph.D.
 
@@ -8,13 +10,13 @@ See the license file for more details.
 
 To install, download or clone the AOSim2 repository.  It will make a subdirectory called AOSim2 with another subdir called AOSim2 (the first of many IQ tests).
 
-Then, in MATLAB, add the following paths:
+Then, in MATLAB, add the following paths:<br>
 {unpack_dir}/AOSim2/AOSim2	    % The AOSim2 classes.  <br>
-{unpack_dir}/AOSim2/AOSim2/utils    % The AOSim2 utility functions.
-{unpack_dir}/AOSim2/AOSim2/demos    % Optional demos, mostly examples.
-{unpack_dir}/AOSim2/AOSim2/data     % Don't include in path, just know that you might need things in here for demos.
-{unpack_dir}/AOSim2/contrib	    % Alex Rodack's tutorial files and things made by users.  (Hopefully more in the future.)
-{unpack_dir}/AOSim2/examples	    % Contributed AOSim2 examples.  I will merge my demos files in here eventually.
+{unpack_dir}/AOSim2/AOSim2/utils    % The AOSim2 utility functions.<br>
+{unpack_dir}/AOSim2/AOSim2/demos    % Optional demos, mostly examples.<br>
+{unpack_dir}/AOSim2/AOSim2/data     % Don't include in path, just know that you might need things in here for demos.<br>
+{unpack_dir}/AOSim2/contrib	    % Alex Rodack's tutorial files and things made by users.  (Hopefully more in the future.)<br>
+{unpack_dir}/AOSim2/examples	    % Contributed AOSim2 examples.  I will merge my demos files in here eventually.<br>
 
 You really only need the AOSim2 subdir and AOSim2/utils to make this go.  The rest is for training.
 
