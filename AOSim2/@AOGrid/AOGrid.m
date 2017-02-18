@@ -1307,11 +1307,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function a = uminus(a)
-            % a = uminus(a)
-            % Negate an AOGrid.
+            % G = G.uminus;
+            % Unary minus: Negate an AOGrid.
             
             a.grid_ = -a.grid_;
-            touch(a);
+            %touch(a);
         end
         
         function a = minus(a,b)
@@ -1334,7 +1334,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     [X,Y] = a.COORDS;
                     bg = b.interpGrid(X,Y);
                     bg(isnan(bg)) = 0;
-                    a.grid_ = a.grid_ + bg;
+                    a.grid_ = a.grid_ - bg;
                     touch(a);
                 end
             end
@@ -1529,6 +1529,69 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             N = norm(G.grid_);
         end
         
+        function grid = LPF(S,scale)
+            % grid = GRID.LPF(S)
+            % This function returns a Gaussian smoothed version
+            % of the GRID's displacement grid. 
+            % The GRID itself is not altered.
+            % This was based on AOScreen's LPF. 
+            % It will be used here for resampling AOGrids.
+        
+            N = round(2*scale/S.dx);
+            N = N + mod(N+1,2);
+            
+            filter1d = chebwin(N);
+            
+            FILTER = filter1d*filter1d';
+            FILTER = FILTER / sum(FILTER(:));
+            if(S.useGPU)
+                FILTER = gpuArray(FILTER);
+            end
+            grid = conv2(S.grid_,FILTER,'same'); 
+        end
+        
+        function G = resample(G,FACTOR)
+            % G = G.resample(FACTOR)
+            % Use Fourier interpolation to add more pixels in a grid.
+            %
+            % FACTOR is expected to be > 1.0.
+            % Fractional FACTORs may not be precise, but will be 
+            % at least the requested amount.  Check the new dx.
+            % The extent of the grid will be unchanged.
+            
+            
+            if(FACTOR == 1.0)
+                return;
+            end
+            
+            if(FACTOR<1.0)
+                fprintf('WARNING: downsampling is not supported (yet).\n');
+                return;
+            end
+            
+            IS_REAL = isreal(G.grid_);
+            
+            G.FFTSize = [0 0];
+            G.fftgrid_ = [];
+            
+            gg = fftshift(fft2(G.grid));
+            
+            PADDING = ceil(G.size * (FACTOR - 1.0)/2);
+            gg = padarray(gg,PADDING,'both');
+            gg = ifft2(ifftshift(gg));
+            
+            SCALE = numel(gg)/G.numel;
+            
+            G.spacing(G.extent./size(gg));
+            
+            if(IS_REAL)
+                G.grid(SCALE*real(gg));
+            else
+                G.grid(SCALE*gg);
+            end
+        end
+        
+        
         %% GPU Methods
         
         function G = gpuify(G,useGPU)
@@ -1563,37 +1626,35 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             F.cache.Propagators = {};
         end
         
+        
+        
     end % of methods
     
     %% static methods
     methods(Static=true)
         
         function yn = differ(mat1,mat2)
+            % yn = differ(mat1,mat2)
+            % AOGrid static method.
             % This is to work around an apparent bug in MATLAB.
             
-            yn = prod(double(mat1(:)==mat2(:)))==0;
-            
-            %             if(prod(double(mat1(:)==mat2(:))))
-            %                 yn = false;
-            %             else
-            %                 yn = true;
-            %             end
-            
+            yn = prod(double(mat1(:)==mat2(:)))==0;            
         end
-        
-        function copy = copyobj(obj)
-            % Create a shallow copy of the calling object.
-            copy = eval(class(obj));
-            meta = eval(['?',class(obj)]);
-            for p = 1: size(meta.Properties,1)
-                pname = meta.Properties{p}.Name;
-                try
-                    eval(['copy.',pname,' = obj.',pname,';']);
-                catch this
-                    fprintf(['\nCould not copy ',pname,' ',this ,'.\n']);
-                end
-            end
-        end
+
+%         % This was from before I made Copyable the base of AOGrid.
+%         function copy = copyobj(obj)
+%             % Create a shallow copy of the calling object.
+%             copy = eval(class(obj));
+%             meta = eval(['?',class(obj)]);
+%             for p = 1: size(meta.Properties,1)
+%                 pname = meta.Properties{p}.Name;
+%                 try
+%                     eval(['copy.',pname,' = obj.',pname,';']);
+%                 catch this
+%                     fprintf(['\nCould not copy ',pname,' ',this ,'.\n']);
+%                 end
+%             end
+%         end
         
         function org = middlePixel(n)
             % STATIC: org = AOGrid.middlePixel(n)
