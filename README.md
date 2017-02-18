@@ -9,7 +9,7 @@ See the license file for more details.
 To install, download or clone the AOSim2 repository.  It will make a subdirectory called AOSim2 with another subdir called AOSim2 (the first of many IQ tests).
 
 Then, in MATLAB, add the following paths:
-{unpack_dir}/AOSim2/AOSim2	    % The AOSim2 classes.
+{unpack_dir}/AOSim2/AOSim2	    % The AOSim2 classes.  <br>
 {unpack_dir}/AOSim2/AOSim2/utils    % The AOSim2 utility functions.
 {unpack_dir}/AOSim2/AOSim2/demos    % Optional demos, mostly examples.
 {unpack_dir}/AOSim2/AOSim2/data     % Don't include in path, just know that you might need things in here for demos.
