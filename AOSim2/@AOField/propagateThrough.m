@@ -18,6 +18,14 @@ if(sign(FinalZ - F.z) ~= F.direction)
 end
 
 SCREENS = find(isBetween(Zlist,F.z,FinalZ));
+
+if(F.verbosity>5)
+    N1 = length(Zlist);
+    N2 = 3;
+    
+    fignum = gcf;
+end
+
 while(~isempty(SCREENS))
     [~,POS] = min(abs(Zlist(SCREENS)-F.z));
     ZnextIndex = SCREENS(POS);
@@ -49,9 +57,27 @@ while(~isempty(SCREENS))
     end
     
     F.z = F.z + F.direction * nudge;
+    if(F.verbosity>5)
+        figure(10);
+        
+        EXTENT = F.extent;
+        subplot(N1,N2,ZnextIndex + N1*0);
+        ATMO.layers{ZnextIndex}.screen.show;
+        setFoV(EXTENT(1));
+        
+        subplot(N1,N2,ZnextIndex + N1*1);
+        ATMO.layers{ZnextIndex}.shadow.show;
+        setFoV(EXTENT(1));
+        
+        subplot(N1,N2,ZnextIndex + N1*2);
+        F.plotI;
+        setFoV(EXTENT(1));
+    end
     
     SCREENS = find(isBetween(Zlist,F.z,FinalZ));
 end
+
+
 
 if(F.z ~= FinalZ)
     if(F.verbosity>0)
@@ -59,4 +85,10 @@ if(F.z ~= FinalZ)
             F.name,F.z,FinalZ,FinalZ-F.z);
     end
     F.propagate2(F.z-FinalZ);
+
+    if(F.verbosity>5)  
+        drawnow;
+        figure(fignum);
+    end
+
 end
