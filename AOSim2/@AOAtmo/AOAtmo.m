@@ -153,7 +153,9 @@ classdef AOAtmo < AOScreen
         end
         
         function [X,Y] = scaleCone(ATMO,X,Y,z,znew,SOURCE) % Shrink to the SOURCE (defaults to BEACON).
-            % [X,Y] = scaleCone(ATMO,X,Y,z,znew,SOURCE) % Shrink to the SOURCE (defaults to BEACON).
+            % [Xnew,Ynew] = scaleCone(ATMO,X,Y,z,znew,SOURCE) 
+            % Shrink the points [X Y z] to [Xnew Ynew znew] collapsing 
+            % a point at SOURCE (defaults to ATMO.BEACON).
             if(nargin<6)
                 SOURCE = ATMO.BEACON;
             end

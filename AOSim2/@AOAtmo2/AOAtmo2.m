@@ -24,8 +24,8 @@ classdef AOAtmo2 < AOAtmo
         end
         
         % Operations
-        function ATMO = addLayer(ATMO,screen,alt)
-            % ATMO = addLayer(ATMO,screen,alt)
+        function ATMO = addLayer(ATMO,screen,alt,MASK)
+            % ATMO = addLayer(ATMO,screen,alt,[MASK])
             n = length(ATMO.layers)+1;
             L = struct; % start building the layer.
             L.name = sprintf('Layer %d:%s',n,screen.name);
@@ -38,6 +38,11 @@ classdef AOAtmo2 < AOAtmo
             L.screen = screen;
             L.shadow = screen.copy;
             L.shadow.name = ['Shadow of ' L.screen.name];
+            if(nargin>3) % there is a mask
+                L.mask = MASK.copy;
+            else
+                L.mask = [];
+            end
             
             L.Wind = [0 0];
             
@@ -70,6 +75,7 @@ classdef AOAtmo2 < AOAtmo
             for n=1:ATMO.nLayers
                 ATMO.layers{n}.screen.Offset = ATMO.layers{n}.Wind*ATMO.time;
                 ATMO.layers{n}.shadow.Offset = ATMO.layers{n}.Wind*ATMO.time;
+                % Note that the mask does not move with the wind.
             end
         end
         
@@ -106,32 +112,42 @@ classdef AOAtmo2 < AOAtmo
         end
         
         %% path integration functions
-        function opl = OPL_(ATMO,X,Y,z,BEACON)
-            % opl = OPL_(ATMO,X,Y,z,BEACON)
+        function [opl,trans] = OPL_(ATMO,X,Y,z,BEACON)
+            % [opl,trans] = ATMO.OPL_(X,Y,z,BEACON)
+            
             opl = zeros(size(X));
+            
+            DO_TRANS = (nargout>1);
+            if(DO_TRANS)
+                trans = ones(size(X));
+            end
             
             if(nargin<5)
                 BEACON = ATMO.BEACON;
             end
-            
+
             % fprintf('DEBUG: OPL_ layers: ');
             for n=1:ATMO.nLayers
                 % fprintf('%d ',n);
                 if(~ATMO.layers{n}.ignore)
                     zLayer = ATMO.layers{n}.screen.altitude;
-                    W = ATMO.layers{n}.Wind;
-                    t = ATMO.time;
                     if(zLayer<=BEACON(3))
                         [XLayer,YLayer] = scaleCone(ATMO,X,Y,z,zLayer);
                         if(ATMO.layers{n}.screen.touched)
                             ATMO.layers{n}.screen.make;
                         end
-                        opl_ = interpGrid(ATMO.layers{n}.screen,XLayer,YLayer);
+                        opl_ = ATMO.layers{n}.screen.interpGrid(XLayer,YLayer);
                         opl_(isnan(opl_)) = 0;
                         opl = opl + opl_;
-                        opl_ = interpGrid(ATMO.layers{n}.shadow,XLayer,YLayer);
+                        opl_ = ATMO.layers{n}.shadow.interpGrid(XLayer,YLayer);
                         opl_(isnan(opl_)) = 0;
                         opl = opl + opl_;
+                        
+                        if(DO_TRANS && ~isempty(ATMO.layers{n}.mask))
+                            tx_ = ATMO.layers{n}.mask.interpGrid(XLayer,YLayer);
+                            tx_(isnan(tx_)) = 0; % Opaque outside mask bounds.
+                            trans = trans .* tx_;
+                        end
                     end
                 end
             end
@@ -141,14 +157,41 @@ classdef AOAtmo2 < AOAtmo
                 opl = opl + ATMO.geomDistances(X,Y,z);
             end
         end
-    
-        %         function A = gpuify(A)
-        %             for n=1:A.nLayers
-        %                 A.layers{n}.screen.gpuify;
-        %                 A.layers{n}.shadow.gpuify;
-        %             end
-        %         end
         
+        %%
+        function ATMO = listLayers(ATMO)
+            % ATMO.listLayers()
+            % Print out info about the ATMO.
+            
+            for n=1:ATMO.nLayers
+                fprintf('Layer %d: <%s> has a %dx%d phase screen with spacing %f m.\n',n,ATMO.layers{n}.screen.name,...
+                    ATMO.layers{n}.screen.size,ATMO.layers{n}.screen.dx);
+                fprintf('\theight = %f m\n',ATMO.layers{n}.screen.altitude);
+                fprintf('\tthickness = %f m\n',ATMO.layers{n}.screen.thickness);
+                fprintf('\tCn2 = %.2g (r0=%.3f for just this screen)\n',ATMO.layers{n}.screen.Cn2,ATMO.layers{n}.screen.r0);
+                fprintf('\tWind = [%.1f %.1f] m/s\n',ATMO.layers{n}.Wind)
+                fprintf('\tOffset=[%.3f %.3f] m\n',ATMO.layers{n}.screen.Offset);
+
+                if(~isempty(ATMO.layers{n}.shadow))
+                    fprintf('\tThere is a %dx%d shadow screen, with spacing %f\n',ATMO.layers{n}.shadow.size,ATMO.layers{n}.shadow.dx);
+                end
+                if(~isempty(ATMO.layers{n}.mask))
+                    fprintf('\tThere is a %dx%d mask, with spacing %f\n',ATMO.layers{n}.mask.size,ATMO.layers{n}.mask.dx);
+                end
+                
+                if(ATMO.layers{n}.screen.useGPU) 
+                    fprintf('\tThe screen uses the GPU.\n');
+                end
+                if(ATMO.layers{n}.shadow.useGPU) 
+                    fprintf('\tThe shadow screen uses the GPU.\n');
+                end
+                if(ATMO.layers{n}.mask.useGPU) 
+                    fprintf('\tThe layer mask uses the GPU.\n');
+                end
+            end
+            
+            fprintf('\tThe total Fried Scale for a star would be %.3f m.\n',ATMO.totalFriedScale);
+        end 
         
         %%
         function A = addGaussian(A,CENTER,amp,width,whichOnes)
