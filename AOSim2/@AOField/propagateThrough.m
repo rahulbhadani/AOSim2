@@ -39,7 +39,14 @@ while(~isempty(SCREENS))
     
     F*ATMO.layers{ZnextIndex}.screen; 
     if(isa(ATMO,'AOAtmo2'))
-        F*ATMO.layers{ZnextIndex}.shadow; % Fix WIND!!!
+        if(~isempty(F*ATMO.layers{ZnextIndex}.shadow))
+            F*ATMO.layers{ZnextIndex}.shadow; 
+        end
+        
+        if(~isempty(F*ATMO.layers{ZnextIndex}.mask))
+            F*ATMO.layers{ZnextIndex}.mask;
+        end
+        
         if(~isempty(ATMO.shadowUpdate))
             if(ATMO.shadowUpdate(ATMO,ZnextIndex,F))
                 error('Error updating AOAtmo2 layer shadow.');
