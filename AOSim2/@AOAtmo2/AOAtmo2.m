@@ -193,6 +193,21 @@ classdef AOAtmo2 < AOAtmo
             fprintf('\tThe total Fried Scale for a star would be %.3f m.\n',ATMO.totalFriedScale);
         end 
         
+        function ATMO = showTransmission(ATMO)
+            % Show the ray-traced transmission through the AOAtmo2.
+            
+            [x,y] = ATMO.coords;
+            [X,Y] = ATMO.COORDS;
+            
+            [OPL,TX] = ATMO.OPL_(X,Y,0);
+
+            imagesc(x,y,TX);sqar;
+            axis xy;
+            title(['Transmission of ' ATMO.name]);
+
+            %drawnow;
+        end
+        
         %%
         function A = addGaussian(A,CENTER,amp,width,whichOnes)
             % AOAtmo2 = AOAtmo2.addGaussian(CENTER,amp,width,[whichOnes])
