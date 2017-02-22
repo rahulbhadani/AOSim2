@@ -45,7 +45,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         % Single precision is the default.
         double_precision = false;  
         gpu = 0; % Support for NVidia GPUs.  Set this.gpu = gpuDevice(n) to enable.
-        cache = []; % General purpose cache.  It gets initialized as an empty struct.
+        cache = struct(); % General purpose cache.
+        flags = struct(); % General purpose place to set flags.
     end
     %     properties(GetAccess = 'protected', SetAccess = 'protected')
     properties(GetAccess = 'public', SetAccess = 'protected')
@@ -72,7 +73,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
     end
     
     % Static (GLOBAL) Constants
-    properties(Constant=true, SetAccess = 'private')
+    properties(Constant=true)
         policy = struct('useGPU',false);
     end
     
@@ -111,8 +112,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     end
                 end
             end
-            
-            obj.cache = struct;
             
             obj.center; % default to center-faced.
         end
