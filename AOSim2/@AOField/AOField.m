@@ -26,7 +26,7 @@ classdef AOField < AOGrid
 	
 	% Public properties
 	properties(Access='public')
-		lambda = AOField.HBAND;
+		lambda = AOField.HeNe_Laser;
 		z = 0;
         
         PROPAGATOR = [];  % Cached propagator.
