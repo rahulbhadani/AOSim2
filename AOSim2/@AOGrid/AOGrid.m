@@ -1132,12 +1132,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             g = G.grid;
             if(isreal(g))
-                % 				I = abs(g).^2;
-                
-                %minI = min(g(:));
-                %maxI = max(g(:));
-                
-                [x,y] = coords(G);
+                [x,y] = G.coords;
                 
                 imagesc(x,y,g);
                 axis square;
@@ -1156,7 +1151,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 if(minI/maxI > 0.99)
                     minI = 0;
                 end
-                
                 
                 I = (max(min(I,maxI),minI)-minI)/(maxI-minI);
                 % I should now be 0<I<1
