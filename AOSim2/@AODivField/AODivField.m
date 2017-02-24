@@ -170,6 +170,33 @@ classdef AODivField < AOField
                 daspect([1 1 1]);
             end
         end
+        
+        function [kx,ky] = kcoords(A)
+            % This computes the coordinates of fft2(fftgrid_).
+
+            A.checkFFTSize;
+            SZ = A.FFTSize; 
+            CEN = AOGrid.middlePixel(SZ);
+            A.FAXIS_PIXEL = CEN;
+            
+            dk = A.dk;
+            
+            kx = ((1:SZ(1))-CEN(1))*dk(1);
+            ky = ((1:SZ(2))-CEN(2))*dk(2);
+            if(~A.double_precision)
+                kx = single(kx);
+                ky = single(ky);
+            end
+        end
+
+        function val = dx(DF)
+            val = DF.spacing_(2)*DF.scalingFactor;
+        end
+
+        function val = dy(DF)
+            val = DF.spacing_(1)*DF.scalingFactor;
+        end
+
     end
     
     %% static methods

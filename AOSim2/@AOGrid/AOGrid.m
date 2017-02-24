@@ -44,6 +44,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         % For GPU performance I am going to take into account precision.  
         % Single precision is the default.
         double_precision = false;  
+        periodic = false;  % Does the grid end at the first cycle?
         gpu = 0; % Support for NVidia GPUs.  Set this.gpu = gpuDevice(n) to enable.
         cache = struct(); % General purpose cache.
         flags = struct(); % General purpose place to set flags.
@@ -335,7 +336,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         function val = dy(obj)
             val = obj.spacing_(1);
         end
-        
         
         function s = spacing(obj,varargin)
             % s = spacing(obj,varargin)
@@ -764,7 +764,15 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             g.checkFFTSize;
             
-            DK = 2*pi./(g.FFTSize .* g.spacing_);
+            DK = 2*pi./(g.FFTSize .* g.spacing);
+        end
+        
+        function DK = dkappa(g)
+            % AOGrid dkappa = AOGrid.dkappa()
+            % This returns the spatial frequency pixel sizes for the current grid.
+            % cf dk = AOGrid.dk();
+            
+            DK = 2*pi./g.extent;
         end
         
         function [kx,ky] = kcoords(A)
@@ -815,9 +823,14 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             A.fftgrid_ = [];
         end
         
-        function A = zeroNaNs(A)
-            % ZERONANS: Set bad values to zero.
-            A.grid_(isnan(A.grid_)) = 0;
+        function A = zeroNaNs(A,val)
+            % AOGrid.zeroNaNs([val]): Set bad values to zero.
+            
+            if(nargin<2)
+                val = 0;
+            end
+            
+            A.grid_(isnan(A.grid_)) = val;
             A.fftgrid_ = [];
         end
         
@@ -1103,6 +1116,22 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 GX = gpuArray(GX);
                 GY = gpuArray(GY);
             end
+            
+            BAD_X = [];
+            BAD_Y = [];
+            if(G.periodic)
+                L = G.extent;
+                DX = G.spacing;
+                LIMS = L - DX/2;
+                Xout = mod(Xout-GX(1),LIMS(1))+GX(1);
+                Yout = mod(Yout-GY(1),LIMS(2))+GY(1);
+            
+                BAD_X = find(~isBetween(Xout(1,:),min(GX(:,1)),max(GX(:,1))));
+                BAD_Y = find(~isBetween(Yout(:,1),min(GY(:,1)),max(GY(:,1))));
+            end
+            
+            % JLC Working here...
+            GRID = G.grid_;
             
             if(isempty(G.interpolate_method))
                 if(USE_GPU)
