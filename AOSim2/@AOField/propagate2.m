@@ -38,7 +38,7 @@ function F = propagate2(F,Z,MaxTheta)
   [K1,K2] = meshgrid(DK(1)*n1,DK(2)*n2);
   Knyquist = min(DK .* F.size / 2);
   
-  Kcutoff = min(0.85*Knyquist,F.k*MaxTheta);
+  Kcutoff = min(0.45*Knyquist,F.k*MaxTheta);
   
   % Note that this is corner-centered by construction.
   PROPAGATOR = exp(-1i*Z*F.dsphere(F.k,K1,K2)); 

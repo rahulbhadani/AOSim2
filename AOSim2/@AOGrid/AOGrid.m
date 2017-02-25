@@ -11,12 +11,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
     % The only exception to this is the pupil coordinates in AOAperture.
     %
     % Once you work with ij and xy long enough, you will want to scream.
-    %
-    % 20090407: JLCodona
-    % 20090415 JLCodona.  Added fft method and new fftgrid_ usage model.
-    % 20100514 JLCodona.  Added a coordinates caching scheme.
-    % 20141120 JLCodona.  Made the objects deep-copyable.
-    % Change comments are in the git log from now on.
     
     %% Properties
     properties(Constant=true, GetAccess='protected')
@@ -1117,8 +1111,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 GY = gpuArray(GY);
             end
             
-            BAD_X = [];
-            BAD_Y = [];
+            GRID = G.grid_;
+
             if(G.periodic)
                 L = G.extent;
                 DX = G.spacing;
@@ -1128,28 +1122,56 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
                 BAD_X = find(~isBetween(Xout(1,:),min(GX(:,1)),max(GX(:,1))));
                 BAD_Y = find(~isBetween(Yout(:,1),min(GY(:,1)),max(GY(:,1))));
-            end
+
+                % Make sure we are interpolating in the interior of the data.
+                if(~isempty(BAD_X))
+                    GRID(:,end+1) = GRID(:,1); % wrap one more x column.
+                    GX(:,end+1) = GX(:,end) + G.dx;
+                    GY(:,end+1) = GY(:,end);
+                end
+
+                if(~isempty(BAD_Y))
+                    GRID(end+1,:) = GRID(1,:); % wrap one more y row.
+                    GX(end+1,:) = GX(end,:);
+                    GY(end+1,:) = GY(end,:) + G.dy;
+                end
             
-            % JLC Working here...
-            GRID = G.grid_;
+                if(G.verbosity>2)
+                    defFig = gcf;
+                    figure(2);
+                    plot(Xout,Yout,'ko');sqar;
+                    plot(GX,GY,'r.','MarkerSize',1);sqar;
+                    hold on; plot(Xout,Yout,'ko','MarkerSize',3);sqar; hold off;
+                    drawnow;
+                    figure(defFig);
+                end
+            end
             
             if(isempty(G.interpolate_method))
                 if(USE_GPU)
-                    g = interp2(GX,GY,G.grid,Xout,Yout);
+                    % g = interp2(GX,GY,G.grid,Xout,Yout);
+                    g = interp2(GX,GY,GRID,Xout,Yout);
+                    % g = griddedInterpolant(GX,GY,GRID,Xout,Yout);
                 else
                     % gather is in case something goes wrong. That would be
                     % a bug.
-                    g = qinterp2(gather(GX),gather(GY),gather(G.grid),...
+                    %g = qinterp2(gather(GX),gather(GY),gather(G.grid),...
+                    %    gather(Xout),gather(Yout));
+                    g = qinterp2(gather(GX),gather(GY),gather(GRID),...
                         gather(Xout),gather(Yout));
                 end
             else
                 if(USE_GPU)
-                    g = interp2(GX,GY,G.grid,Xout,Yout);
+                    % g = interp2(GX,GY,G.grid,Xout,Yout);
+                    g = interp2(GX,GY,GRID,Xout,Yout);
+                    % g = griddedInterpolant(GX,GY,GRID,Xout,Yout);
                 else
                     % gather is in case something goes wrong. 
                     % That would be a bug.  At least this won't crash.
-                    g = interp2(gather(GX),gather(GY),gather(G.grid),...
-                        gather(Xout),gather(Yout),G.interpolate_method);
+                    %g = interp2(gather(GX),gather(GY),gather(G.grid),...
+                    %    gather(Xout),gather(Yout),G.interpolate_method);
+                    g = interp2(gather(GX),gather(GY),gather(GRID),gather(Xout),gather(Yout),G.interpolate_method);
+                    % g = griddedInterpolant(gather(GX),gather(GY),gather(GRID),gather(Xout),gather(Yout),G.interpolate_method);
                 end
             end
             % g(isnan(g)) = 0;
