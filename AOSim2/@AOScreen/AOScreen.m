@@ -339,15 +339,25 @@ classdef AOScreen < AOGrid
             % 'sphere', 'cylinder'
             % TODO: add cylinder.
             
-            if(nargin<2)
+            if(nargin<3)
                 lensType = 'sphere';
             end
             
-            FL = 1/DIOPTERS;
+            if(strncmpi(lensType,'sphere',3))
+                FL = 1/DIOPTERS;
+                
+                [X,Y] = S.COORDS();
+                
+                S + S.dsphere(FL,X,Y);
+            end
             
-            [X,Y] = S.COORDS();
-
-            S + S.dsphere(FL,X,Y);
+            if(strncmpi(lensType,'cylinder',3))
+                FL = 1./DIOPTERS;
+                
+                [X,Y] = S.COORDS();
+                
+                S + S.dsphere(FL,X,Y);
+            end
             
             touch(S);
         end

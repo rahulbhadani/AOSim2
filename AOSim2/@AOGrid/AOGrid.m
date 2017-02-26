@@ -790,10 +790,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             kx = ((1:SZ(1))-CEN(1))*dk(1);
             ky = ((1:SZ(2))-CEN(2))*dk(2);
-            if(~A.double_precision)
-                kx = single(kx);
-                ky = single(ky);
-            end
+            % This messed up the interp2 routing forcing splines.  Hmmmm.
+            % if(~A.double_precision)
+            %   kx = single(kx);
+            %   ky = single(ky);
+            % end
         end
         
         function [KX,KY] = KCOORDS(A)
@@ -1111,7 +1112,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 GY = gpuArray(GY);
             end
             
-            GRID = G.grid_;
+            GRID = G.grid();
 
             if(G.periodic)
                 L = G.extent;

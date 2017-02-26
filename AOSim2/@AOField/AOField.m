@@ -267,6 +267,17 @@ classdef AOField < AOGrid
             
         end
         
+        function F = telescope(F,MAGNIFICATION)
+            % F = F.telescope(magnification)
+            % Transform a field from the entrance pupil to the exit pupil
+            % of a telescope. 
+            % MAGNIFICATION is the ratio of the entrance pupil to the exit
+            % pupil size.
+            
+            F.Offset = F.Offset/MAGNIFICATION;
+            F.spacing(F.spacing/MAGNIFICATION);
+        end
+        
         function Rf = FresnelScale(F,RANGE,LAMBDA)
             % Rf = FresnelScale(F,[RANGE],[LAMBDA])
             % Compute the Fresnel scale for the field or in general.
