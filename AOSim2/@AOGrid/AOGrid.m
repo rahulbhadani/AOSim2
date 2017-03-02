@@ -291,9 +291,18 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         function G = downsample(G,DEMAG)
             % AOGRID.downsample(DEMAG)
             % Decrease the sampling and size of an AOGrid.
+            % Unlike downsampleI, this modifies the grid.
             
             G.grid(downsampleCCD(G.grid_,DEMAG,DEMAG)/DEMAG^2);
             G.spacing(G.spacing*DEMAG);
+        end
+        
+        
+        function IMG_BINNED = downsampleI(G,BINNING)
+            % IMG_BINNED = AOGRID.downsampleI(BINNING)
+            % Returns the binned mag2.
+            
+            IMG_BINNED = downsampleCCD(G.mag2,BINNING,BINNING)/BINNING^2;
         end
         
         function G = setBBox(G,BBox,pad)
@@ -878,6 +887,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function g = mag2(A)
+            % image = AOGrid.mag2
+            % Returns the intensity.  
+            % NOTE BENE: If there is no output, the grid is
+            % replaced with the intensity.  
+            
             if(nargout<1)
                 A.grid_ = (A.grid_).*conj(A.grid_);
                 A.fftgrid_ = [];

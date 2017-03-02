@@ -371,16 +371,28 @@ classdef AODM < AOScreen
 				%fprintf('DEBUG: DM.rendering\n');
 				[X,Y] = COORDS(DM);
 				SEL = DM.actuators(:,5)~=0;
-				DM.grid_ = ...
-					griddata([DM.actuators(SEL,1);DM.bconds(:,1)],...
-					[DM.actuators(SEL,2);DM.bconds(:,2)],...
-					[DM.actuators(SEL,3);DM.bconds(:,3)],...
-					X,Y,'cubic');
-					% X,Y,'cubic');
-				DM.grid_(isnan(DM.grid_)) = 0; % TODO: rethink extrapolation.
+				
+                if(DM.double_precision)
+                
+                    DM.grid_ = ...
+                        griddata(double([DM.actuators(SEL,1);DM.bconds(:,1)]),...
+                        double([DM.actuators(SEL,2);DM.bconds(:,2)]),...
+                        double([DM.actuators(SEL,3);DM.bconds(:,3)]),...
+                        double(X),double(Y),'cubic');
+                else
+                    g = griddata(double([DM.actuators(SEL,1);DM.bconds(:,1)]),...
+                        double([DM.actuators(SEL,2);DM.bconds(:,2)]),...
+                        double([DM.actuators(SEL,3);DM.bconds(:,3)]),...
+                        double(X),double(Y),'cubic');
+                    DM.grid_ = single(g);
+                end
+                    
+                DM.grid_(isnan(DM.grid_)) = 0; % TODO: rethink extrapolation.
 				DM.touched = false;
-			else
-				%fprintf('DEBUG: DM.render using CACHED\n');
+            else
+                if(DM.verbosity>0)
+                    fprintf('DEBUG: DM.render using CACHED\n');
+                end
 			end
 		end
 		
