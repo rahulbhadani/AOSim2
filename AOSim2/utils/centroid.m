@@ -1,6 +1,7 @@
 function C = centroid(M,CENTER)
 
 % C = centroid(M,[CENTER=[0 0]]): First moment of M in 2-D.
+% M can be an image cube.
 
 M = squeeze(M);
 if(nargin<2)
@@ -18,4 +19,4 @@ x2 = (1:size(M,2))-CENTER(2);
 
 [X1,X2] = meshgrid(x1,x2);
 
-C = [sum(sum(X1.*M)),sum(sum(X2.*M))]/M1;
+C = squeeze([sum(sum(X1.*M)),sum(sum(X2.*M))]/M1);
