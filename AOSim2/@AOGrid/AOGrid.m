@@ -1560,6 +1560,21 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
         end
         
+        function G = setBorder(G,width,value)
+            % G = setBorder(G,width,value)
+            % Set the border of G.grid_ to value.
+            % value defaults to 0;
+            
+            if(nargin<3)
+                value = 0;
+            end
+            
+            G.grid_(1:width,:) = value;
+            G.grid_(end-width+1:end,:) = value;
+            G.grid_(:,1:width) = value;
+            G.grid_(:,end-width+1:end) = value;
+        end
+        
         %% Hilbert Space Operations
         
         function G = rmModes(G,MODES)
