@@ -1,5 +1,5 @@
 function F = propagateThrough(F,ATMO,FinalZ)
-  
+
 % F.propagateThrough(ATMO,[FinalZ=0])
 % Propagate the field through an AOAtmo or AOAtmo2 using wave propagation.
 % Starts at F.z and ends at FinalZ (defaults to 0).
@@ -35,15 +35,15 @@ while(~isempty(SCREENS))
         fprintf('AOField "%s": Propagating to layer %d: %gm --> %gm (%gm)\n',...
             F.name,ZnextIndex,F.z,Znext,Znext-F.z);
     end
-    F.propagate2(-(Znext-F.z));
+    F.propagate2(abs(Znext-F.z)); % Use F.direction to determine the sign.
     
-    F*ATMO.layers{ZnextIndex}.screen; 
+    F*ATMO.layers{ZnextIndex}.screen;
     if(isa(ATMO,'AOAtmo2'))
         if(~isempty(F*ATMO.layers{ZnextIndex}.shadow))
-            F*ATMO.layers{ZnextIndex}.shadow; 
+            F*ATMO.layers{ZnextIndex}.shadow;
         end
         
-        if(~isempty(F*ATMO.layers{ZnextIndex}.mask))
+        if(~isempty(ATMO.layers{ZnextIndex}.mask))
             F*ATMO.layers{ZnextIndex}.mask;
         end
         
@@ -92,10 +92,10 @@ if(F.z ~= FinalZ)
             F.name,F.z,FinalZ,FinalZ-F.z);
     end
     F.propagate2(F.z-FinalZ);
-
-    if(F.verbosity>5)  
+    
+    if(F.verbosity>5)
         drawnow;
         figure(fignum);
     end
-
+    
 end
