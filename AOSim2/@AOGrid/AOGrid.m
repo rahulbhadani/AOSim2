@@ -40,6 +40,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         double_precision = false;
         periodic = false;  % Does the grid end at the first cycle?
         gpu = 0; % Support for NVidia GPUs.  Set this.gpu = gpuDevice(n) to enable.
+        policy = struct('useGPU',false);
         cache = struct(); % General purpose cache.
         flags = struct(); % General purpose place to set flags.
     end
@@ -69,7 +70,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
     
     % Static (GLOBAL) Constants
     properties(Constant=true)
-        policy = struct('useGPU',false);
     end
     
     %% Methods
@@ -584,8 +584,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             if(sum(g.size > g.FFTSize)>0)
                 g.FFTSize = [1 1]*max(g.size);
             end
-            
-            
         end
         
         function fgrid = fft(g,FFTSize)
@@ -791,7 +789,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % get allocated until a request for an fft has been generated.
             % This should be okay, just make sure you call fft BEFORE you
             % expect there to be an answer in fftgrid_!
-            
+            % These arrays are CENTERED, i.e. not in the default fftshift
+            % arrangement.
             A.checkFFTSize;
             SZ = A.FFTSize;
             CEN = AOGrid.middlePixel(SZ);
@@ -799,8 +798,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             dk = A.dk;
             
-            kx = ((1:SZ(1))-CEN(1))*dk(1);
-            ky = ((1:SZ(2))-CEN(2))*dk(2);
+            ky = ((1:SZ(1))-CEN(1))*dk(1);
+            kx = ((1:SZ(2))-CEN(2))*dk(2);
             % This messed up the interp2 routing forcing splines.  Hmmmm.
             % if(~A.double_precision)
             %   kx = single(kx);
@@ -811,6 +810,61 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         function [KX,KY] = KCOORDS(A)
             [kx,ky] = kcoords(A);
             [KY,KX] = meshgrid(kx,ky);
+        end
+        
+        function BB = BBox(S,local)
+            % BBox is [x1min, x2min; x1max, x2max];
+            % In other words...
+            % [ ymin  xmin
+            %   ymax  xmax ];
+            % 
+            % local is a flag that returns the BBox relative to the object
+            % without the user Offset.
+            % 
+            % n.b. The BBox includes the half-pixels on all sides to
+            % include the covered area.  The centers of the bounding pixels
+            % lie one half pixel inside of the BBox.
+            
+            [x,y] = S.coords; % note that this includes the S.Offset.
+            dxy = S.spacing;
+            
+            BB = [y(1)-dxy(2)/2,   x(1)-dxy(1)/2;
+                y(end)+dxy(2)/2, x(end)+dxy(2)/2];
+            
+            if(nargin>1 && local)
+                ORIGIN = S.Offset;
+                BB(:,1) = BB(:,1) - ORIGIN(1); % Take out the offset.
+                BB(:,2) = BB(:,2) - ORIGIN(2);
+            end
+            
+        end
+        
+        function S = plotBBox(S,BBOX,linespec)
+            % S = plotBBox(S,BBOX,[linespec])
+            % BBox is [x1min, x2min; x1max, x2max];
+            % In other words...
+            % [ ymin  xmin
+            %   ymax  xmax ];
+
+            if(nargin<3)
+                linespec = '-';
+            end
+            
+            if(nargin<2 || isempty(BBOX))
+                BBOX = S.BBox;
+            end
+                        
+            BB = [
+                BBOX(1,2),BBOX(1,1);
+                BBOX(1,2),BBOX(2,1);
+                BBOX(2,2),BBOX(2,1);
+                BBOX(2,2),BBOX(1,1);
+                BBOX(1,2),BBOX(1,1);
+                ];
+            
+            hold on;
+            plot(BB(:,1),BB(:,2),linespec);
+            hold off;
         end
         
         function A = zero(A)
@@ -1475,6 +1529,27 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             G.grid_ = circshift(G.grid_,pixels);
             G.touch;
         end
+
+        function G = shiftGrid(G,deltaXY)
+            % G = G.shiftGrid(deltaXY)
+            % Perform a *circular* shift of the grid by the distance [x,y].
+            % Note that this is circular and uses Fourier interpolation.
+            % Also, deltaXY = [ud,lr].
+
+            IS_REAL = isreal(G.grid_);
+
+            SZ = G.size;
+            x1 = mkXvec(SZ(1),1/SZ(1));
+            x2 = mkXvec(SZ(2),1/SZ(2));
+            [X2,X1] = meshgrid(x2,x1);
+            
+            G.grid_ = ifft2(exp(-2*pi*1i*(deltaXY(1)/G.dy*X1 + deltaXY(2)/G.dx*X2)).*fft2(G.grid_));
+            if(IS_REAL)
+                G.grid_ = real(G.grid_);
+            end
+            
+            G.touch;
+        end
         
         function AOGRID = padBy(AOGRID,PADDING,PADVAL)
             % AOGRID = AOGRID.padBy(PADDING,[PADVAL])
@@ -1887,6 +1962,15 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 S = signum*(X.^2+Y.^2)./R/2;
             end
         end
+        
+        function plotPolygon(POLY)
+            P = [POLY;POLY(end,:);];
+            
+            hold on;
+            plot(P(:,1),P(:,2));
+            hold off;
+        end
+        
     end % static methods
 end % of classdef
 

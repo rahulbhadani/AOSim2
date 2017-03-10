@@ -37,32 +37,34 @@ while(~isempty(SCREENS))
     end
     F.propagate2(abs(Znext-F.z)); % Use F.direction to determine the sign.
     
-    F*ATMO.layers{ZnextIndex}.screen;
-    if(isa(ATMO,'AOAtmo2'))
-        if(~isempty(F*ATMO.layers{ZnextIndex}.shadow))
-            F*ATMO.layers{ZnextIndex}.shadow;
-        end
-        
-        if(~isempty(ATMO.layers{ZnextIndex}.mask))
-            F*ATMO.layers{ZnextIndex}.mask;
-        end
-        
-        if(~isempty(ATMO.shadowUpdate))
-            if(ATMO.shadowUpdate(ATMO,ZnextIndex,F))
-                error('Error updating AOAtmo2 layer shadow.');
+    if(~ATMO.layers{ZnextIndex}.ignore)
+        F*ATMO.layers{ZnextIndex}.screen;
+        if(isa(ATMO,'AOAtmo2'))
+            if(~isempty(F*ATMO.layers{ZnextIndex}.shadow))
+                F*ATMO.layers{ZnextIndex}.shadow;
+            end
+
+            if(~isempty(ATMO.layers{ZnextIndex}.mask))
+                F*ATMO.layers{ZnextIndex}.mask;
+            end
+
+            if(~isempty(ATMO.shadowUpdate))
+                if(ATMO.shadowUpdate(ATMO,ZnextIndex,F))
+                    error('Error updating AOAtmo2 layer shadow.');
+                end
+            end
+
+            if(ATMO.verbosity>1)
+                subplot(2,2,2);
+                %ATMO.layers{ZnextIndex}.shadow.show; setFoV(D);
+                [x,y] = ATMO.layers{ZnextIndex}.shadow.coords;
+                imagesc(x,y,ATMO.layers{ZnextIndex}.shadow.grid,[0 1]*1e-6);
+                axis xy; sqar; colorbar;
+                title(sprintf('shadow screen %d',ZnextIndex));
             end
         end
-        
-        if(ATMO.verbosity>1)
-            subplot(2,2,2);
-            %ATMO.layers{ZnextIndex}.shadow.show; setFoV(D);
-            [x,y] = ATMO.layers{ZnextIndex}.shadow.coords;
-            imagesc(x,y,ATMO.layers{ZnextIndex}.shadow.grid,[0 1]*1e-6);
-            axis xy; sqar; colorbar;
-            title(sprintf('shadow screen %d',ZnextIndex));
-        end
     end
-    
+
     F.z = F.z + F.direction * nudge;
     if(F.verbosity>5)
         figure(10);

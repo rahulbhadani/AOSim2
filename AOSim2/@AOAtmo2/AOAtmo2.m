@@ -26,6 +26,13 @@ classdef AOAtmo2 < AOAtmo
         % Operations
         function ATMO = addLayer(ATMO,screen,alt,MASK)
             % ATMO = addLayer(ATMO,screen,alt,[MASK])
+            % Add another atmosphere layer at altitude alt.
+            % Also add a shadow screen for other physics.
+            % The MASK is optional, but if included will be multiplied into
+            % the field during interactions.  
+            % The MASK should be an AOGrid of some type, for example, an
+            % AOSegment.
+            
             n = length(ATMO.layers)+1;
             L = struct; % start building the layer.
             L.name = sprintf('Layer %d:%s',n,screen.name);
@@ -38,6 +45,10 @@ classdef AOAtmo2 < AOAtmo
             L.screen = screen;
             L.shadow = screen.copy;
             L.shadow.name = ['Shadow of ' L.screen.name];
+            L.shadow.zero;
+            %L.shadow.policy.motionMode = 'wind'; 
+            L.shadow.policy.motionMode = 'fixed';
+
             if(nargin>3) % there is a mask
                 L.mask = MASK.copy;
             else
@@ -73,9 +84,18 @@ classdef AOAtmo2 < AOAtmo
             ATMO.time = t;
             
             for n=1:ATMO.nLayers
+                % Always move the screen with the wind.
                 ATMO.layers{n}.screen.Offset = ATMO.layers{n}.Wind*ATMO.time;
-                ATMO.layers{n}.shadow.Offset = ATMO.layers{n}.Wind*ATMO.time;
-                % Note that the mask does not move with the wind.
+                
+                % Move the shadow according to the policy.
+                if(strncmp(ATMO.layers{n}.shadow.policy,'wind',4))
+                    ATMO.layers{n}.shadow.Offset = ATMO.layers{n}.Wind*ATMO.time;
+                end
+                
+                % Move the mask according to the policy.
+                if(~isempty(ATMO.layers{n}.mask) && strncmp(ATMO.layers{n}.mask.policy,'wind',4))
+                    ATMO.layers{n}.shadow.Offset = ATMO.layers{n}.Wind*ATMO.time;
+                end
             end
         end
         
@@ -111,7 +131,7 @@ classdef AOAtmo2 < AOAtmo
             A.grid(A.OPL_(X,Y,A.z,A.BEACON));
         end
         
-        %% path integration functions
+        %% ray trace and physical optics integration functions
         function [opl,trans] = OPL_(ATMO,X,Y,z,BEACON)
             % [opl,trans] = ATMO.OPL_(X,Y,z,BEACON)
             
@@ -136,13 +156,23 @@ classdef AOAtmo2 < AOAtmo
                         if(ATMO.layers{n}.screen.touched)
                             ATMO.layers{n}.screen.make;
                         end
-                        opl_ = ATMO.layers{n}.screen.interpGrid(XLayer,YLayer);
-                        opl_(isnan(opl_)) = 0;
+
+                        % Screen
+                        if(ATMO.layers{n}.screen.periodic)
+                            opl_ = ATMO.layers{n}.screen.interpGrid(XLayer,YLayer);
+                        else
+                            opl_ = ATMO.layers{n}.screen.interpGrid(XLayer,YLayer);
+                        end
+                        opl_(isnan(opl_)) = 0;                       
                         opl = opl + opl_;
+                        
+                        % Shadow
                         opl_ = ATMO.layers{n}.shadow.interpGrid(XLayer,YLayer);
+                        
                         opl_(isnan(opl_)) = 0;
                         opl = opl + opl_;
                         
+                        % Mask
                         if(DO_TRANS && ~isempty(ATMO.layers{n}.mask))
                             tx_ = ATMO.layers{n}.mask.interpGrid(XLayer,YLayer);
                             tx_(isnan(tx_)) = 0; % Opaque outside mask bounds.
