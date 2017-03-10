@@ -32,14 +32,15 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         % optimize storage, while Offset is a user control.
         nanmap = 0;      % If when interpolating we get NaNs, this settable value is used to fill.
         verbosity = 0;  % set this to >0 for info and intermediate plots.
-    
+        
         interpolate_method = []; % quick or selected method.  Empty [] sets to qinterp2. Otherwise use the named method.
         seed = []; % Set this to empty for unseeded.  Set seed value for repeatable random numbers.
-        % For GPU performance I am going to take into account precision.  
+        % For GPU performance I am going to take into account precision.
         % Single precision is the default.
-        double_precision = false;  
+        double_precision = false;
         periodic = false;  % Does the grid end at the first cycle?
         gpu = 0; % Support for NVidia GPUs.  Set this.gpu = gpuDevice(n) to enable.
+        policy = struct('useGPU',false);
         cache = struct(); % General purpose cache.
         flags = struct(); % General purpose place to set flags.
     end
@@ -69,7 +70,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
     
     % Static (GLOBAL) Constants
     properties(Constant=true)
-        policy = struct('useGPU',false);
     end
     
     %% Methods
@@ -226,7 +226,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % Use OBJ.spacing(dx) to set the new spacing.
             % You can resize to fit another AOGrid object with a different
             % size.  The current object will be resized to be able to
-            % contain it, assuming they are aligned.  
+            % contain it, assuming they are aligned.
             % sz = obj.resize(obj2);
             
             useGPU = obj.useGPU; % Remember if it is a GPU object.
@@ -369,7 +369,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % D = obj.extent(new_extent)
             % No argument returns the spatial extent of the grid.
             % If the argument is a scalar, the object will be resized to
-            % contain the new_extent.  
+            % contain the new_extent.
             % If the argument is an AOGrid, the new extent is changed to
             % contain the object.
             
@@ -382,7 +382,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     end
                 end
             end
-                        
+            
             D = size(obj.grid_) .* obj.spacing_;
         end
         
@@ -449,18 +449,20 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             G.grid_(MASK(:)) = NEWVALS(:);
         end
         
-        %% 
+        %%
         function G = justPhasor(G)
             % G = justPhase(G)
-            % Replace the grid amplitudes with 1.  
+            % Replace the grid amplitudes with 1.
             % Only phase remains.
+            % Useful for Gerchberg-Saxton-type algorithms.
+            
             G.grid(exp(1i*angle(G.grid)));
         end
         
         %%
         function G = transpose(G)
             % Transpose the grid.  G.transpose();
-           
+            
             G.grid(G.grid_.'); % No complex conjugate, just flip.
         end
         
@@ -529,7 +531,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % interior of the array, not at the (1,1) corner as is a fresh
             % FFT result.
             % I still keep this because it is in some of the AOSim(1) code.
-            % *YOU* shouldn't need it.  
+            % *YOU* shouldn't need it.
             
             % warning('AOGrid:DEPRECATED','Try to keep it in the x domain');
             if(strcmp(g.domain,AOGrid.DOMAIN_SPACE))
@@ -577,13 +579,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             DEFAULT = (g.FFTSize==0);
             g.FFTSize(DEFAULT) = SZ(DEFAULT);
             % there should no longer be any zeros in FFTSize.
-
-            % FFTSize is smaller than the actual grid. 
+            
+            % FFTSize is smaller than the actual grid.
             if(sum(g.size > g.FFTSize)>0)
                 g.FFTSize = [1 1]*max(g.size);
             end
-            
-            
         end
         
         function fgrid = fft(g,FFTSize)
@@ -651,8 +651,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                         % JLC 20101008: This code is probably not very efficient.
                         % I'm hoping it doesn't get used very often.
                         % Please feel free to contribute better code.
-
-                        % TODO: (JLC 20150919) This is buggy. 
+                        
+                        % TODO: (JLC 20150919) This is buggy.
                         % It causes a x-y transpose in
                         % the fft.  I also wonder if there shouldn't be a
                         % warning if you set the FFT size to be smaller
@@ -680,8 +680,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                         g.fftgrid_(isnan(g.fftgrid_)) = 0; % inefficient zero-padding
                         
                         g.fftgrid_ = circshift(fft2(g.fftgrid_),g.FAXIS_PIXEL-1);
-                    end 
-                end                
+                    end
+                end
             else
                 fprintf('DEBUG: Returning cached FFT result.\n');
             end
@@ -750,8 +750,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                         g.fftgrid_(isnan(g.fftgrid_)) = 0; % inefficient zero-padding
                         
                         g.fftgrid_ = circshift(ifft2(g.fftgrid_),g.FAXIS_PIXEL-1);
-                    end 
-                end                
+                    end
+                end
             else
                 fprintf('DEBUG: Returning cached FFT result.\n');
             end
@@ -789,16 +789,17 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % get allocated until a request for an fft has been generated.
             % This should be okay, just make sure you call fft BEFORE you
             % expect there to be an answer in fftgrid_!
-
+            % These arrays are CENTERED, i.e. not in the default fftshift
+            % arrangement.
             A.checkFFTSize;
-            SZ = A.FFTSize; 
+            SZ = A.FFTSize;
             CEN = AOGrid.middlePixel(SZ);
             A.FAXIS_PIXEL = CEN;
             
             dk = A.dk;
             
-            kx = ((1:SZ(1))-CEN(1))*dk(1);
-            ky = ((1:SZ(2))-CEN(2))*dk(2);
+            ky = ((1:SZ(1))-CEN(1))*dk(1);
+            kx = ((1:SZ(2))-CEN(2))*dk(2);
             % This messed up the interp2 routing forcing splines.  Hmmmm.
             % if(~A.double_precision)
             %   kx = single(kx);
@@ -809,6 +810,61 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         function [KX,KY] = KCOORDS(A)
             [kx,ky] = kcoords(A);
             [KY,KX] = meshgrid(kx,ky);
+        end
+        
+        function BB = BBox(S,local)
+            % BBox is [x1min, x2min; x1max, x2max];
+            % In other words...
+            % [ ymin  xmin
+            %   ymax  xmax ];
+            % 
+            % local is a flag that returns the BBox relative to the object
+            % without the user Offset.
+            % 
+            % n.b. The BBox includes the half-pixels on all sides to
+            % include the covered area.  The centers of the bounding pixels
+            % lie one half pixel inside of the BBox.
+            
+            [x,y] = S.coords; % note that this includes the S.Offset.
+            dxy = S.spacing;
+            
+            BB = [y(1)-dxy(2)/2,   x(1)-dxy(1)/2;
+                y(end)+dxy(2)/2, x(end)+dxy(2)/2];
+            
+            if(nargin>1 && local)
+                ORIGIN = S.Offset;
+                BB(:,1) = BB(:,1) - ORIGIN(1); % Take out the offset.
+                BB(:,2) = BB(:,2) - ORIGIN(2);
+            end
+            
+        end
+        
+        function S = plotBBox(S,BBOX,linespec)
+            % S = plotBBox(S,BBOX,[linespec])
+            % BBox is [x1min, x2min; x1max, x2max];
+            % In other words...
+            % [ ymin  xmin
+            %   ymax  xmax ];
+
+            if(nargin<3)
+                linespec = '-';
+            end
+            
+            if(nargin<2 || isempty(BBOX))
+                BBOX = S.BBox;
+            end
+                        
+            BB = [
+                BBOX(1,2),BBOX(1,1);
+                BBOX(1,2),BBOX(2,1);
+                BBOX(2,2),BBOX(2,1);
+                BBOX(2,2),BBOX(1,1);
+                BBOX(1,2),BBOX(1,1);
+                ];
+            
+            hold on;
+            plot(BB(:,1),BB(:,2),linespec);
+            hold off;
         end
         
         function A = zero(A)
@@ -859,7 +915,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 g = imag(A.grid_);
             end
         end
-
+        
         function A = rmMean(A)
             % A = A.rmMean;
             % Subtract the mean value from the grid.
@@ -888,9 +944,9 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         function g = mag2(A)
             % image = AOGrid.mag2
-            % Returns the intensity.  
+            % Returns the intensity.
             % NOTE BENE: If there is no output, the grid is
-            % replaced with the intensity.  
+            % replaced with the intensity.
             
             if(nargout<1)
                 A.grid_ = (A.grid_).*conj(A.grid_);
@@ -902,15 +958,15 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function dex = dex(A)
-        % dex = A.dex()
-        % Returns the grid intensity values in log10 (decades).
+            % dex = A.dex()
+            % Returns the grid intensity values in log10 (decades).
             
             dex = log10(A.mag2);
         end
         
         function dex = ndex(A)
-        % dex = A.ndex()
-        % Returns the grid intensity values in log10 normalized to the max value.
+            % dex = A.ndex()
+            % Returns the grid intensity values in log10 normalized to the max value.
             dex = A.mag2;
             dex = log10(dex/max(dex(:)));
         end
@@ -944,22 +1000,22 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function CEN = centroid(A)
-        % CEN = A.centroid;
-        % Compute the centroid of the AOGrid in physical units.
-        
-        [X,Y] = A.COORDS;
-        M0 = mean(A.grid_(:));
-        dG = A.grid - M0;
-        M1x = mean(dG(:).*X(:))/M0;
-        M1y = mean(dG(:).*Y(:))/M0;
-        
-        CEN = [M1x,M1y];
+            % CEN = A.centroid;
+            % Compute the centroid of the AOGrid in physical units.
+            
+            [X,Y] = A.COORDS;
+            M0 = mean(A.grid_(:));
+            dG = A.grid - M0;
+            M1x = mean(dG(:).*X(:))/M0;
+            M1y = mean(dG(:).*Y(:))/M0;
+            
+            CEN = [M1x,M1y];
         end
         
         function s = sum(A)
-        % s = sum(A)
-        % Sum all of the pixels in the grid.
-        
+            % s = sum(A)
+            % Sum all of the pixels in the grid.
+            
             s = sum(A.grid_(:));
         end
         
@@ -975,7 +1031,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         function b = isK(G)
             % BOOLEAN = AOGRID.isK();
             % This method is left over from AOSim1 when grids could be in
-            % configuration space (X) or in Fourier space (K).  
+            % configuration space (X) or in Fourier space (K).
             % In AOSim2 all AOGrids are assumed to be in configuration space.
             % This method is deprecated.
             b=(strcmp(G.domain_,AOGrid.DOMAIN_FREQ)==1);
@@ -1034,7 +1090,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function G = setPixel(G,n1,n2,value)
-        % G = setPixel(G,n1,n2,value)
+            % G = setPixel(G,n1,n2,value)
             G.grid_(n1,n2) = value;
         end
         
@@ -1044,16 +1100,16 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             G.grid_(n1,n2) = G.grid_(n1,n2) + value;
         end
-
+        
         function G = setPixel1(G,n,value)
-        % G = G.setPixel1(n,value)
-        % Sets the nth pixel without coercing the shape.
+            % G = G.setPixel1(n,value)
+            % Sets the nth pixel without coercing the shape.
             G.grid_(n) = value;
         end
         
         function G = bumpPixel1(G,n,value)
-        % G = G.bumpPixel1(n,value)
-        % Adds to the nth pixel without coercing the shape.
+            % G = G.bumpPixel1(n,value)
+            % Adds to the nth pixel without coercing the shape.
             G.grid_(n(:)) = G.grid_(n(:)) + value(:);
         end
         
@@ -1062,7 +1118,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % Imprints a cirrcle on the grid.
             % CENTER is in real units (i.e. not pixels).
             % Note that the edge is smoothed by G.smooth.
-           
+            
             if(nargin<5)
                 INVERT = false;
             end
@@ -1089,7 +1145,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             %
             % g = G.interpGrid(XARRAY,YARRAY);
             % g = G.interpGrid(AOGRID);
-
+            
             USE_GPU = strcmp(class(G.grid_),'gpuArray');
             
             switch length(varargin)
@@ -1110,7 +1166,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     Xout = varargin{1};
                     Yout = varargin{2};
             end
-
+            
             if(USE_GPU)
                 Xout = gpuArray(Xout);
                 Yout = gpuArray(Yout);
@@ -1118,7 +1174,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             G.center();
             [GX,GY] = G.COORDS;
-
+            
             if(USE_GPU)
                 Xout = gpuArray(Xout);
                 Yout = gpuArray(Yout);
@@ -1127,30 +1183,30 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
             
             GRID = G.grid();
-
+            
             if(G.periodic)
                 L = G.extent;
                 DX = G.spacing;
                 LIMS = L - DX/2;
                 Xout = mod(Xout-GX(1),LIMS(1))+GX(1);
                 Yout = mod(Yout-GY(1),LIMS(2))+GY(1);
-            
+                
                 BAD_X = find(~isBetween(Xout(1,:),min(GX(:,1)),max(GX(:,1))));
                 BAD_Y = find(~isBetween(Yout(:,1),min(GY(:,1)),max(GY(:,1))));
-
+                
                 % Make sure we are interpolating in the interior of the data.
                 if(~isempty(BAD_X))
                     GRID(:,end+1) = GRID(:,1); % wrap one more x column.
                     GX(:,end+1) = GX(:,end) + G.dx;
                     GY(:,end+1) = GY(:,end);
                 end
-
+                
                 if(~isempty(BAD_Y))
                     GRID(end+1,:) = GRID(1,:); % wrap one more y row.
                     GX(end+1,:) = GX(end,:);
                     GY(end+1,:) = GY(end,:) + G.dy;
                 end
-            
+                
                 if(G.verbosity>2)
                     defFig = gcf;
                     figure(2);
@@ -1181,7 +1237,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     g = interp2(GX,GY,GRID,Xout,Yout);
                     % g = griddedInterpolant(GX,GY,GRID,Xout,Yout);
                 else
-                    % gather is in case something goes wrong. 
+                    % gather is in case something goes wrong.
                     % That would be a bug.  At least this won't crash.
                     %g = interp2(gather(GX),gather(GY),gather(G.grid),...
                     %    gather(Xout),gather(Yout),G.interpolate_method);
@@ -1193,8 +1249,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function G = plotC(G,gamma)
-        % G = G.plotC(gamma)
-        % Plot an AOGrid in complex.
+            % G = G.plotC(gamma)
+            % Plot an AOGrid in complex.
             
             g = G.grid;
             if(isreal(g))
@@ -1237,38 +1293,80 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 axis square;
                 axis xy;
             end
+            title(['Complex: ' G.name]);
+        end
+        
+        function G = plotAmp(G,LIMS)
+            % G = G.plotAmp([LIMS])
+            % Plot an AOGrid amplitude.
+            
+            [x,y] = G.coords;
+            if(nargin<2)
+                imagesc(x,y,abs(G.grid));
+            else
+                imagesc(x,y,abs(G.grid),LIMS);
+            end
+            
+            axis square;
+            axis xy;
+            colorbar;
+            title(['Amplitude: ' G.name]);
         end
         
         function G = plotI(G,LIMS)
-        % G = G.plotI([LIMS])
-        % Plot an AOGrid intensity.
+            % G = G.plotI([LIMS])
+            % Plot an AOGrid intensity.
             
-                [x,y] = G.coords;
-                if(nargin<2)
-                    imagesc(x,y,G.mag2);
-                else
-                    imagesc(x,y,G.mag2,LIMS);
-                end
-
-                axis square;
-                axis xy;
-                colorbar;
+            [x,y] = G.coords;
+            if(nargin<2)
+                imagesc(x,y,G.mag2);
+            else
+                imagesc(x,y,G.mag2,LIMS);
+            end
+            
+            axis square;
+            axis xy;
+            colorbar;
+            title(['Intensity: ' G.name]);
         end
         
         function G = plotDex(G,LIMS)
-        % G = G.plotDex([LIMS])
-        % Plot an AOGrid log10 intensity.
+            % G = G.plotDex([LIMS])
+            % Plot an AOGrid log10 intensity.
             
-                [x,y] = G.coords;
-                if(nargin<2)
-                    imagesc(x,y,G.dex);
+            [x,y] = G.coords;
+            if(nargin<2)
+                imagesc(x,y,G.dex);
+            else
+                imagesc(x,y,G.dex,LIMS);
+            end
+            
+            axis square;
+            axis xy;
+            colorbar;
+            title(['log10 Intensity: ' G.name]);
+        end
+        
+        function G = plotPhase(G,LIMS)
+            % G = G.plotPhase([LIMS])
+            % Plot an AOGrid phase.
+            % LIMS overrides the default [-pi pi].
+            
+            [x,y] = G.coords;
+            if(nargin<2)
+                imagesc(x,y,angle(G.grid));
+            else
+                if(isempty(LIMS))
+                    imagesc(x,y,angle(G.grid));
                 else
-                    imagesc(x,y,G.dex,LIMS);
+                    imagesc(x,y,angle(G.grid),LIMS);
                 end
-
-                axis square;
-                axis xy;
-                colorbar;
+            end
+            
+            axis square;
+            axis xy;
+            colorbar;
+            title(['Phase: ' G.name]);
         end
         
         function delZ = del(G)
@@ -1285,7 +1383,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         function RESULT = convolve(G,KERNEL)
             % RESULT = G.convolve(KERNEL);
-        
+            
             RESULT = conv2(G.grid_,KERNEL,'same');
         end
         
@@ -1293,7 +1391,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % NUM = numel(g)
             % Returns the number of elements in the grid.
             
-            NUM = numel(g.grid_); 
+            NUM = numel(g.grid_);
         end
         
         function G = add_rand(G,scale)
@@ -1306,7 +1404,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             G + scale*(rand(G.size)-0.5);
         end
-            
+        
         function G = add_randn(G,scale)
             % G = G.add_rand(sigma)
             % Add Gaussian random real values to grid.
@@ -1335,7 +1433,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             S + amp*exp(-((X-CENTER(1)).^2 + (Y-CENTER(2)).^2)/width^2);
             touch(S);
         end
-
+        
         
         %% Overloaded operators.
         function a = plus(a,b)
@@ -1431,6 +1529,27 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             G.grid_ = circshift(G.grid_,pixels);
             G.touch;
         end
+
+        function G = shiftGrid(G,deltaXY)
+            % G = G.shiftGrid(deltaXY)
+            % Perform a *circular* shift of the grid by the distance [x,y].
+            % Note that this is circular and uses Fourier interpolation.
+            % Also, deltaXY = [ud,lr].
+
+            IS_REAL = isreal(G.grid_);
+
+            SZ = G.size;
+            x1 = mkXvec(SZ(1),1/SZ(1));
+            x2 = mkXvec(SZ(2),1/SZ(2));
+            [X2,X1] = meshgrid(x2,x1);
+            
+            G.grid_ = ifft2(exp(-2*pi*1i*(deltaXY(1)/G.dy*X1 + deltaXY(2)/G.dx*X2)).*fft2(G.grid_));
+            if(IS_REAL)
+                G.grid_ = real(G.grid_);
+            end
+            
+            G.touch;
+        end
         
         function AOGRID = padBy(AOGRID,PADDING,PADVAL)
             % AOGRID = AOGRID.padBy(PADDING,[PADVAL])
@@ -1475,7 +1594,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         function G = multiplyRows(G,vector)
             % AOGrid G.multiplyRows(vector);
-            % 
+            %
             % Multiply each row by the vector.
             % Only works if the vector is the same size as the grid row
             % size.
@@ -1483,7 +1602,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             vector = vector(:);
             LV = length(vector);
             SZ = G.size;
-
+            
             if(LV ~= SZ(2))
                 fprintf('AOGrid.multiplyRows Error: vector length (%d) and row size (%d) differ.\n',...
                     LV,SZ(2));
@@ -1497,14 +1616,14 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         function G = multiplyCols(G,vector)
             % AOGrid G.multiplyCols(vector);
-            % 
+            %
             % Multiply each column by the vector.
             % Only works if the vector is the same size as the grid column size.
             
             vector = vector(:);
             LV = length(vector);
             SZ = G.size;
-
+            
             if(LV ~= SZ(1))
                 fprintf('AOGrid.multiplyCols Error: vector length (%d) and column size (%d) differ.\n',...
                     LV,SZ(1));
@@ -1516,7 +1635,22 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
         end
         
-        %% Hilbert Space Operations 
+        function G = setBorder(G,width,value)
+            % G = setBorder(G,width,value)
+            % Set the border of G.grid_ to value.
+            % value defaults to 0;
+            
+            if(nargin<3)
+                value = 0;
+            end
+            
+            G.grid_(1:width,:) = value;
+            G.grid_(end-width+1:end,:) = value;
+            G.grid_(:,1:width) = value;
+            G.grid_(:,end-width+1:end) = value;
+        end
+        
+        %% Hilbert Space Operations
         
         function G = rmModes(G,MODES)
             % G = rmModes(G,MODES)
@@ -1557,13 +1691,13 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 end
             end
             
-            G.grid_ = circshift(G.grid_,SHIFT); 
+            G.grid_ = circshift(G.grid_,SHIFT);
         end
         
         function G = normalize(G)
             % G.normalize: Normalize the grid so its max value is 1+0i.
             
-            [mx,loc] = max(abs(G.grid_(:))); % Note this returns the max complex value 
+            [mx,loc] = max(abs(G.grid_(:))); % Note this returns the max complex value
             if(mx~=0)
                 G.grid_ = G.grid_/G.grid_(loc);
             end
@@ -1571,31 +1705,31 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         function g_ = vec(G,MASK)
             % g_ = vec(G,[MASK])
-            % G.vec returns the contents of the AOGrid grid as a column vector. 
+            % G.vec returns the contents of the AOGrid grid as a column vector.
             % G.vec(MASK) does the same but only selected values.
-           
+            
             if(nargin<2)
                 g_ = G.grid_(:);
             else
                 g_ = G.grid_(MASK(:));
             end
         end
-
+        
         function N = norm(G)
             % N = norm(G)
             % Compute the L2 norm of the AOGrid data.
-           
+            
             N = norm(G.grid_);
         end
         
         function grid = LPF(S,scale)
             % grid = GRID.LPF(S)
             % This function returns a Gaussian smoothed version
-            % of the GRID's displacement grid. 
+            % of the GRID's displacement grid.
             % The GRID itself is not altered.
-            % This was based on AOScreen's LPF. 
+            % This was based on AOScreen's LPF.
             % It will be used here for resampling AOGrids.
-        
+            
             N = round(2*scale/S.dx);
             N = N + mod(N+1,2);
             
@@ -1606,7 +1740,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             if(S.useGPU)
                 FILTER = gpuArray(FILTER);
             end
-            grid = conv2(S.grid_,FILTER,'same'); 
+            grid = conv2(S.grid_,FILTER,'same');
         end
         
         function G = resample(G,FACTOR)
@@ -1614,7 +1748,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % Use Fourier interpolation to add more pixels in a grid.
             %
             % FACTOR is expected to be > 1.0.
-            % Fractional FACTORs may not be precise, but will be 
+            % Fractional FACTORs may not be precise, but will be
             % at least the requested amount.  Check the new dx.
             % The extent of the grid will be unchanged.
             
@@ -1672,11 +1806,11 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         function yesno = useGPU(G)
             yesno = isa(G.grid_,'gpuArray');
         end
-
+        
         function F = conj(F)
             F.grid_ = conj(F.grid_);
         end
-
+        
         function F = clearCache(F)
             F.fftgrid_ = [];
             F.FFTSize = 0;
@@ -1697,23 +1831,23 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % AOGrid static method.
             % This is to work around an apparent bug in MATLAB.
             
-            yn = prod(double(mat1(:)==mat2(:)))==0;            
+            yn = prod(double(mat1(:)==mat2(:)))==0;
         end
-
-%         % This was from before I made Copyable the base of AOGrid.
-%         function copy = copyobj(obj)
-%             % Create a shallow copy of the calling object.
-%             copy = eval(class(obj));
-%             meta = eval(['?',class(obj)]);
-%             for p = 1: size(meta.Properties,1)
-%                 pname = meta.Properties{p}.Name;
-%                 try
-%                     eval(['copy.',pname,' = obj.',pname,';']);
-%                 catch this
-%                     fprintf(['\nCould not copy ',pname,' ',this ,'.\n']);
-%                 end
-%             end
-%         end
+        
+        %         % This was from before I made Copyable the base of AOGrid.
+        %         function copy = copyobj(obj)
+        %             % Create a shallow copy of the calling object.
+        %             copy = eval(class(obj));
+        %             meta = eval(['?',class(obj)]);
+        %             for p = 1: size(meta.Properties,1)
+        %                 pname = meta.Properties{p}.Name;
+        %                 try
+        %                     eval(['copy.',pname,' = obj.',pname,';']);
+        %                 catch this
+        %                     fprintf(['\nCould not copy ',pname,' ',this ,'.\n']);
+        %                 end
+        %             end
+        %         end
         
         function org = middlePixel(n)
             % STATIC: org = AOGrid.middlePixel(n)
@@ -1727,14 +1861,14 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         function G = multRows(G,vector)
             % G = multRows(G,vector);
-            % 
+            %
             % Multiply each row by the vector.
             % Only works if the vector is the same size as the grid row
             % size.
             
             LV = numel(vector);
             SZ = size(G);
-
+            
             if(LV ~= SZ(2))
                 fprintf('AOGrid.multRows Error: vector length (%d) and row size (%d) differ.\n',...
                     LV,SZ(2));
@@ -1745,17 +1879,17 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 end
             end
         end
-
+        
         function G = multCols(G,vector)
             % static G = AOGrid.multCols(G,vector);
-            % 
+            %
             % Multiply each column by the vector.
             % Only works if the vector is the same size as the grid column size.
             
             vector = vector(:);
             LV = length(vector);
             SZ = size(G);
-
+            
             if(LV ~= SZ(1))
                 fprintf('AOGrid.multCols Error: vector length (%d) and column size (%d) differ.\n',...
                     LV,SZ(1));
@@ -1766,7 +1900,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 end
             end
         end
-
+        
         function M = RVmerge(M,V)
             % static MV = AOGrid.RVmerge(M,V)
             %
@@ -1785,7 +1919,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         function S = dsphere(R,X,Y,N)
             % S = dsphere(R,X,Y,[N])
-            % 
+            %
             % S = sqrt(R.^2 + X.^2 + Y.^2) - R;
             % This takes care of the sqrt branch and ensures that the
             % smallest changes in S are at least N(100) times the machine eps.
@@ -1817,9 +1951,9 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 T = gather(Y(1:2));
                 dY = abs(T(2)-T(1));
             end
-
+            
             delta = max(dX,dY);
-
+            
             if(delta^2 > 2*N*R*machine_eps)
                 %fprintf('Pythagoras (%d).\n',signum);
                 S = signum*(sqrt(R.^2 + X.^2 + Y.^2) - R);
@@ -1828,6 +1962,15 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 S = signum*(X.^2+Y.^2)./R/2;
             end
         end
+        
+        function plotPolygon(POLY)
+            P = [POLY;POLY(end,:);];
+            
+            hold on;
+            plot(P(:,1),P(:,2));
+            hold off;
+        end
+        
     end % static methods
 end % of classdef
 

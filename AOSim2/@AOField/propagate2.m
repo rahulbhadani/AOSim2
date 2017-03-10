@@ -2,21 +2,19 @@ function F = propagate2(F,Z,MaxTheta)
   
 % AOField.propagate2(dz,MaxTheta)
 % 
-% dz: propagation distance in m.
+% dz: propagation distance in m. (May be positive or negative.)
 % MaxTheta: max included angles in arcsecs.
-% 
-% 20150424 JLCodona
 
   NFRESNEL = 10;
   LATERAL = 1/4;
 
   if(nargin<3)
-      MaxTheta = sqrt(F.lambda/Z) * NFRESNEL;
-      MaxTheta = min(MaxTheta,min(F.extent)*LATERAL/Z)*206265;
+      MaxTheta = sqrt(F.lambda/abs(Z)) * NFRESNEL;
+      MaxTheta = min(MaxTheta,min(F.extent)*LATERAL/abs(Z))*206265;
   end
   
   if(nargin < 2)
-    error('requires at least 2 arguments: propagate(AOField,distance).');
+    error('AOField.propagate2: You need to at least specify the propagation distance.');
   end
   
   % pad the field by some number of Fresnel scales.
@@ -41,7 +39,7 @@ function F = propagate2(F,Z,MaxTheta)
   Kcutoff = min(0.45*Knyquist,F.k*MaxTheta);
   
   % Note that this is corner-centered by construction.
-  PROPAGATOR = exp(-1i*Z*F.dsphere(F.k,K1,K2)); 
+  PROPAGATOR = exp(F.direction*1i*Z*F.dsphere(F.k,K1,K2)); 
   
   if(isempty(F.cache.LPF))
       KR2 = K1.^2 + K2.^2;
@@ -54,4 +52,4 @@ function F = propagate2(F,Z,MaxTheta)
   
   %F.grid(ifftshift(ifft2(PROPAGATOR.*fft2(fftshift(F.grid))))); 
   F.grid((ifft2(PROPAGATOR.*fft2((F.grid))))); 
-  F.z = F.z - Z;
+  F.z = F.z + F.direction*Z;
