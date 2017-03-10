@@ -5,7 +5,11 @@ function plotComplex(CPLX,GAMMA,RANGE)
 %
 % JLC!
 
-igamma = 1/GAMMA;
+if(nargin<2)
+    igamma = 1;
+else
+    igamma = 1/GAMMA;
+end
 
 CPLX = squeeze(CPLX);
 % CPLX(isnan(CPLX)) = 0;
@@ -13,10 +17,6 @@ CPLX = squeeze(CPLX);
 % I = CPLX.*conj(CPLX);
 I = abs(CPLX).^2;
 PHASE = angle(CPLX);
-
-if(nargin<2)
-    igamma = 1;
-end
 
 if(nargin==3)
     plotPhaseAmplitude(I.^igamma,PHASE,RANGE.^igamma);
