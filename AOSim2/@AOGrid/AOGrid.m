@@ -867,6 +867,23 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             hold off;
         end
         
+        function S = plotGridPoints(S,linespec)
+            % S.plotBBox([linespec])
+
+            if(nargin<2)
+                linespec = 'b.';
+            end
+            
+            [X,Y] = S.COORDS;
+            
+            hold on;
+            plot(X,Y,linespec);
+            hold off;
+        end        
+        
+        
+        %%
+        
         function A = zero(A)
             % ZERO: Set an AOGrid to zero.
             if(A.useGPU)
@@ -1241,7 +1258,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     % That would be a bug.  At least this won't crash.
                     %g = interp2(gather(GX),gather(GY),gather(G.grid),...
                     %    gather(Xout),gather(Yout),G.interpolate_method);
-                    g = interp2(gather(GX),gather(GY),gather(GRID),gather(Xout),gather(Yout),G.interpolate_method);
+                    % g = interp2(gather(GX),gather(GY),gather(GRID),gather(Xout),gather(Yout),G.interpolate_method);
+                    g = interp2(GX,GY,GRID,Xout,Yout,G.interpolate_method);
                     % g = griddedInterpolant(gather(GX),gather(GY),gather(GRID),gather(Xout),gather(Yout),G.interpolate_method);
                 end
             end
@@ -1463,6 +1481,13 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
         end
         
+        function a = negate(a)
+            % G = G.negate; % same as uminus.
+            % Unary minus: Negate an AOGrid.
+            
+            a.uminus;
+        end
+        
         function a = uminus(a)
             % G = G.uminus;
             % Unary minus: Negate an AOGrid.
@@ -1522,6 +1547,8 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
         end
         
+        
+        %%
         function G = shiftPixels(G,pixels)
             % G = G.shiftPixels(PIXELS)
             % Perform a circular shift of the grid by the vector PIXELS.
@@ -1817,6 +1844,16 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             
             F.cache.LPF = [];
             F.cache.Propagators = {};
+            
+            % Coordinates cache
+            % the actual cache...
+            F.X_ = [];
+            F.Y_ = [];
+            % Cache update clues
+            F.Xextremes = []; % This only gets set by COORDS.
+            F.Yextremes = [];
+            F.Nx_ = nan;
+            F.Ny_ = nan;
         end
         
         

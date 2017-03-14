@@ -13,6 +13,8 @@ function F = propagate2(F,Z,MaxTheta)
       MaxTheta = min(MaxTheta,min(F.extent)*LATERAL/abs(Z))*206265;
   end
   
+  MaxTheta = MaxTheta/206265; % After this point, MaxTheta is in radians.
+  
   if(nargin < 2)
     error('AOField.propagate2: You need to at least specify the propagation distance.');
   end
@@ -39,7 +41,8 @@ function F = propagate2(F,Z,MaxTheta)
   Kcutoff = min(0.45*Knyquist,F.k*MaxTheta);
   
   % Note that this is corner-centered by construction.
-  PROPAGATOR = exp(F.direction*1i*Z*F.dsphere(F.k,K1,K2)); 
+  %PROPAGATOR = exp(F.direction*1i*Z*F.dsphere(F.k,K1,K2)); 
+  PROPAGATOR = exp(1i*Z*F.dsphere(F.k,K1,K2)); 
   
   if(isempty(F.cache.LPF))
       KR2 = K1.^2 + K2.^2;

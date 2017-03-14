@@ -485,6 +485,31 @@ classdef AOAtmo < AOScreen
             end
         end
         
+        
+        function ATMO = show(ATMO,RANGE,rmmean_)
+            % AOAtmo.show([RANGE],[remove mean]);
+            % Make an image of the wavefront from the beacon.
+            
+            if(nargin<3 || ~rmmean_)
+                wavefront = ATMO.grid;
+            else
+                wavefront = demean(ATMO.grid);
+            end
+            
+            [x,y] = ATMO.coords;
+            
+            if(nargin<2||isempty(RANGE))
+                imagesc(x,y,wavefront);
+            else
+                imagesc(x,y,wavefront,RANGE);
+            end
+            
+            title(ATMO.describe,'FontSize',10);
+            daspect([1 1 1]);
+            axis xy;
+            colorbar;
+        end
+        
         function A = gpuify(A,useGPU)
             if(nargin<2)
                 useGPU = true;

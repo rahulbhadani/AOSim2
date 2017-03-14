@@ -74,11 +74,54 @@ classdef AOAtmo2 < AOAtmo
             ATMO.touched = true;
         end
         
-%         function ATMO2 = tick(ATMO2)
-%             % Bump the clock by physics.dt
-%             ATMO2.setObsTime(ATMO2.time+ATMO2.physics.dt);
-%         end
+        function ATMO = driftShadows(ATMO,dTime)
+            % ATMO = ATMO.driftShadows([dTime])
+            
+            if(nargin<2)
+                dTime = ATMO.physics.dt;
+            end
+
+            if(ATMO.verbosity>0)
+                fprintf('Drifting shadows in %s by %f s.\n',ATMO.name,dTime);
+            end
+            
+            for nl=1:ATMO.nLayers
+                DRIFT = ATMO.layers{nl}.Wind*dTime;
+                COOLING_PIXELS = ceil(norm(DRIFT./ATMO.layers{nl}.shadow.spacing));
+                ATMO.layers{nl}.shadow.setBorder(COOLING_PIXELS); % Harsh cooling at edge.
+
+                ATMO.layers{nl}.shadow.shiftGrid(DRIFT); % Wind drift.
+                
+                if(ATMO.verbosity>0)
+                    fprintf('Drifting %s shadow(%d) by (%f,%f) m.\n',ATMO.name,nl,DRIFT);
+                end
+                
+                ATMO.layers{nl}.shadow.setBorder(COOLING_PIXELS); % Harsh cooling at edge.
+            end
+        end
         
+        function ATMO = diffuseShadows(ATMO,L)
+            % ATMO = ATMO.diffuseShadows(L)
+
+            if(nargin<2)
+                L = ATMO.physics.diffusion_scale;
+            end
+
+            if(ATMO.verbosity>0)
+                fprintf('Diffusing shadows in %s by %f m.\n',ATMO.name,L);
+            end
+            
+            for nl=1:ATMO.nLayers
+                % Diffuse the previous heat...
+                ATMO.layers{nl}.shadow.grid(ATMO.layers{nl}.shadow.LPF(L)); % Do it. (Pretty ad hoc.)
+            end
+        end
+
+        % function ATMO2 = tick(ATMO2)
+        % % Bump the clock by physics.dt
+        % ATMO2.setObsTime(ATMO2.time+ATMO2.physics.dt);
+        % end
+
         function ATMO = setObsTime(ATMO,t) % set observation time.
             %ATMO = setObsTime(ATMO,t) % set observation time.
             ATMO.time = t;
@@ -159,6 +202,7 @@ classdef AOAtmo2 < AOAtmo
 
                         % Screen
                         if(ATMO.layers{n}.screen.periodic)
+                            fprintf('WARN: periodic is broken.\n');
                             opl_ = ATMO.layers{n}.screen.interpGrid(XLayer,YLayer);
                         else
                             opl_ = ATMO.layers{n}.screen.interpGrid(XLayer,YLayer);
@@ -201,6 +245,7 @@ classdef AOAtmo2 < AOAtmo
                 fprintf('\tCn2 = %.2g (r0=%.3f for just this screen)\n',ATMO.layers{n}.screen.Cn2,ATMO.layers{n}.screen.r0);
                 fprintf('\tWind = [%.1f %.1f] m/s\n',ATMO.layers{n}.Wind)
                 fprintf('\tOffset=[%.3f %.3f] m\n',ATMO.layers{n}.screen.Offset);
+                fprintf('\tInterpolation method: %s\n',ATMO.layers{n}.screen.interpolate_method);
 
                 if(~isempty(ATMO.layers{n}.shadow))
                     fprintf('\tThere is a %dx%d shadow screen, with spacing %f\n',ATMO.layers{n}.shadow.size,ATMO.layers{n}.shadow.dx);
@@ -213,9 +258,9 @@ classdef AOAtmo2 < AOAtmo
                     fprintf('\tThe screen uses the GPU.\n');
                 end
                 if(ATMO.layers{n}.shadow.useGPU) 
-                    fprintf('\tThe shadow screen uses the GPU.\n');
+                    fprintf('\tThe shadow screen uses the GPU .\n');
                 end
-                if(ATMO.layers{n}.mask.useGPU) 
+                if(~isempty(ATMO.layers{n}.mask) && ATMO.layers{n}.mask.useGPU) 
                     fprintf('\tThe layer mask uses the GPU.\n');
                 end
             end
@@ -229,7 +274,7 @@ classdef AOAtmo2 < AOAtmo
             [x,y] = ATMO.coords;
             [X,Y] = ATMO.COORDS;
             
-            [OPL,TX] = ATMO.OPL_(X,Y,0);
+            [~,TX] = ATMO.OPL_(X,Y,0);
 
             imagesc(x,y,TX);sqar;
             axis xy;

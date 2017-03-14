@@ -1,8 +1,16 @@
-function F = propagateThrough(F,ATMO,FinalZ)
+function F = propagateThrough(F,ATMO,FinalZ,maxAngle)
 
-% F.propagateThrough(ATMO,[FinalZ=0])
+% F.propagateThrough(ATMO,[FinalZ=0],[maxAngle])
 % Propagate the field through an AOAtmo or AOAtmo2 using wave propagation.
 % Starts at F.z and ends at FinalZ (defaults to 0).
+% maxAngle is in arcsecs and applied at every step.
+
+if(nargin<4)
+    maxAngle = 0;
+    USE_MAX_ANGLE = false;
+else
+    USE_MAX_ANGLE = true;
+end
 
 nudge = 1e-6; % How far to push beyond a screen (just for ineq, could be eps).
 
@@ -35,7 +43,11 @@ while(~isempty(SCREENS))
         fprintf('AOField "%s": Propagating to layer %d: %gm --> %gm (%gm)\n',...
             F.name,ZnextIndex,F.z,Znext,Znext-F.z);
     end
-    F.propagate2(abs(Znext-F.z)); % Use F.direction to determine the sign.
+    if(USE_MAX_ANGLE)
+        F.propagate2(abs(Znext-F.z),maxAngle); % Use F.direction to determine the sign.
+    else
+        F.propagate2(abs(Znext-F.z)); % Use F.direction to determine the sign.
+    end
     
     if(~ATMO.layers{ZnextIndex}.ignore)
         F*ATMO.layers{ZnextIndex}.screen;

@@ -236,6 +236,28 @@ classdef AOScreen < AOGrid
             touch(S);
         end
         
+        function S = addTipTilt(S,TTx,TTy)
+            % S.addTipTilt(TipTilt)
+            % TipTilt is measured in arcsecs.
+            % TipTilt is [TTx,TTy]
+            % Call as S.([TTx,TTy]);
+            % or as   S.(TTx,TTy);
+            
+            if(nargin<3)
+                TTy = TTx(2);
+                TTx = TTx(1);
+            end
+            
+            % minus signs tilt field in the direction of TT.
+            TTx = -TTx / 206265;
+            TTy = -TTy / 206265;
+            
+            [X,Y] = S.COORDS();
+            S + (TTx*X+TTy*Y);
+
+            touch(S);
+        end
+        
         function S = addGaussian(S,CENTER,amp,width)
         % S = addGaussian(S,CENTER,amp,width)
             [X,Y] = S.COORDS();

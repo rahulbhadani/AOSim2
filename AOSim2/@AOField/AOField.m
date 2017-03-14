@@ -203,7 +203,9 @@ classdef AOField < AOGrid
                 end
                 
 			elseif(isa(b,'AOAtmo'))
-% 				fprintf('DEBUG: AOField*AOAtmo at altitude %f.\n',a.z);
+ 				if(a.verbosity>0)
+                    fprintf('DEBUG: AOField(%s)*AOAtmo(%s) at altitude %f.\n',a.name,b.name,a.z);
+                end
 				% opl = b.OPL(a,a.z);
 				a.grid_ = a.grid_ .* exp((2*pi*1i/a.lambda)*b.OPL(a,a.z));
 			else
