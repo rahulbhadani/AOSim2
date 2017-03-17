@@ -951,12 +951,15 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function g = abs(A)
-            if(nargout<1)
-                A.grid_ = abs(A.grid_);
-                A.fftgrid_ = [];
-            else
-                g = abs(A.grid_);
-            end
+        % g = A.abs()
+        % Replace the grid with its absolute values.
+        % NOTE!!! This function used to have a different behavior of
+        % returning the abs if an output was retrieved, and modifying the
+        % grid if no output.  This breaks my programming model so beware
+        % things may be broken for a while. (JLC 20170316)
+        
+        A.grid_ = abs(A.grid_);
+        A.fftgrid_ = [];
         end
         
         function g = mag2(A)

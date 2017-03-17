@@ -166,10 +166,10 @@ classdef AOSegment < AOGrid
             
             CUTOFF = 0.1;
             
-            PRJ = find(max((a.abs>CUTOFF),[],2));
+            PRJ = find(max((abs(a.grid)>CUTOFF),[],2));
             D1 = (max(PRJ)-min(PRJ))*a.dx;
             
-            PRJ = find(max((a.abs>CUTOFF),[],1));
+            PRJ = find(max((abs(a.grid)>CUTOFF),[],1));
             D2 = (max(PRJ)-min(PRJ))*a.dy;
             
             D = max(D1,D2);
