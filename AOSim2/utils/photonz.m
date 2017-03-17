@@ -20,11 +20,9 @@ function photons = photonz(IMG,N0)
 % Dec 12, 2007   Rewrote this to work with a straight array and use 
 %                MATLAB's imnoise function.
 
-
+IMG = double(IMG);
 Sum0 = sum(IMG(:));
-
-IMG = double(IMG)*(1e-12*N0/Sum0);
-
+IMG = IMG*(1e-12*N0/Sum0);
 photons = 1e12*imnoise(IMG,'poisson');
 
 return;

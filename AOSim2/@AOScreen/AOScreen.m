@@ -7,6 +7,7 @@ classdef AOScreen < AOGrid
 	%
 	% Written by: Johanan L. Codona, Steward Observatory: CAAO
 	% 20090417 JLCodona.  AOSim2.
+	% 20151208 Mark Milton. Changed the Zernike normalization to follow Noll.
 	
 	% Public properties
 	properties(Access='public')
@@ -14,20 +15,37 @@ classdef AOScreen < AOGrid
 		lambdaRef = AOField.VBAND;
 	
 		mirror = false;  % This is like a height doubler.
+        conjugate = false; % This changes the sign of the phase when multiplying an AOField.
 		touched = true;
         radius = 1; % This is for Zernike reference.
         
-        fixLF = false; % This is to patch the FFT generation using fractal scaling.
-	end
+        L0 = 30;                % Outer scale
+        inner_scale = 0.005;    % Inner scale of turbulence. (For Rod!)
+
+        TURBULENCE_MODEL = AOScreen.VON_KARMAN;
+        ALPHA = 11/3;      % This is the PSD exponent.  Change it for non-standard turbulence.
+        
+        LOW_FREQ_FIX = false;  % Flag if we want to compensate for the Fourier synthesis error.
+    end
 	
 	% Private
 	properties(SetAccess='private', GetAccess='public')
-		thickness;
-		r0 = 0.15;
-		Cn2;
-        L0 = 30;
-	end
+		thickness = 1;          % Thickness of the turbulent layer squashed into the screen.
+		r0 = 0.15;              % Fried length at lambdaRef.
+		Cn2;                    % Turbulence index of refraction structure constant.
+    end
 	
+    % Static constants
+	properties(Constant=true, SetAccess = 'private')
+        % Turbulence models. 
+        KOLMOGOROV      = 1; % Pure power-law with -11/3 spectral exponent.
+        TATARSKI        = 2; % Kolmogorov with an inner scale.
+        VON_KARMAN      = 3; % Kolmogorov with an outer scale and an inner scale.
+        MODIFIED_ATMO   = 4; % VON_KARMAN with the "Hill Bump."
+        HILL_MODEL      = 4; % An alias for MODIFIED_ATMO.
+        DISABLED        = 5; % Don't add any turbulence.  (For other physics problems.)
+	end
+    
 	%% Methods
 	methods
 		% Constructors
@@ -55,47 +73,91 @@ classdef AOScreen < AOGrid
 				PS.lambdaRef = varargin{3};
 			end
 
-			PS.thickness = 100;
+			%PS.thickness = 100;
 			PS.Cn2 = PS.r0^(-5/3)/0.423/(2*pi/PS.lambdaRef)^2/PS.thickness;
 			
 			PS.nanmap = 1; % Make clear beyond the turbulence.
 		end
 		
 		function PS = setCn2(PS,cn2,thick)
-			if(nargin<3)
-				thick = 1;
+		% PS = setCn2(PS,cn2,thick)
+        % Set the Cn2 and optionally set the thickness.
+        % If the thickness is not set, it is left to the current value.
+        % PS.r0 is updated using lambdaRef.
+        
+			if(nargin>2)
+    			PS.thickness = thick;
 			end
 			
-			PS.thickness = thick;
 			PS.Cn2 = cn2;
 			PS.r0 = (0.423*(2*pi/PS.lambdaRef)^2*cn2*PS.thickness)^(-3/5); % see Roddier
 			PS.touch;
 		end
 		
 		function PS = setR0(PS,r0,thick)
-			if(nargin<3)
-				thick = 1;
-			end
+		% PS = setR0(PS,r0,thick)
+        % Set the R0 and optionally set the thickness.
+        % If the thickness is not set, it is left to the current value.
+        % PS.Cn2 is updated using lambdaRef and the current/new thickness.
+
+            if(nargin>2)
+    			PS.thickness = thick;
+            end
 			
-			PS.thickness = thick;
 			PS.r0 = r0;
 			PS.Cn2 = (r0^(-5/3))/0.423/(2*pi/PS.lambdaRef)^2/PS.thickness;
 			PS.touch;
         end
 
+        function PS = setThickness(PS,thick)
+        % PS = setThickness(PS,thick)
+        % Set the thickness of an AOScreen without changing any other parameters.
+        % This updates r0 using lambdaRef.
+        
+            PS.setCn2(PS.Cn2,thick);
+        
+		end
+        
         function PS = setOuterScale(PS,L0)
+        % PS = setOuterScale(PS,L0)
 			PS.L0 = L0;
 			PS.touch;
         end        
         
-		% Utilities
+        function PS = scaleTurbStrength(PS,RATIO)
+        % PS = scaleTurbStrength(PS,RATIO)
+        % Scale the strenth of the turbulence model so that the rms changes
+        % by the factor RATIO.
+        
+            PS.setCn2(PS.Cn2 * RATIO^2);
+        
+        end
+        
+        function PS = setLowFreqCorrection(PS,LowFreqCorr)
+        % PS = setLowFreqCorrection(PS,LowFreqCorr)
+        % LowFreqCorr is a boolean to turn on/off the low freq correction.
+        
+			PS.LOW_FREQ_FIX = LowFreqCorr;
+			PS.touch;
+        end        
+        
+        
+        
+		%% Utilities
 		
 		function b = isPhase(G)
-            b=true; % This is for confused programs that think this is an AOPhaseScreen.
+		% b = isPhase(G)
+        % This is for confused programs that think this is an AOPhaseScreen.
+            b = true; 
 		end
 		
 		function PSI = phasor(PS,lambda)
-			tX(PS);
+		% PSI = phasor(PS,lambda)
+        % Return exp(1i*k_ref*grid);
+        % If lambda is not set, I just use lambdaRef.
+        % lambdaRef is not changed.
+        
+        %tX(PS);
 			
 			if(nargin<2)
 				lambda = PS.lambdaRef;
@@ -105,38 +167,94 @@ classdef AOScreen < AOGrid
 		end
 		
 		function PHASE = phase(PS,lambda)
-			tX(PS);
+		% PHASE = phase(PS,lambda)
+        % Return k_ref*grid;
+        % If lambda is not set, I just use lambdaRef.
+        % lambdaRef is not changed.
+
+        %tX(PS);
 			
 			if(nargin<2)
 				lambda = PS.lambdaRef;
 			end
 
 			PHASE = (2*pi/lambda) * PS.grid;
-		end
-		
-		function Rf = fresnel(a)
+        end
+        
+        function RESULT = convPhasors(PS,KERNEL,lambda)
+            % RESULT = PS.convPhasors(KERNEL,lambda);
+            
+            if(nargin<3)
+                lambda = PS.lambdaRef;
+            end
+            
+            RESULT = conv2(PS.phasor(lambda),KERNEL,'same');
+        end
+        
+        function Rf = fresnel(a)
+		% Rf = fresnel(a)
+        % Compute the Fresnel scale assuming lambdaRef and the screen
+        % altitude.
 			Rf = sqrt(a.lambdaRef * a.altitude);
         end
 		
         function S = touch(S)
+        % S = touch(S)
+        % Tell the AOScreen that we want to re-render.
             S.touch@AOGrid;
             S.touched = true;
         end
 		
         function S = importAPP(S,FITSNAME,FRAME)
-            % This is JLC specific.  Read in a PAC APP phase pattern.
+            % This is JLC specific.  Reads in a PAC APP phase pattern.
+            
+            if(nargin<3)
+                FRAME = 1;
+            end
+            
             HEADER = fits_read_header(FITSNAME);
+            S.resize(double(HEADER.NAXIS1)); % I only support square grids for now.
+            
             START = double([1,1,FRAME]);
             STOP = double([HEADER.NAXIS1,HEADER.NAXIS2,FRAME]);
-            APP = fits_read_image_subset(FITSNAME,START,STOP);
-            S.grid_ = APP'*(S.lambdaRef/2/pi);
-            S.spacing(HEADER.XSPACING);
+            if(nargin<3)
+                APP = fits_read_image(FITSNAME);
+            else
+                APP = fits_read_image_subset(FITSNAME,START,STOP);
+            end
+            % Notice the transpose.  This may cause trouble if you load
+            % things from other places and don't also transpose there. I
+            % will probably change this in the future.
+            S.grid_ = APP'*(S.lambdaRef/2/pi); 
+            %S.spacing(HEADER.XSPACING);
         end
         
         function S = addRipple(S,K,amp,phase)
         % S = addRipple(S,K,amp,phase)
             [X,Y] = S.COORDS();
             S + amp*cos(K(1)*X + K(2)*Y + phase);
+            touch(S);
+        end
+        
+        function S = addTipTilt(S,TTx,TTy)
+            % S.addTipTilt(TipTilt)
+            % TipTilt is measured in arcsecs.
+            % TipTilt is [TTx,TTy]
+            % Call as S.([TTx,TTy]);
+            % or as   S.(TTx,TTy);
+            
+            if(nargin<3)
+                TTy = TTx(2);
+                TTx = TTx(1);
+            end
+            
+            % minus signs tilt field in the direction of TT.
+            TTx = -TTx / 206265;
+            TTy = -TTy / 206265;
+            
+            [X,Y] = S.COORDS();
+            S + (TTx*X+TTy*Y);
+
             touch(S);
         end
         
@@ -148,6 +266,8 @@ classdef AOScreen < AOGrid
         end
 
         function S = addGDelta(S,CENTER,amp,width,xy)
+        % S = addGDelta(S,CENTER,amp,width,xy)
+        % Add a Gaussian delta.
             [X,Y] = S.COORDS();
             if(nargin<5)
                 error('need all args specified: addGDelta(S,CENTER,amp,width,xy)');
@@ -165,29 +285,45 @@ classdef AOScreen < AOGrid
             touch(S);
         end
 
-        function S = addZernike(S,n,m,amp,D,cenx,ceny)
-        % AOScreen S = S.addZernike(n,m,amp,D,cenx,ceny)
+        function S = addZernike(S,n,m,amp,D,cenx,ceny,NOLL)
+        % AOScreen S = S.addZernike(n,m,amp,D,[cenx],[ceny],[NOLL])
+        % The cen[x|y] variables defalt to zero. 
+        % If NOLL==true, use Noll normalization.
+        % Otherwise just use the basic Zernike formulae.
             if(nargin>4)
                 S.radius = D/2;
             end
             if(nargin>5)
-                Xcen=cenx;    %allows segment aberrations
-                Ycen=ceny;
+                Xcen = cenx;    %allows segment aberrations
+                Ycen = ceny;
             else	
-				Xcen=0;
-                Ycen=0;
-			end
+				Xcen = 0;
+                Ycen = 0;
+            end
+            if(nargin<8)
+                NOLL = true;
+            end
             
             [x,y] = S.COORDS(); % lowercase on purpose to match Zernike vars.
             %fprintf('Xcen=%d   YCen=%d \n',Xcen,Ycen);
             x = (x-Ycen)/S.radius;
             y = (y-Xcen)/S.radius;
             zern = ZernikeStringR(n,m);
-            S + amp*eval(zern);
+            if(NOLL)
+                if m == 0
+                    norm = sqrt(n + 1);
+                else
+                    norm = sqrt(2*(n + 1));
+                end
+                S + amp*norm*eval(zern);
+            else
+                S + amp*eval(zern);
+            end
             %touch(S);
         end
 
 		function S = addDiskHarmonic(S,n,m,amp,D,cenx,ceny)
+		% S = addDiskHarmonic(S,n,m,amp,D,cenx,ceny)
             if(nargin>5)
                 Xcen=cenx;  %allows segment aberrations
                 Ycen=ceny;
@@ -218,6 +354,36 @@ classdef AOScreen < AOGrid
             touch(S);
         end
 		
+        function S = addPower(S,DIOPTERS,lensType)
+            % S = addPower(S,DIOPTERS,[lensType='sphere'])
+            % Add a specified amount of aberration power.
+            % lensType can be:
+            % 'sphere', 'cylinder'
+            % TODO: add cylinder.
+            
+            if(nargin<3)
+                lensType = 'sphere';
+            end
+            
+            if(strncmpi(lensType,'sphere',3))
+                FL = 1/DIOPTERS;
+                
+                [X,Y] = S.COORDS();
+                
+                S + S.dsphere(FL,X,Y);
+            end
+            
+            if(strncmpi(lensType,'cylinder',3))
+                FL = 1./DIOPTERS;
+                
+                [X,Y] = S.COORDS();
+                
+                S + S.dsphere(FL,X,Y);
+            end
+            
+            touch(S);
+        end
+
         function grid = LPF(S,scale)
             % grid = SCREEN.LPF(S)
             % This function returns a Gaussian smoothed version
@@ -231,14 +397,53 @@ classdef AOScreen < AOGrid
             % FIELD.planewave*SCREEN*APERTURE;
             % PSF = FIELD.mkPSF(FOV,dFOV);
             % ta dah! (note that this is only a fitting error model)
+            % To add lag error, shift z1 by some pixels of length
+            % wind*lagtime.
         
-            grid = S.grid;
             N = round(2*scale/S.dx);
             N = N + mod(N+1,2);
             filter1d = chebwin(N);
             FILTER = filter1d*filter1d';
             FILTER = FILTER / sum(FILTER(:));
-            grid = conv2(grid,FILTER,'same');
+            if(S.useGPU)
+                FILTER = gpuArray(FILTER);
+            end
+            grid = conv2(S.grid_,FILTER,'same');
+            
+        end
+        
+        function grid = LPF_(S,scale,transition)
+            % grid = SCREEN.LPF(S)
+            % This function returns a Gaussian smoothed version
+            % of the SCREEN's displacement grid. 
+            % The SCREEN itself is not altered.
+            % A cheesy AO model is 
+            %
+            % z0 = SCREEN.make.grid;
+            % z1 = SCREEN.LPF(l_actuator);
+            % SCREEN.grid(1.414*(z0-z1));
+            % FIELD.planewave*SCREEN*APERTURE;
+            % PSF = FIELD.mkPSF(FOV,dFOV);
+            % ta dah! (note that this is only a fitting error model)
+        
+            KMAX = 2*pi/scale;
+            
+            if(nargin<3)
+                EXTENT = S.extent;
+                %transition = 2*pi/EXTENT(1)/25
+                transition = KMAX/20
+            end
+            
+            grid = S.grid;
+            [KX,KY] = S.KCOORDS;
+            KR = sqrt(KX.^2+KY.^2);
+            FILTER = (smoothedge(2*pi/scale-KR,transition));
+            FILTER = FILTER / sum(FILTER(:));
+            FILTER = fftshift(FILTER);
+            
+            grid = real(ifft2(fft2(S.grid).*FILTER));
+            S.grid(ifft2(fft2(S.grid).*FILTER));
+            %grid = conv2(grid,FILTER,'same');
             
         end
         
@@ -252,7 +457,7 @@ classdef AOScreen < AOGrid
             % This method Starts with Npoints in the PS grid and then
             % filters them based on being inside the pupil.
             % The number of points is reduced from the value set, and
-            % pairwise ombined, so be aware of huge tasks being
+            % combined pairwise, so be aware of huge tasks being
             % inadvertently set.
 
             if(nargin<5)
@@ -308,15 +513,45 @@ classdef AOScreen < AOGrid
             end
             
             %semilogy
-            loglog(s,dPhase_meanSquare,'.',...
-                s,dPhase_meanSquare+dPhase_meanSquareSigma,'r--',...
-                s,dPhase_meanSquare-dPhase_meanSquareSigma,'r--');
-            hold on;
-            plot(s([1 end]),[1 1]*6.88,'k--');
-            plot([1 1]*PS.r0,[0.1 100],'k-');            
-            plot(s,6.88*(s/PS.r0).^(5/3),'g--');
-            hold off;
-            drawnow;
+%             loglog(s,dPhase_meanSquare,'.',...
+%                 s,dPhase_meanSquare+dPhase_meanSquareSigma,'r--',...
+%                 s,dPhase_meanSquare-dPhase_meanSquareSigma,'r--');
+%             hold on;
+%             plot(s([1 end]),[1 1]*6.88,'k--');
+%             plot([1 1]*PS.r0,[0.1 100],'k-');            
+%             plot(s,6.88*(s/PS.r0).^(PS.ALPHA-2),'g--');
+%             hold off;
+%             xlabel('spacing (m)');
+%             ylabel('phase structure function');
+%             ylim(10.^[-3 1]);
+            %drawnow;
         end
- 	end % public methods.
+    
+        function SF = SFtheo(PS,x)
+        % SF = SFtheo(PS,x)
+        % Return the theoretical value(s) of the structure function using
+        % values from SL=H.
+            SF = 6.88 * (x/PS.r0).^(5/3);
+        end
+        
+        function PS = simpleAO(PS,SmoothSize,WindLag)
+            % PS = simpleAO(PS,SmoothSize,WindLag)
+            % Modifies the phase screen to simulate a post-AO wavefront.
+            % WindLag is tau*wind in pixels.
+            
+            dx = mean(PS.spacing);
+            Kwidth = 5*SmoothSize;
+            SMOOTH = fspecial('gaussian',ceil(Kwidth/dx),SmoothSize/dx);
+            
+            g = PS.grid;
+            g = conv2(g,SMOOTH,'same');
+            
+            if(nargin>2)
+                g = circshift(g,WindLag);
+            end
+            
+            PS.grid(PS.grid-g);
+        end
+        
+    end % public methods.
 end

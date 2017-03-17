@@ -21,7 +21,7 @@ function F = propagate(F,dz,REGULARIZE,PADDED)
 % For more information on propagating paraxial waves through phase screens,
 % see my dissertation, chap 1, intro theory.  Or Tatarskii, a lot of other
 % places.  My thesis is online:
-% http://leitzel.as.arizona.edu/thesis
+% http://books.google.com/books?id=59seqhaUvPwC
 % 
 % SEE ALSO:
 % AOGrid, interact.
@@ -59,17 +59,29 @@ function F = propagate(F,dz,REGULARIZE,PADDED)
   if(nargin>4 | PADDED>F.nx)
       NPAD = round(NFRESNEL*Rf./DX);
       fprintf('DEBUG: PADDING the field array by [%d,%d] pixels.\n',NPAD);
-      field = padarray(field,NPAD,'post');
+      %field = padarray(field,NPAD,'post');
+      %field = padarray(field,NPAD,F.subGrid(1,1),'post'); % pad with what is at the edge.
+      field = [field,fliplr(field(:,end-NPAD+1:end))];
+      field = [field;flipud(field(end-NPAD+1:end,:))];
+  end
+
+  if((F.lastLambda~=F.lambda) || (F.lastDistance~=dz) || isempty(F.PROPAGATOR))      
+      %fprintf('Computing a new propagator.\n');
+      
+      dK = 2*pi./(size(field) .* DX);
+      
+      kx1 = mkXvec(size(field,1),dK(1));
+      kx2 = mkXvec(size(field,2),dK(2));
+      [KX2,KX1] = meshgrid(kx2,kx1);
+      
+      % make sure the regularization damps the high angles even in reverse.
+      F.PROPAGATOR = exp((-(abs(REGULARIZE*dz)+1i*dz)/2/F.k)*(KX1.^2+KX2.^2));
+      F.lastDistance = dz;
+      F.lastLambda = F.lambda;
   end
   
-  dK = 2*pi./(size(field) .* DX);
-  
-  kx1 = mkXvec(size(field,1),dK(1));
-  kx2 = mkXvec(size(field,2),dK(2));
-  [KX2,KX1] = meshgrid(kx2,kx1);
-  % make sure the regularization damps the high angles even in reverse.
-  PROPAGATOR = exp((-(abs(REGULARIZE*dz)+1i*dz)/2/F.k)*(KX1.^2+KX2.^2));
-  field = ifft2(PROPAGATOR.*fft2(field)); 
-  F.grid_ = field(1:SZ(1),1:SZ(2)); 
+  field = ifft2(F.PROPAGATOR.*fft2(field));
+  F.grid_ = field(1:SZ(1),1:SZ(2));
   F.z = F.z - dz;
   
+  F.touch;

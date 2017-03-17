@@ -14,6 +14,10 @@ classdef AOField < AOGrid
         LBAND = 3.8e-6;
 		MBAND = 4.769e-6;
 		NBAND = 10.472e-6;
+        BrGamma = 2.165e-6; % Brackett Gamma
+        HAlpha = 0.6563e-6; % Hydrogen Alpha 
+        PaBeta =1.2818e-6;  % Paschen Beta
+        OIII = 0.5007e-6;   % Oxygen III
 		
 		Rayleigh_LGS = 532e-9;
 		Sodium_LGS = 589e-9;
@@ -22,18 +26,28 @@ classdef AOField < AOGrid
 	
 	% Public properties
 	properties(Access='public')
-		lambda = AOField.HBAND;
+		lambda = AOField.HeNe_Laser;
 		z = 0;
-	end
-	
+        
+        PROPAGATOR = [];  % Cached propagator.
+        lastLambda = 0;
+        lastDistance = 0;
+    end
+    
+    properties(GetAccess = 'public', SetAccess = 'protected')
+        direction = -1; % initial propagation direction is toward -z.
+    end
+    
 	% Private
-	properties(Access='private')
+	properties(Access='private' )
 	end
 	
 	%% Methods
 	methods
 		function obj = AOField(ref)
 			obj = obj@AOGrid(ref);
+            obj.cache.LPF = [];
+            obj.cache.Propagators = {};
         end
 
         function [HALO,thx,thy] = mkHALO(F,FoV,dth) % angles in arcsecs.
@@ -45,13 +59,12 @@ classdef AOField < AOGrid
             
             halo = F.fft; % do this first to initialize the buffers, etc.
             
-            k = 2*pi/F.lambda;
             [kx,ky] = kcoords(F);
             
             % This is the size of the FFT pixels...
             dTH = F.dk/F.k*206265;
-            thx_ = kx/k*206265;
-            thy_ = ky/k*206265;
+            thx_ = kx/F.k*206265;
+            thy_ = ky/F.k*206265;
             
             if(nargin<3)
                 dth = median(diff(thx_));
@@ -73,8 +86,8 @@ classdef AOField < AOGrid
             
             halo = halo(SELx,SELy);
             
-            HALO = qinterp2(THX_,THY_,halo,THX,THY);
-            %HALO = interp2(THX_,THY_,halo,THX,THY,'cubic');
+            %HALO = qinterp2(THX_,THY_,halo,THX,THY);
+            HALO = interp2(THX_,THY_,halo,THX,THY,'cubic');
             
         end
         
@@ -132,9 +145,12 @@ classdef AOField < AOGrid
 			k = 2*pi/A.lambda;
 			THX = KX/k;
 			THY = KY/k;
-		end
+        end
 		
 		function a = mtimes(a,b)
+		% function a = mtimes(a,b)
+        % This is overloaded to compute smart "times" operations for AOFields.
+        
 			if(isa(b,'AOPhaseScreen'))
 				if(isCommensurate(a,b))
 					if(isPhase(b))
@@ -165,27 +181,38 @@ classdef AOField < AOGrid
 					MIRROR = 2;
 				else
 					MIRROR = 1;
-				end
-				
+                end
+			
+                if(b.conjugate)
+                    FLIP = -1;
+                else
+                    FLIP = 1;
+                end
+                
 				if(isCommensurate(a,b))
-% 					fprintf('DEBUG: AOField*AOScreen: commensurate grids.\n');
-					a.grid_ = a.grid_ .* exp((MIRROR*2*pi*1i/a.lambda)*b.grid);
+                    %fprintf('DEBUG: AOField*AOScreen: commensurate grids.\n');
+					a.grid_ = a.grid_ .* exp((FLIP*MIRROR*2*pi*1i/a.lambda)*b.grid);
 				else
 					[X,Y] = a.COORDS;
-% 					fprintf('DEBUG: AOField*AOScreen: non-commensurate grids.\n');
-					bg = exp((MIRROR*2*pi*1i/a.lambda)*interpGrid(b,X,Y));
+ 					%fprintf('DEBUG: AOField*AOScreen: non-commensurate grids.\n');
+					bg = exp((FLIP*MIRROR*2*pi*1i/a.lambda) * b.interpGrid(X,Y));
 					
 					%bg(isnan(bg)) = 1;
 					bg(isnan(bg)) = b.nanmap;
 					a.grid_ = a.grid_ .* bg;
-				end
+                end
+                
 			elseif(isa(b,'AOAtmo'))
-% 				fprintf('DEBUG: AOField*AOAtmo at altitude %f.\n',a.z);
+ 				if(a.verbosity>0)
+                    fprintf('DEBUG: AOField(%s)*AOAtmo(%s) at altitude %f.\n',a.name,b.name,a.z);
+                end
 				% opl = b.OPL(a,a.z);
 				a.grid_ = a.grid_ .* exp((2*pi*1i/a.lambda)*b.OPL(a,a.z));
 			else
 				a = mtimes@AOGrid(a,b);
-			end
+            end
+            
+            a.touch;
         end
         
           function wavenumber = k(this)
@@ -215,5 +242,87 @@ classdef AOField < AOGrid
             
             F.grid_ = F.grid_ * bandIntFlux * pixelArea;
         end
+        
+        function F = setDirection(F,direction)
+            % F = setDirection(F,direction)
+            % Set the propagation direction.
+            % Propagation direction is sign(direction).
+            % If direction==0, reverse the direction.
+            
+            if(sign(direction) == sign(F.direction)) % Already going that way.
+                if(F.verbosity>0)
+                    fprintf('WARNING: AOField.setDirection set to the current direction (NOOP).');
+                end
+
+                return;
+            end
+            
+            if(direction==0)
+                direction = -F.direction;
+            else
+                F.direction = sign(direction);
+            end
+            
+            
+            F.PROPAGATOR = [];  % Need to compute a new propagator.  
+            % (TODO: May be okay to just conjugate.)
+            
+        end
+        
+        function F = telescope(F,MAGNIFICATION)
+            % F = F.telescope(magnification)
+            % Transform a field from the entrance pupil to the exit pupil
+            % of a telescope. 
+            % MAGNIFICATION is the ratio of the entrance pupil to the exit
+            % pupil size.
+            
+            F.Offset = F.Offset/MAGNIFICATION;
+            F.spacing(F.spacing/MAGNIFICATION);
+        end
+        
+        function Rf = FresnelScale(F,RANGE,LAMBDA)
+            % Rf = FresnelScale(F,[RANGE],[LAMBDA])
+            % Compute the Fresnel scale for the field or in general.
+            % Returns a matrix of Fresnel scales (LAMBDAS x RANGES) if
+            % the inputs are both vectors.
+            
+            if(nargin<2 || isempty(RANGE))
+                RANGE = F.z;
+            end
+            
+            if(nargin<3)
+                LAMBDA = F.lambda;
+            end
+            
+            Rf = sqrt(LAMBDA(:)'*abs(RANGE(:)));
+        end
+        
+        function Fnumber = FresnelNumber(F,D,RANGE,LAMBDA)
+            % Fnumber = FresnelNumber(F,D,RANGE,LAMBDA)
+            % Compute the Fresnel Number for the field or in general.
+            % https://en.wikipedia.org/wiki/Fresnel_number
+            % Returns a matrix of Fresnel Numbers (LAMBDAS x RANGES) if
+            % the inputs are both vectors.
+            
+            % If D not given, use the AOGrid extent.
+            if(nargin<2 || isempty(D))
+                D = max(F.extent);
+            end
+
+            if(nargin<3 || isempty(RANGE))
+                RANGE = F.z;
+            end
+            
+            if(nargin<4)
+                LAMBDA = F.lambda;
+            end
+            
+            Fnumber = (D/2)^2./(LAMBDA(:)'*abs(RANGE(:)));
+        end
+    end
+    
+    %% static methods
+    methods(Static=true)
+        
     end
 end

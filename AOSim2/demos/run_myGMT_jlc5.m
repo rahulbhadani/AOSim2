@@ -11,7 +11,7 @@
 
 WFS_FPS = 1000;
 
-% gain=1; % gain>2 is asking for trouble!
+gain=1; % gain>2 is asking for trouble!
 % gain = 0.3; % gain>2 is asking for trouble!
 pgain = 0.1; % pgain is the piston gain.
 

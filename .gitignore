@@ -9,6 +9,8 @@
 *.bbl
 *.bak
 *.fits
+*.jpg
+*.png
 *.mat
 *.out
 *.err
