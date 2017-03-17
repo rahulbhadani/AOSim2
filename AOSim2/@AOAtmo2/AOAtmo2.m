@@ -123,21 +123,24 @@ classdef AOAtmo2 < AOAtmo
         % end
 
         function ATMO = setObsTime(ATMO,t) % set observation time.
-            %ATMO = setObsTime(ATMO,t) % set observation time.
+            % ATMO.setObsTime(t) % set observation time.
+            % The screens are shifted including the time_offset so 
+            % that t==0 can be somewhere other than the middle of the screen.
+            
             ATMO.time = t;
             
             for n=1:ATMO.nLayers
                 % Always move the screen with the wind.
-                ATMO.layers{n}.screen.Offset = ATMO.layers{n}.Wind*ATMO.time;
+                ATMO.layers{n}.screen.Offset = ATMO.layers{n}.Wind*(ATMO.time+ATMO.time_offset);
                 
                 % Move the shadow according to the policy.
                 if(strncmp(ATMO.layers{n}.shadow.policy,'wind',4))
-                    ATMO.layers{n}.shadow.Offset = ATMO.layers{n}.Wind*ATMO.time;
+                    ATMO.layers{n}.shadow.Offset = ATMO.layers{n}.Wind*(ATMO.time+ATMO.time_offset);
                 end
                 
                 % Move the mask according to the policy.
                 if(~isempty(ATMO.layers{n}.mask) && strncmp(ATMO.layers{n}.mask.policy,'wind',4))
-                    ATMO.layers{n}.shadow.Offset = ATMO.layers{n}.Wind*ATMO.time;
+                    ATMO.layers{n}.shadow.Offset = ATMO.layers{n}.Wind*(ATMO.time+ATMO.time_offset);
                 end
             end
         end

@@ -14,6 +14,7 @@ classdef AOAtmo < AOScreen
         layers = {};                    % List of AOScreens.
         BEACON = [ 0 0 1.5e11 ]*100;    % [x,y,z] a single point. Defaults to 100 AU.
         time = 0;                       % Set this for the observation time.  Affects wind.
+        time_offset = 0;                % shifts phase screens with this time offset.
         GEOMETRY = true;                % Include geometric OPL as well as aberrations.
         z = 0;                          % Location of the OUTPUT for this object.
         physics = struct;  % Put physics model params here.
@@ -118,7 +119,7 @@ classdef AOAtmo < AOScreen
             ATMO.time = t;
             
             for n=1:ATMO.nLayers
-                ATMO.layers{n}.screen.Offset = ATMO.layers{n}.Wind*ATMO.time;
+                ATMO.layers{n}.screen.Offset = ATMO.layers{n}.Wind*(ATMO.time+ATMO.time_offset);
             end
         end
         
@@ -219,8 +220,8 @@ classdef AOAtmo < AOScreen
                 % fprintf('%d ',n);
                 if(~ATMO.layers{n}.ignore)
                     zLayer = ATMO.layers{n}.screen.altitude;
-                    W = ATMO.layers{n}.Wind;
-                    t = ATMO.time;
+                    % W = ATMO.layers{n}.Wind;
+                    % t = ATMO.time;
                     if(zLayer <= BEACON(3))
                         [XLayer,YLayer] = scaleCone(ATMO,X,Y,z,zLayer);
                         if(ATMO.layers{n}.screen.touched)
