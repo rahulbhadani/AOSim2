@@ -10,7 +10,7 @@
 WFS_FPS = 550;
 WFS.qscale = 1; % smaller values make the WFS arrows bigger in the quiver plot.
 
-gain=1; % gain>2 is asking for trouble!
+gain = 1.0; % gain>2 is asking for trouble!
 % gain = 0.3; % gain>2 is asking for trouble!
 GAMMA = 2;  % This is the gamma correction for the PSF image.
 SCIENCE_WAVELENGTH = AOField.KBAND;
@@ -79,7 +79,7 @@ F.FFTSize = 2048*[1 1]; % This needs to be HUGE for the GMT.
 PSF = F.mkPSF(.2,.2/100); %TODO: This is a bug workaround.  FIXME!
 
 %% Set your Primary and adaptive secondary initial conditions...
-A.trueUp;
+% A.trueUp;
 DM.setActs(0);
 % DM.addRippleActs(.3*[1 1],500e-9,0);
 % DM.addRippleActs(.5*[-1.2 .4],300e-9,pi/2);
@@ -104,6 +104,7 @@ HISTMAX = 2000;
 [x,y]=coords(F);
 
 CCD = 0;
+ATMO.time_offset = -1.5;
 
 N1=2;N2=3;  % Selects display geometry.
 
@@ -111,7 +112,7 @@ N1=2;N2=3;  % Selects display geometry.
 for n=1:2000
 	% 1kHz Frame rate.  Divide by 2000 to match CoDR.
     t = n/WFS_FPS;
-    ATMO.time = t-1.5;
+    ATMO.setObsTime(t);
 	
     fprintf('%d ',n);
     
@@ -235,8 +236,7 @@ for n=1:2000
 	
     subplot(N1,N2,4);
     xScale = linspace(-pi,pi,64);
-   
-    g=F.grid_;
+    g = F.grid_;
 	binDat = histc(angle(g(mask)),xScale);
 	[vals,indx] = max(binDat);
 	phase0 = xScale(indx);
@@ -252,7 +252,7 @@ for n=1:2000
 
 	subplot(N1,N2,5:6);
 	surf(x,y,DM.grid,A.grid,'LineStyle','none');
-	zlim([-1 1]*3e-6);
+	zlim([-1 1]*5e-6);
 	daspect([1 1 5e-6]);
 	lt=light();
 	set(lt,'Position',[-1 0 1]);

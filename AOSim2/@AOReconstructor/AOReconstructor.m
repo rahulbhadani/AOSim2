@@ -47,22 +47,16 @@ classdef AOReconstructor < handle
 			RECON.WFS = WFS;
 		end
 		
-		function RECON = program(RECON,D,OWD,step,lambda)
-			% RECON = program(RECON,[D],[OWD],[step],[lambda])
+		function RECON = program(RECON,D,OWD,step)
+			% RECON = program(RECON,[D],[OWD],[step])
+            % NOTE: Args have changed.
+            % Specify lambda and verbose in object before programming.
 			
 			RECON.TrainingMethod = 'fourier';
 			
-			if(nargin<5)
-				if(isempty(RECON.lambda))
-					RECON.lambda = AOField.RBAND;
-				end
-			else
-				RECON.lambda = lambda;
-			end
-			
 			if(nargin<4)
 				if(isempty(RECON.step))
-					RECON.step = 0.5;
+					RECON.step = 0.5;  % Measured in lamda/D.
 				end
 			else
 				RECON.step = step;
@@ -70,7 +64,8 @@ classdef AOReconstructor < handle
 			
 			if(nargin<3)
 				if(isempty(RECON.OWD))
-					RECON.OWD = 6;
+					% RECON.OWD = 6;
+					RECON.OWD = sqrt(RECON.DM.nActs)/2;
 				end
 			else
 				RECON.OWD = OWD;
@@ -78,8 +73,9 @@ classdef AOReconstructor < handle
 			
 			if(nargin<2)
 				if(isempty(RECON.D))
-					BBOX = RECON.A.BBox;
-					RECON.D = mean(BBOX(2,:)-BBOX(1,:));
+					% BBOX = RECON.A.BBox;
+					% RECON.D = mean(BBOX(2,:)-BBOX(1,:));
+                    RECON.D = RECON.A.estimateD;
 				end
 			else
 				RECON.D = D;
@@ -102,7 +98,6 @@ classdef AOReconstructor < handle
 			% We must do this for sin and cos.
 			RECON.ACTS = zeros(RECON.DM.nActs,2*length(KSET)^2);
 			RECON.SLOPES = zeros(2*RECON.WFS.nSubAps,2*length(KSET)^2);
-			% 			disp(RECON);
 			
 			F = AOField(RECON.A);
 			F.lambda = RECON.lambda;
@@ -179,17 +174,11 @@ classdef AOReconstructor < handle
 			RECON.rebuild;
 		end
 		
-		function RECON = zprogram(RECON,D,Nmax,lambda)
-			% RECON = zprogram(RECON,D,Nmax,lambda)
-			
-			if(nargin<5)
-				if(isempty(RECON.lambda))
-					RECON.lambda = AOField.RBAND;
-				end
-			else
-				RECON.lambda = lambda;
-			end
-			
+        function RECON = zprogram(RECON,D,Nmax)
+            % RECON = zprogram(RECON,D,Nmax)
+            % NOTE: Args have changed.
+            % Specify lambda and verbose in object before programming.
+
 			RECON.TrainingMethod = 'zernike';
 			RECON.OWD = Nmax;
 			RECON.D = D;
@@ -206,10 +195,10 @@ classdef AOReconstructor < handle
 			% We must do this for sin and cos.
 			RECON.ACTS = zeros(RECON.DM.nActs,NZmodes);
 			RECON.SLOPES = zeros(2*RECON.WFS.nSubAps,NZmodes);
-			% 			disp(RECON);
 			
 			F = AOField(RECON.A);
 			F.lambda = RECON.lambda;
+            [x,y] = F.coords;
 			
 			ABER = AOScreen(RECON.A);
 			
@@ -239,7 +228,6 @@ classdef AOReconstructor < handle
 					RECON.SLOPES(:,nmode) = RECON.WFS.slopes;
 					nmode = nmode + 1;
                     fprintf('%d ',m);
-                    [x,y]=coords(F);
                     
                     if(RECON.verbose)
                         [x,y]=coords(F);
@@ -276,22 +264,15 @@ classdef AOReconstructor < handle
 			RECON.rebuild;
 		end
 		
-		function RECON = dhprogram(RECON,D,Nmax,verbose,lambda)
-			% RECON = zprogram(RECON,D,Nmax,lambda)
-			
-			if(nargin<6)
-				if(isempty(RECON.lambda))
-					RECON.lambda = AOField.RBAND;
-				end
-			else
-				RECON.lambda = lambda;
-			end
+		function RECON = dhprogram(RECON,D,Nmax)
+			% RECON = zprogram(RECON,D,Nmax)
+            % NOTE: Args have changed. 
+            % Specify lambda and verbosity in object before programming.
 			
 			RECON.TrainingMethod = 'diskharmonics';
 			RECON.OWD = Nmax;
 			Mmax = round(pi*Nmax);
 			RECON.D = D;
-            RECON.verbose=verbose;
 			
 			NNmodes = Nmax*(2*Mmax+1);
 			

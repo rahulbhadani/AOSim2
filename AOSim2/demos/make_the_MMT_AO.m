@@ -73,7 +73,7 @@ RECON = AOReconstructor(A,DM,WFS);
 
 OWD = sqrt(MAX_MODES/pi);
 % RECON.program(D,6*sqrt(2)); % Use Fourier modes. OWD is ~6 lambda/D for programming.
-RECON.zprogram(D,9);  % program using Zernikes.
+RECON.zprogram(D,10);  % program using Zernikes.
 % RECON.dhprogram(D,10); % program using disk harmonics.
 semilogy(RECON.s/RECON.s(1));
 

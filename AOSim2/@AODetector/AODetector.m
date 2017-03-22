@@ -26,7 +26,6 @@ classdef AODetector < handle
         end
         
         function DET = SetNumPixels(DET,Nx,Ny)
-            
             if nargin < 3
                 Ny = Nx;
             end
