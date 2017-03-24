@@ -683,7 +683,9 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     end
                 end
             else
-                fprintf('DEBUG: Returning cached FFT result.\n');
+                if(g.verbosity>0)
+                    fprintf('%s: Returning cached FFT result.\n',g.name);
+                end
             end
             
             fgrid = g.fftgrid_;

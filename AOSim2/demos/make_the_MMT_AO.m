@@ -59,9 +59,11 @@ DM.plotRegions; daspect([1 1 1]); drawnow;
 %% Build the Shack-Hartmann WFS.
 D = 6.5;
 
-WFS = AOWFS(A,D/12);
+% WFS = AOWFS(A,D/12);
+WFS = AOShackHartmann(A);
+WFS.defineSubApsByAperture(A,D/12);
 WFS.name = 'MMT Shack-Hartmann WFS';
-A.show; WFS.quiver(1); drawnow; % Show them.
+A.show; WFS.quiver(); drawnow; % Show them.
 
 %% Now for some real work.  Building the RECONSTRUCTOR...
 RECON = AOReconstructor(A,DM,WFS);
