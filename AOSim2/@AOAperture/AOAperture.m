@@ -203,7 +203,7 @@ classdef AOAperture < AOSegment
         end
         
         function g = grid(A,nugrid) % TODO: make this fancier.
-            if(nargin>2)
+            if(nargin>1)
                 warning('AOAperture:SYNTAX','AOAperture.grid() I am ignoring the nugrid you passed.');
             end
             

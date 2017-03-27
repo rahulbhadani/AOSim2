@@ -44,13 +44,29 @@ classdef AOWFS < AOGrid
             % WFS.sense(FIELD);
             % This returns itself, so an implementation should provide
             % methods that return the measurements and the derived results.
+
+            error('error: The WFS.sense(FIELD) method needs to be implemented.');
         end
         
         function WFS = initBias(WFS,A)
-            fprintf('The WFS.initBias method needs to be implemented.');
+            % WFS.initBias(A)
+            % This method is WFS-specific and should take a reference
+            % measurement to set the output bias.  
+            % Because it includes an assumption of use into a general
+            % method, I have decided to deprecate it.  
+            
+            error('error: The WFS.initBias method is deprecated.');
         end
         
-        
+        function WFS = setBias(WFS)
+            % WFS.setBias()
+            % This method sets the last WFS-specific measurement as the zero bias.
+            % Subsequent measurements will include the bias.
+            % Implementors should think about how this should most
+            % logically work for the specific WFS type.
+
+            error('error: The WFS.setBias method needs to be implemented.');
+        end
     end
     
     
