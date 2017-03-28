@@ -16,20 +16,39 @@
 % tiltish being way up like modes 83 and 84 and therefore not getting
 % included at all.  This is a tricky point and has to have been dealt with
 % in the MMT reconstructor design.  All roads lead back to GUIDO BRUSA!
-MAX_MODES = 56;
 
-load data/PMMT.mat
-load data/MMT_DM336_Actuators.mat
+% 3  6 10 15 21 28 36 45 55 66 78 91 105 120
+% MAX_MODES = 56;
+MAX_MODES = 120;
+
+D = 6.5;
+secondary = 0.1 * D;
+aa = 0.01;
+
+SPACING = 0.01;
+
+% PUPIL_DEFN = [
+%    0 0 D         1 aa 0 0 0 0 0
+%    0 0 secondary 0 aa 0 0 0 0 0
+%    0 0 spider   -2 aa 4 0 0 0 0];
+
+PUPIL_DEFN = [
+   0 0 D         1 aa 0 0 0 0 0
+   0 0 secondary 0 aa 0 0 0 0 0 ];
+
+% load data/PMMT.mat
 
 Seg = AOSegment;
 Seg.name = 'MMT Primary';
-Seg.pupils = PMMT;
+Seg.pupils = PUPIL_DEFN;
+Seg.spacing(SPACING);
 Seg.make;
 
 clf;
 % Seg.touch.make.show;
-A = AOAperture;
+A = AOAperture();
 A.name = 'MMT';
+A.spacing(SPACING);
 A.addSegment(Seg);
 A.show;
 colormap(gray);
@@ -57,13 +76,16 @@ DM.defineBC(5,8); % A circle of 8 null points at 5m radius.
 DM.plotRegions; daspect([1 1 1]); drawnow;
 
 %% Build the Shack-Hartmann WFS.
-D = 6.5;
 
 % WFS = AOWFS(A,D/12);
 WFS = AOShackHartmann(A);
-WFS.defineSubApsByAperture(A,D/12);
+% WFS.defineSubApsByAperture(A,D/12);
+WFS.defineSubApsByAperture(A,D/12,[1 1]*D/12/2); % Use the minimum number of lenslets.
 WFS.name = 'MMT Shack-Hartmann WFS';
-A.show; WFS.quiver(); drawnow; % Show them.
+A.show; 
+WFS.plotSubAps('r');
+% WFS.quiver(); 
+drawnow; % Show them.
 
 %% Now for some real work.  Building the RECONSTRUCTOR...
 RECON = AOReconstructor(A,DM,WFS);
@@ -75,16 +97,18 @@ RECON = AOReconstructor(A,DM,WFS);
 
 OWD = sqrt(MAX_MODES/pi);
 % RECON.program(D,6*sqrt(2)); % Use Fourier modes. OWD is ~6 lambda/D for programming.
-RECON.zprogram(D,10);  % program using Zernikes.
+RECON.zprogram(D,11);  % program using Zernikes.
 % RECON.dhprogram(D,10); % program using disk harmonics.
 semilogy(RECON.s/RECON.s(1));
 
 F = AOField(A);
+F.padBy(64);
 F.lambda = RECON.lambda;
 [x,y] = coords(F);
 % Look at the reconstructor for good "gut" feelings...
 lim0 = min(RECON.RECONSTRUCTOR(:));
 lim1 = max(RECON.RECONSTRUCTOR(:));
+
 % for n=1:size(RECON.RECONSTRUCTOR,2)
 %     DM.setActs(5*RECON.RECONSTRUCTOR(:,n)).touch.render;
     %F.planewave*A*DM;

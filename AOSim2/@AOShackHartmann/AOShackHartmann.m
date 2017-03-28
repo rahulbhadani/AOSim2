@@ -72,9 +72,10 @@ classdef AOShackHartmann < AOWFS
             ymin = BB(1,1);
             ymax = BB(2,1);
             
+            % This is overkill, but I trim the locations back.
             EXTENT = A.extent;
-            Nx =  EXTENT(1)/subap_spacing;
-            Ny =  EXTENT(2)/subap_spacing;
+            Nx =  ceil(EXTENT(1)/subap_spacing);
+            Ny =  ceil(EXTENT(2)/subap_spacing);
             
             WFS.DiamSubAp = subap_spacing;
             
@@ -102,19 +103,27 @@ classdef AOShackHartmann < AOWFS
         function WFS = setMasked(WFS,A,threshold)
             % WFS = setMasked(WFS,A,[threshold=0.5])
             % Set the supap masks based on an AOAperture mask.
-            % Note that the
             
             if(nargin>2)
                 WFS.maskThresh = threshold;
             end
+
+            Acopy = AOSegment(A);  % Note that we don't want this to be an AOAperture.
+            Acopy.padBy(ceil(WFS.DiamSubAp/A.dx));
+            Acopy.grid(Acopy.convolve(fspecial('disk',WFS.DiamSubAp/A.dx/2)));
             
             X = WFS.Xsubap;
             Y = WFS.Ysubap;
             
-            aper = gather(A.interpGrid(X,Y));
+            aper = gather(Acopy.interpGrid(X,Y));
             
             WFS.MASKED = (aper < WFS.maskThresh);
         end
+        
+        function n = nSubAps(WFS)
+            n = sum(~WFS.MASKED(:));
+        end
+        
         
         function [Sx,Sy] = slopeArrays(WFS)
             if(isempty(WFS.XSLOPES0) || isempty(WFS.YSLOPES0))
@@ -163,11 +172,6 @@ classdef AOShackHartmann < AOWFS
             end
         end
         
-        function N = nSubAps(WFS)
-            % N = numel(WFS.);
-            N = sum(~WFS.MASKED(:));
-        end
-        
         function WFS = senseFake1(WFS,F)
             % WFS = senseFake1(WFS,F)
             % This is a fake SH.  The real version should use a lenslet
@@ -210,6 +214,9 @@ classdef AOShackHartmann < AOWFS
         end        
         
         function SLOPES = slopes(WFS)
+        % SLOPES = WFS.slopes();
+        % Returns a vector of slopes from the last sense measurement.
+        
             SLOPES = [WFS.XSLOPES(:)-WFS.XSLOPES0(:); WFS.YSLOPES(:)-WFS.YSLOPES0(:)];
         end
                 

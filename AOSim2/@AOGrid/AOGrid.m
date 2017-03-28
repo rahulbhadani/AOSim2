@@ -383,7 +383,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 end
             end
             
-            D = size(obj.grid_) .* obj.spacing_;
+            D = obj.size .* obj.spacing;
         end
         
         function G = centerOn(G,C)
@@ -395,7 +395,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function DK = dk_(obj)
-            DK = 2*pi./(size(obj.grid_) .* obj.spacing_);
+            DK = 2*pi./obj.extent;
         end
         
         %%
@@ -1597,7 +1597,6 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
             
             AOGRID.grid(padarray(AOGRID.grid,PADDING,PADVAL,'both'));
-            
         end
         
         function AOGRID = importFITS(AOGRID,FITSNAME,FRAME)
