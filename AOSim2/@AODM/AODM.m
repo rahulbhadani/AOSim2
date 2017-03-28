@@ -371,11 +371,10 @@ classdef AODM < AOScreen
 				%fprintf('DEBUG: DM.rendering\n');
 				[X,Y] = COORDS(DM);
 				SEL = DM.actuators(:,5)~=0;
-				
-                if(DM.double_precision)
+
                 
-                    DM.grid_ = ...
-                        griddata(double([DM.actuators(SEL,1);DM.bconds(:,1)]),...
+                if(isempty(DM.interpolate_method))
+                    g = griddata(double([DM.actuators(SEL,1);DM.bconds(:,1)]),...
                         double([DM.actuators(SEL,2);DM.bconds(:,2)]),...
                         double([DM.actuators(SEL,3);DM.bconds(:,3)]),...
                         double(X),double(Y),'cubic');
@@ -383,18 +382,23 @@ classdef AODM < AOScreen
                     g = griddata(double([DM.actuators(SEL,1);DM.bconds(:,1)]),...
                         double([DM.actuators(SEL,2);DM.bconds(:,2)]),...
                         double([DM.actuators(SEL,3);DM.bconds(:,3)]),...
-                        double(X),double(Y),'cubic');
+                        double(X),double(Y),DM.interpolate_method);
+                end
+                
+                if(DM.double_precision)
+                    DM.grid_ = g;
+                else
                     DM.grid_ = single(g);
                 end
-                    
+                
                 DM.grid_(isnan(DM.grid_)) = 0; % TODO: rethink extrapolation.
-				DM.touched = false;
+                DM.touched = false;
             else
                 if(DM.verbosity>0)
                     fprintf('DEBUG: DM.render using CACHED\n');
                 end
-			end
-		end
+            end
+        end
 		
 		function a = uminus(a)
 			if(a.nActs == 0)
