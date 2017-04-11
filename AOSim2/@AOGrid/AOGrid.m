@@ -1830,7 +1830,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             if(useGPU)
                 G.grid(gpuArray(G.grid_));
             else
-                G.grid(gather(G.grid_));
+                G.grid_ = gather(G.grid_);
             end
         end
         

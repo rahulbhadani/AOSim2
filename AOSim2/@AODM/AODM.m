@@ -48,7 +48,12 @@ classdef AODM < AOScreen
 					touch(DM);
 					
 				case 'AOAtmo'
-					DM.actuators(:,3) = -WF.interpGrid(DM.actuators(:,1),DM.actuators(:,2));
+					DM.actuators(:,3) = gather(-WF.interpGrid(DM.actuators(:,1),DM.actuators(:,2)));
+					% TODO: clip.
+					touch(DM);
+					
+				case 'AOAtmo2'
+					DM.actuators(:,3) = gather(-WF.interpGrid(DM.actuators(:,1),DM.actuators(:,2)));
 					% TODO: clip.
 					touch(DM);
 					
@@ -370,9 +375,11 @@ classdef AODM < AOScreen
 			if(DM.touched)
 				%fprintf('DEBUG: DM.rendering\n');
 				[X,Y] = COORDS(DM);
+                X = gather(X);
+                Y = gather(Y);
+                
 				SEL = DM.actuators(:,5)~=0;
 
-                
                 if(isempty(DM.interpolate_method))
                     g = griddata(double([DM.actuators(SEL,1);DM.bconds(:,1)]),...
                         double([DM.actuators(SEL,2);DM.bconds(:,2)]),...
@@ -408,22 +415,48 @@ classdef AODM < AOScreen
 			end
 			touch(a);
 		end
-		
-		function g = grid(DM)
+        
+        function g = grid(DM,nugrid,mask) % TODO: make this fancier.
+            %% AODM.grid(nugrid,[mask])
+            % See AOGrid.grid.
+            
 			if(DM.nActs == 0)
 				g = DM.grid_;
 				return
-			end
-			DM.render;
-			g = DM.grid_;
-		end
-		
+            end
+            
+            if(nargin==1) % Just read out the value.
+                DM.render;
+                g = DM.grid_;
+            else % Set the value to the input...
+                if(nargin==2) % the CLASSIC behavior...
+                    nugrid = squeeze(nugrid);
+                    nugrid = nugrid(:,:,1);
+                    nugrid = squeeze(nugrid);
+                    %if(size(obj)==size(nugrid))
+                    if(numel(DM)==numel(nugrid))  %  Also allow vector assignments
+                        %obj.grid_(:) = nugrid(:); % Does not force shape.
+                        DM.grid_ = reshape(nugrid(:),size(DM.grid_)); % Does not force shape.
+                        %obj.touch;
+                    else
+                        DM.resize(size(nugrid));
+                        DM.grid_ = nugrid;
+                        %obj.touch;
+                        %error('different sized grid assignment not supported (yet)');
+                    end
+                else % This when a mask is specified...
+                    DM.grid_(mask(:)) = nugrid(:);
+                end
+                g = DM; % Note that I return the object if setting the grid.
+            end
+        end
+        
 		function DM = show(DM,RANGE,MASK)
 			% This method allows for a plot to be made with the common
 			% requirement of an externally set range and an AOAperture
 			% mask.
 			
-			G = real(DM.grid());
+			G = real(gather(DM.grid));
 			[x,y] = coords(DM);
 			
 			if(nargin<2 || isempty(RANGE))
