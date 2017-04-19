@@ -59,7 +59,7 @@ img = imread('doubleSlit.png');
 whos img
 size(img)
 
-A.grid(img).show;
+A.grid(double(img)).show;
 
 % Note that if you say A.make it will overwrite your manual grid with a
 % rendered one based on the pupils definitions.  It will not do this unless
@@ -151,7 +151,7 @@ end
 % Do it again with two holes...
 
 %img = imread('doubleHoles.png');
-A.grid(imread('doubleHoles.png')).show;
+A.grid(single(imread('doubleHoles.png'))).show;
 
 clf;
 
