@@ -446,6 +446,56 @@ classdef AOScreen < AOGrid
             %grid = conv2(grid,FILTER,'same');
             
         end
+
+        function [SF,s] = SFx(PS,NN,lambdaRef)
+            % [SF,s] = SFx(PS,NN,[lambdaRef])
+            % Compute the AOScreen structure function for x grid spacings NN.
+            
+            if(nargin<3)
+                lambdaRef = PS.lambdaRef;
+            end
+            
+            NN = unique(sort(NN));
+            NN(NN<1) = [];
+            NN(NN>PS.nx) = [];
+            
+            s = NN * PS.dx;
+            SF = zeros(size(NN));
+            
+            for nn=1:length(NN)
+                modprint(nn,25);
+                n = NN(nn);
+                SF(nn) = var(vec1(PS.grid_(:,1:end-n)-PS.grid_(:,1+n:end)));
+            end
+            fprintf('\n');
+
+            SF = SF*(2*pi/lambdaRef)^2;
+        end
+        
+        function [SF,s] = SFy(PS,NN,lambdaRef)
+            % [SF,s] = SFy(PS,NN,[lambdaRef])
+            % Compute the AOScreen structure function for y grid spacings NN.
+            
+            if(nargin<3)
+                lambdaRef = PS.lambdaRef;
+            end
+            
+            NN = unique(sort(NN));
+            NN(NN<1) = [];
+            NN(NN>PS.ny) = [];
+            
+            s = NN * PS.dy;
+            SF = zeros(size(NN));
+            
+            for nn=1:length(NN)
+                modprint(nn,25);
+                n = NN(nn);
+                SF(nn) = var(vec1(PS.grid_(1:end-n,:)-PS.grid_(1+n:end,:)));
+            end
+            fprintf('\n');
+
+            SF = SF*(2*pi/lambdaRef)^2;
+        end
         
 		function [dPhase_meanSquare,s,...
                 dPhase_meanSquareSigma,...
