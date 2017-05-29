@@ -239,6 +239,26 @@ classdef AOField < AOGrid
             F.grid(F.grid * sqrt(REF_POWER/POWER0));
         end
         
+        function SR = estimateStrehl(F)
+            % SR = F.estimateStrehl();
+            % Compute a measure assuming the field was all in phase with
+            % the amp as given.  This only makes sense if you are in a
+            % pupil plane.  YMMV.
+            
+            SR = abs(sum(F.grid_(:))).^2/sum(abs(F.grid_(:)))^2;
+        end
+
+        function WFE = estimateWFE(F)
+            % SR = F.estimateWFE();
+            % Compute a measure assuming the field was all in phase with
+            % the amp as given.  This only makes sense if you are in a
+            % pupil plane.  YMMV.
+            
+            WFE = sqrt(-log(F.estimateStrehl))*F.lambda/2/pi;
+        end
+
+        
+        %%
         function F = setDirection(F,direction)
             % F = setDirection(F,direction)
             % Set the propagation direction.
