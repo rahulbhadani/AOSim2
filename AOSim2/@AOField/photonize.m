@@ -20,10 +20,13 @@ function photons = photonize(F,N0,FOCALPLANE)
 %                MATLAB's imnoise function.
 % 20090424 JLCodona.  Ported to AOSim2. Now an AOField method.
 
+N0 = double(N0); % Note: MATLAB uses 1e6 scaling if N0 is single precision.
+
 if(nargin>2 && FOCALPLANE)
-    IMG = abs(F.fft).^2;
+    IMG = abs(double(F.fft)).^2;
 else
-    IMG = F.mag2;
+    %IMG = F.mag2;
+    IMG = abs(double(F.grid)).^2;
 end
 
 Sum0 = sum(IMG(:));
