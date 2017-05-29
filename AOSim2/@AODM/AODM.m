@@ -175,9 +175,19 @@ classdef AODM < AOScreen
             end    
 		end
 		
-		function DM = removeMean(DM)
-			SELECT = DM.actuators(:,5)~=0;
+		function DM = removeMean(DM,MASK)
+		% AODM.removeMean([MASK]): This removes the mean actuator
+		% displacement.
+        if(nargin<2)
+            MASK = true(1,DM.nActs);
+        end
+        
+        SELECT = DM.actuators(:,5)~=0;
+            if(nargin<2)
+                SELECT(~MASK(:)) = false;
+            end
 			MEAN = mean(DM.actuators(SELECT,3));
+            
 			DM.actuators(SELECT,3) = DM.actuators(SELECT,3) - MEAN;
 		end
 		
@@ -321,12 +331,13 @@ classdef AODM < AOScreen
 			touch(DM);
 		end
 		
-		function DM = addRippleActs(DM,K,amp,phase)
-			DM.actuators(:,3) = DM.actuators(:,3) + ...
-				amp*cos(K(1)*DM.actuators(:,1) + K(2)*DM.actuators(:,2) + phase);
-			% TODO: clip.
-			touch(DM);
-		end
+        function DM = addRippleActs(DM,K,amp,phase)
+            % DM.actuators(:,3) = DM.actuators(:,3) + ...
+            %    amp*cos(K(1)*DM.actuators(:,1) + K(2)*DM.actuators(:,2) + phase);
+            DM.actuators(:,3) = DM.actuators(:,3) + ...
+                amp*cos(DM.actuators(:,1:2)*K(:) + phase);
+            touch(DM);
+        end
 		
 		function LIST = listActuators(DM,seg)
 			if(nargin<2)
@@ -482,7 +493,7 @@ classdef AODM < AOScreen
             title([class(DM) ' ' DM.name ': axis:' DM.axis ' domain:' DM.domain ],...
                 'FontSize',14);
             colorbar;
-            drawnow;
+            %drawnow;
             
             
 			
