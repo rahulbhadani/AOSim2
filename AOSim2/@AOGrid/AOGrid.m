@@ -944,12 +944,12 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function g = phase(A)
-            if(nargout<1)
-                A.grid_ = angle(A.grid_);
-                A.fftgrid_ = [];
-            else
-                g = angle(A.grid_);
-            end
+            % A.phase: Returns the phase of the grid.
+            % WARNING: This method used to behave differently if there was no
+            % output argument.  It only computes the phase and outputs it
+            % now.  This may break things (20170527).  
+            
+            g = angle(A.grid_);
         end
         
         function g = abs(A)
