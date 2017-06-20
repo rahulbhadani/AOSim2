@@ -348,12 +348,21 @@ classdef AOAtmo < AOScreen
             end
         end
         
-        function HEIGHTS = listHeights(ATMO)
+        function HEIGHTS = listHeights(ATMO,LIST_SHADOWS)
             % HEIGHTS = listHeights(ATMO)
+            
+            if(nargin<2)
+                LIST_SHADOWS = false;
+            end
+            
             HEIGHTS = nan(1,ATMO.nLayers);
             
             for n=1:ATMO.nLayers
-                HEIGHTS(n) = ATMO.layers{n}.screen.altitude;
+                if(LIST_SHADOWS)
+                    HEIGHTS(n) = ATMO.layers{n}.shadow.altitude;
+                else
+                    HEIGHTS(n) = ATMO.layers{n}.screen.altitude;
+                end
             end
         end
         

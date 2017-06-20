@@ -12,6 +12,9 @@ classdef AOScreen < AOGrid
 	% Public properties
 	properties(Access='public')
 		altitude = 0.;	% Default is on the ground.
+        pressure = 1.0;  % This is for advanced physics models. Nominal units are in atm (1013.25 mbar).
+        pressure_scale = 8440.; % 1/e pressure alt.  Better barometric formula: https://en.wikipedia.org/wiki/Atmospheric_pressure
+        
 		lambdaRef = AOField.VBAND;
 	
 		mirror = false;  % This is like a height doubler.
