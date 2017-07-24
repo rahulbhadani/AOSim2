@@ -1959,7 +1959,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function S = dsphere(R,X,Y,N)
-            % S = dsphere(R,X,Y,[N])
+            % S = dsphere(R,X,Y,[N])  {STATIC}
             %
             % S = sqrt(R.^2 + X.^2 + Y.^2) - R;
             % This takes care of the sqrt branch and ensures that the
