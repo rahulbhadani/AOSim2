@@ -374,7 +374,10 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % contain the object.
             
             if(nargin>1)
-                if(isscalar(sz))
+                if(isvector(sz)) % note: a scalar is a vector of length 1.
+                    if(length(sz)>2) 
+                        sz = sz(1:2);
+                    end
                     obj.resize(ceil(sz./obj.spacing));
                 else
                     if(isa(sz,'AOGrid'))
