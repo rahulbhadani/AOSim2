@@ -34,3 +34,6 @@ F.zero + Fin;  % This cubic interpolates to the Fout grid.  No spherical wave ye
 [X,Y] = F.COORDS;
 SAG = F.dsphere(deltaZ,X,Y);
 F.grid(F.grid.*(-1i*exp(-1i*F.k*SAG)));
+
+F.z = F.z + F.direction*deltaZ;
+
