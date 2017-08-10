@@ -387,6 +387,23 @@ classdef AOScreen < AOGrid
             touch(S);
         end
 
+        function S = addCylinder(S,DIOPTERS,CylAxis)
+            % S = addCylinder(S,DIOPTERS,Axis)
+            % Add a specified amount of aberration power.
+            % DIOPTERS: power in 1/FL.
+            % Axis: Orientation of cylinder in degrees.
+            
+            FL = 1/DIOPTERS;
+            [X,Y] = S.COORDS();
+            
+            X_ = X*cos(CylAxis*pi/180) + Y*sin(CylAxis*pi/180);
+            %Y_ = X*sin(CylAxis*pi/180) + Y*cos(CylAxis*pi/180);
+
+            S + S.dsphere(FL,X_,0*X);
+            
+            touch(S);
+        end
+
         function grid = LPF(S,scale)
             % grid = SCREEN.LPF(S)
             % This function returns a Gaussian smoothed version
