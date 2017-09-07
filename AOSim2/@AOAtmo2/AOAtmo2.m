@@ -299,8 +299,10 @@ classdef AOAtmo2 < AOAtmo
             clf;
             BBOX = ATMO.BBox;
             
-            N1 = ATMO.nLayers;
-            N2 = 1;
+            %N1 = ATMO.nLayers;
+            %N2 = 1;
+            N1 = ceil(sqrt(ATMO.nLayers));
+            N2 = ceil(ATMO.nLayers/N1);
             
             if(N1>5)
                 FF = factor(N1);
