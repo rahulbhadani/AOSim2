@@ -1026,13 +1026,14 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         function CEN = centroid(A)
             % CEN = A.centroid;
-            % Compute the centroid of the AOGrid in physical units.
+            % Compute the POWER centroid of the AOGrid in physical units.
             
             [X,Y] = A.COORDS;
-            M0 = mean(A.grid_(:));
-            dG = A.grid - M0;
-            M1x = mean(dG(:).*X(:))/M0;
-            M1y = mean(dG(:).*Y(:))/M0;
+            POWER = vec1(A.mag2);
+            M0 = mean(POWER);
+            dG = POWER - M0;
+            M1x = mean(POWER.*X(:))/M0;
+            M1y = mean(POWER.*Y(:))/M0;
             
             CEN = [M1x,M1y];
         end
