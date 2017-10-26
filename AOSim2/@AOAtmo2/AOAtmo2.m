@@ -268,7 +268,7 @@ classdef AOAtmo2 < AOAtmo
                 end
             end
             
-            fprintf('\tThe total Fried Scale for a star would be %.3f m.\n',ATMO.totalFriedScale);
+            fprintf('\nThe total Fried Scale for a star would be %.3f m.\n',ATMO.totalFriedScaleStar);
         end 
         
         function ATMO = showTransmission(ATMO)
