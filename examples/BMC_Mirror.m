@@ -1,6 +1,8 @@
 % An example of how to make a continuous face-sheet Deformable Mirror
 %
 % 20150412 ATRodack
+addpath('../AOSim2')
+addpath('../AOSim2/utils')
 
 clear all;
 clc;

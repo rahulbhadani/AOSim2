@@ -2,11 +2,14 @@
 % 
 % 20150225 JLCodona
 
-lambda = AOField.RBAND; % Red light.
-r0 = 0.15; % r0 is 15 cm at 500 nm.
+addpath('../AOSim2')
+addpath('../AOSim2/utils')
 
-D = 1.54;
-secondary = 14.5/100;
+lambda = AOField.RBAND; % Red light.
+r0 = 0.15; % r0 is 15 cm at 500 nm. %Fried parameter
+
+D = 1.54; % Aperture Diameter of Kuiper 61inch telescope http://james.as.arizona.edu/~psmith/61inch/
+secondary = 14.5/100; %Secondary Diameter of Kuiper 61inch telescope http://james.as.arizona.edu/~psmith/61inch/
 
 SPACING = 0.01;            % fine spacing makes nice pupil images but is really overkill.
 aa = SPACING;              % for antialiasing.
@@ -27,7 +30,7 @@ A = AOSegment;
 A.spacing(SPACING);
 A.name = 'Kuiper 61inch Primary';
 A.pupils = PUPIL_DEFN;
-A.make;
+A.make
 
 clf;
 colormap(gray);

@@ -78,7 +78,7 @@ input 'Continue...'
 
 %% Now pass through the lens and defocus...
 
-for DEFOCUS=-2:.05:2
+for DEFOCUS=-2:.01:2
     
     % Set the lens defocus.  Use F.lambda as a reference.
     LENS.zero.addZernike(2,0,-F.lambda*DEFOCUS,D);
@@ -98,6 +98,7 @@ for DEFOCUS=-2:.05:2
     drawnow; 
 end
 
+input 'Continue...'
 
 %% Now make a Kolmogorov phase screen and run through focus using it.
 TURBULENCE = AOScreen(2048); % Make it big so we get good low-frequency behavior.
@@ -112,7 +113,7 @@ input 'Continue...'
 
 %% Now pass through the lens and defocus...
 
-for DEFOCUS=-2:.1:2
+for DEFOCUS=-2:0.01:2
     
     % Set the lens defocus.  Use F.lambda as a reference.
     LENS.zero.addZernike(2,0,-F.lambda*DEFOCUS,D);
@@ -138,7 +139,7 @@ input 'Continue...'
 TURBULENCE.setR0(0.5); 
 TURBULENCE.make;
 
-for DEFOCUS=-2:.1:2
+for DEFOCUS=-2:0.01:2
     
     % Set the lens defocus.  Use F.lambda as a reference.
     LENS.zero.addZernike(2,0,-F.lambda*DEFOCUS,D);

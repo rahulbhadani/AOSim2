@@ -4,6 +4,9 @@
 % 
 % 20150221 JLCodona
 
+addpath('../AOSim2')
+addpath('../AOSim2/utils')
+
 lambda = AOField.RBAND; % Red light.
 r0 = 0.15; % r0 is 15 cm at 500 nm.
 PHOTONS_PER_EXPOSURE = 1e4; % Just a test.
