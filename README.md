@@ -43,7 +43,7 @@ what you're doing, but if you create an AOField F, just call F.useGPU(true) to g
 I'm pretty much making a living off using this software at this point, which is remarkable.  I would be happy to see it do the same for 
 others.  Use the features of github to start discussions or ask questions.
 
-I'm currently working in the branch jlc1.4.
+Origina repository from John is in the branch jlc1.4.
 
 Johanan (John) Codona<br>
 Tucson, AZ.
