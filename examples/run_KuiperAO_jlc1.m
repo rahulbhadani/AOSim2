@@ -7,6 +7,9 @@
 % load data/MMTAO_Model_withBadActs_JLC_20090427
 % load data/MMTAO_Model_working
 
+addpath('/home/ivory/VersionControl/AOSim2/AOSim2');
+addpath('/home/ivory/VersionControl/AOSim2/AOSim2/utils');
+
 STROKE = 5.5e-6;
 
 WFS_FPS = 500.;
