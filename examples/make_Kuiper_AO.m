@@ -51,6 +51,9 @@ Seg.name = 'Kuiper 61inch Primary';
 Seg.spacing(0.01);
 Seg.pupils = PUPIL_DEFN;
 Seg.make;
+Seg.show;
+
+%%
 
 clf;
 % Seg.touch.make.show;
