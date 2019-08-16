@@ -77,7 +77,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         %% Constructors
         function obj = AOGrid(nxy)
             % function obj = AOGrid(nxy)
-            % This is the basic AOGrid constructor.
+            % This is the basic AOGrid contructor.
             % The argument can be a pixel size (single number is square)
             % or it can be another AOGrid in which case it is used as a
             % template.  In that case no data is copied, just dimensions.
@@ -324,13 +324,10 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             G.origin(midpoint);
         end
         
-        % Dimension in x direction*/
         function n = nx(obj)
             n = size(obj.grid_,2);
         end
         
-        
-        % Dimension in y direction*/
         function n = ny(obj)
             n = size(obj.grid_,1);
         end
@@ -377,10 +374,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             % contain the object.
             
             if(nargin>1)
-                if(isvector(sz)) % note: a scalar is a vector of length 1.
-                    if(length(sz)>2) 
-                        sz = sz(1:2);
-                    end
+                if(isscalar(sz))
                     obj.resize(ceil(sz./obj.spacing));
                 else
                     if(isa(sz,'AOGrid'))
@@ -389,7 +383,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                 end
             end
             
-            D = obj.size .* obj.spacing;
+            D = size(obj.grid_) .* obj.spacing_;
         end
         
         function G = centerOn(G,C)
@@ -401,7 +395,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function DK = dk_(obj)
-            DK = 2*pi./obj.extent;
+            DK = 2*pi./(size(obj.grid_) .* obj.spacing_);
         end
         
         %%
@@ -689,9 +683,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
                     end
                 end
             else
-                if(g.verbosity>0)
-                    fprintf('%s: Returning cached FFT result.\n',g.name);
-                end
+                fprintf('DEBUG: Returning cached FFT result.\n');
             end
             
             fgrid = g.fftgrid_;
@@ -803,7 +795,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             SZ = A.FFTSize;
             CEN = AOGrid.middlePixel(SZ);
             A.FAXIS_PIXEL = CEN;
-         
+            
             dk = A.dk;
             
             ky = ((1:SZ(1))-CEN(1))*dk(1);
@@ -950,12 +942,12 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function g = phase(A)
-            % A.phase: Returns the phase of the grid.
-            % WARNING: This method used to behave differently if there was no
-            % output argument.  It only computes the phase and outputs it
-            % now.  This may break things (20170527).  
-            
-            g = angle(A.grid_);
+            if(nargout<1)
+                A.grid_ = angle(A.grid_);
+                A.fftgrid_ = [];
+            else
+                g = angle(A.grid_);
+            end
         end
         
         function g = abs(A)
@@ -1029,14 +1021,13 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         
         function CEN = centroid(A)
             % CEN = A.centroid;
-            % Compute the POWER centroid of the AOGrid in physical units.
+            % Compute the centroid of the AOGrid in physical units.
             
             [X,Y] = A.COORDS;
-            POWER = vec1(A.mag2);
-            M0 = mean(POWER);
-            dG = POWER - M0;
-            M1x = mean(POWER.*X(:))/M0;
-            M1y = mean(POWER.*Y(:))/M0;
+            M0 = mean(A.grid_(:));
+            dG = A.grid - M0;
+            M1x = mean(dG(:).*X(:))/M0;
+            M1y = mean(dG(:).*Y(:))/M0;
             
             CEN = [M1x,M1y];
         end
@@ -1604,6 +1595,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             end
             
             AOGRID.grid(padarray(AOGRID.grid,PADDING,PADVAL,'both'));
+            
         end
         
         function AOGRID = importFITS(AOGRID,FITSNAME,FRAME)
@@ -1837,7 +1829,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             if(useGPU)
                 G.grid(gpuArray(G.grid_));
             else
-                G.grid_ = gather(G.grid_);
+                G.grid(gather(G.grid_));
             end
         end
         
@@ -1966,7 +1958,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         end
         
         function S = dsphere(R,X,Y,N)
-            % S = dsphere(R,X,Y,[N])  {STATIC}
+            % S = dsphere(R,X,Y,[N])
             %
             % S = sqrt(R.^2 + X.^2 + Y.^2) - R;
             % This takes care of the sqrt branch and ensures that the

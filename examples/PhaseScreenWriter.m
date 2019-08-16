@@ -1,10 +1,5 @@
 % Program to make a PHASE SCREEN for use with other programs.
 
-
-addpath('../AOSim2')
-addpath('../AOSim2/utils')
-
-
 fprintf('Phase Screen Writer.\n\n');
 
 fprintf('Enter phase screen specifications...\n');

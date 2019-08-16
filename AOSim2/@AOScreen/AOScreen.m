@@ -12,9 +12,6 @@ classdef AOScreen < AOGrid
 	% Public properties
 	properties(Access='public')
 		altitude = 0.;	% Default is on the ground.
-        pressure = 1.0;  % This is for advanced physics models. Nominal units are in atm (1013.25 mbar).
-        pressure_scale = 8440.; % 1/e pressure alt.  Better barometric formula: https://en.wikipedia.org/wiki/Atmospheric_pressure
-        
 		lambdaRef = AOField.VBAND;
 	
 		mirror = false;  % This is like a height doubler.
@@ -387,23 +384,6 @@ classdef AOScreen < AOGrid
             touch(S);
         end
 
-        function S = addCylinder(S,DIOPTERS,CylAxis)
-            % S = addCylinder(S,DIOPTERS,Axis)
-            % Add a specified amount of aberration power.
-            % DIOPTERS: power in 1/FL.
-            % Axis: Orientation of cylinder in degrees.
-            
-            FL = 1/DIOPTERS;
-            [X,Y] = S.COORDS();
-            
-            X_ = X*cos(CylAxis*pi/180) + Y*sin(CylAxis*pi/180);
-            %Y_ = X*sin(CylAxis*pi/180) + Y*cos(CylAxis*pi/180);
-
-            S + S.dsphere(FL,X_,0*X);
-            
-            touch(S);
-        end
-
         function grid = LPF(S,scale)
             % grid = SCREEN.LPF(S)
             % This function returns a Gaussian smoothed version
@@ -465,56 +445,6 @@ classdef AOScreen < AOGrid
             S.grid(ifft2(fft2(S.grid).*FILTER));
             %grid = conv2(grid,FILTER,'same');
             
-        end
-
-        function [SF,s] = SFx(PS,NN,lambdaRef)
-            % [SF,s] = SFx(PS,NN,[lambdaRef])
-            % Compute the AOScreen structure function for x grid spacings NN.
-            
-            if(nargin<3)
-                lambdaRef = PS.lambdaRef;
-            end
-            
-            NN = unique(sort(NN));
-            NN(NN<1) = [];
-            NN(NN>PS.nx) = [];
-            
-            s = NN * PS.dx;
-            SF = zeros(size(NN));
-            
-            for nn=1:length(NN)
-                modprint(nn,25);
-                n = NN(nn);
-                SF(nn) = var(vec1(PS.grid_(:,1:end-n)-PS.grid_(:,1+n:end)));
-            end
-            fprintf('\n');
-
-            SF = SF*(2*pi/lambdaRef)^2;
-        end
-        
-        function [SF,s] = SFy(PS,NN,lambdaRef)
-            % [SF,s] = SFy(PS,NN,[lambdaRef])
-            % Compute the AOScreen structure function for y grid spacings NN.
-            
-            if(nargin<3)
-                lambdaRef = PS.lambdaRef;
-            end
-            
-            NN = unique(sort(NN));
-            NN(NN<1) = [];
-            NN(NN>PS.ny) = [];
-            
-            s = NN * PS.dy;
-            SF = zeros(size(NN));
-            
-            for nn=1:length(NN)
-                modprint(nn,25);
-                n = NN(nn);
-                SF(nn) = var(vec1(PS.grid_(1:end-n,:)-PS.grid_(1+n:end,:)));
-            end
-            fprintf('\n');
-
-            SF = SF*(2*pi/lambdaRef)^2;
         end
         
 		function [dPhase_meanSquare,s,...

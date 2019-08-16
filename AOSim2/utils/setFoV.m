@@ -6,7 +6,7 @@ if(halfwidth == 0)
 	return;
 end
 
-halfwidth = abs(halfwidth(1));
+halfwidth = abs(halfwidth);
 
 xlim([-halfwidth halfwidth]);
 ylim([-halfwidth halfwidth]);

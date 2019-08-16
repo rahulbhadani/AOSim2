@@ -4,9 +4,13 @@
 dx = 0.04;
 PS_SIZE = 2048;
 
-WIND = 30;
+if(~exist('WIND'))
+    WIND = 30;
+end
 
-Cn2_Ground = 1e-14;
+if(~exist('Cn2_Ground'))
+    Cn2_Ground = 1e-14;
+end
 
 LAMBDA = AOField.VBAND;
 
@@ -33,7 +37,6 @@ for n=1:length(HEIGHTS)
     ATMO.addLayer(ps,HEIGHTS(n));
     
     ATMO.layers{n}.Wind = [10 15] + [0 WIND]*HEIGHTS(n)/10000; % Jet Stream.
-    input('Continue ...');
 end
 
 ATMO.show;

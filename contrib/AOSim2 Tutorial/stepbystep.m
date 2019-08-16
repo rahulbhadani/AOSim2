@@ -139,7 +139,7 @@ clear all; clc; close all;
 % some stuff.
 %
 % AOGrid is located in the @AOGrid folder in the AOSim2 section of the
-% repository.  The reason for all the '@' symbols in front of the folder
+% repository.  The reaon for all the '@' symbols in front of the folder
 % names is that it allows for other functions to be included in the folder
 % and act as methods in the class, but also maintain the ability to be
 % called separate from the class.
@@ -268,14 +268,9 @@ grid(Grid,fgrid);
 subplot(1,3,2)
 plotC(Grid,1);
 title('Standard Matlab Function Designation');
-
-
-% Plotting fourier transform in 3d 
-surf(X,Y, fgrid);
-
 touch(Grid);
 
-% You can see in figure 2 that calling the methods either way gives the
+% You can see in figure 2 that calling the methods either way nets the
 % exact same result.  Pretty cool, right?
 
 % Now we should take a look at the property FFTSize.  This is an important
@@ -287,7 +282,7 @@ touch(Grid);
 clear fgrid;
 Grid.grid(cyl);
 Grid.FFTSize = [1024,1024];
-fgrid = Grid.fft; %note: not giving an input to fft uses the size stored in FFTSize
+fgrid = Grid.fft; %note not giving an input to fft uses the size stored in FFTSize
 subplot(1,3,3)
 plotCAmpl(fgrid,0.5); %this is a function in the utils folder that functions the same way as plotC
 title('Higher Resolution FFT');
@@ -323,10 +318,10 @@ input('Press a Key to Continue');
 % PUPIL_DEF1 = [0 0 8.4 1 0.05 0 0 0 0 0];
 % Let me take a second to explain this vector. Each input holds a piece of
 % information that will be used when making the Pupil.
-% PUPIL_DEF1(1) = x0, the x-coordinate of the center of the pupil
-% PUPIL_DEF1(2) = y0, the y-coordinate of the center of the pupil
-% PUPIL_DEF1(3) = D, the diameter of the pupil
-% PUPIL_DEF1(4) = Transmission Type
+% PUPIL(1) = x0, the x-coordinate of the center of the pupil
+% PUPIL(2) = y0, the y-coordinate of the center of the pupil
+% PUPIL(3) = D, the diameter of the pupil
+% PUPIL(4) = Transmission Type
 
 % "Transmission" type Options:
 % 0: circular hole
@@ -334,8 +329,8 @@ input('Press a Key to Continue');
 % -1: wedge
 % -2: spider vanes (3: width, 6: nvanes, 7: starting theta)
 
-% PUPIL_DEF1(5) = smoothing or "antialiasing"
-% PUPIL_DEF1(6) = apodization type
+% PUPIL(5) = smoothing or "antialiasing"
+% PUPIL(6) = apodization type
 
 % Supported Apodizations: apod_type = pupils(6)
 % 0: Cosine (arg 5 holds the width)

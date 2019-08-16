@@ -80,7 +80,7 @@ switch PS.TURBULENCE_MODEL
 end
 
 PSD(PS.FAXIS_PIXEL(1),PS.FAXIS_PIXEL(2)) = 0;  % Kill DC for zero mean.
-PSD = PSD * PS.thickness; 
+PSD = PSD * PS.thickness* 1.25; % The 1.25 is a fudge factor.  I'll have to figure that out later.  
 
 PS.zero.addNoise(1);
 

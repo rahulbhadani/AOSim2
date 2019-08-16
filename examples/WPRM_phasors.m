@@ -1,19 +1,16 @@
 % A demonstration of using AOSim2 to watch the evolution of various
 % statistics beyond a Kolmogorov phase screen.
-% Use the Kuiper 61 telescope" to view the field.
+% Use the Kuiper 61" to view the field.
 % 
 % 20150221 JLCodona
-
-addpath('../AOSim2')
-addpath('../AOSim2/utils')
 
 SAVE_IMGS = false;
 
 lambda = AOField.RBAND; % Red light.
-r0 = 0.15; % r0 is 15 cm at 500 nm. %r0 is the fried parameter 
+r0 = 0.15; % r0 is 15 cm at 500 nm.
 
-D = 1.54; %Aperture https://www.as.arizona.edu/kuiper-61-telescope
-secondary = 14.5/100; %http://james.as.arizona.edu/~psmith/61inch/
+D = 1.54;
+secondary = 14.5/100;
 
 SPACING = 0.01;            % fine spacing makes nice pupil images but is really overkill.
 aa = SPACING;              % for antialiasing.

@@ -10,7 +10,7 @@ D = 10*0.0254; % 10 inch primary.
 secondary = D/4;
 
 SPACING = D/100;
-aa = SPACING/3; % This is smoothing or "antialiasing".
+aa = SPACING/4; % This is smoothing or "antialiasing".
 % aa = 0.04;
 % spider = 0.0254;
 spider = 0.01;
@@ -59,7 +59,7 @@ img = imread('doubleSlit.png');
 whos img
 size(img)
 
-A.grid(double(img)).show;
+A.grid(img).show;
 
 % Note that if you say A.make it will overwrite your manual grid with a
 % rendered one based on the pupils definitions.  It will not do this unless
@@ -151,7 +151,7 @@ end
 % Do it again with two holes...
 
 %img = imread('doubleHoles.png');
-A.grid(single(imread('doubleHoles.png'))).show;
+A.grid(imread('doubleHoles.png')).show;
 
 clf;
 

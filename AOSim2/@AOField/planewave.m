@@ -24,6 +24,7 @@ function F = planewave(F,amplitude,THETA)
 
 % global env;
 
+
 if(nargin < 2)
 	amplitude = complex(1);
 end
@@ -47,7 +48,8 @@ else  % OFF AXIS
 	F.tX;
 	[X,Y] = COORDS(F);
 	k = 2*pi/F.lambda;
-	thx = THETA(1) / 206265;
+	THETA(1)
+    thx = THETA(1) / 206265;
 	thy = THETA(2) / 206265;
 	kappax = k*thx;
 	kappay = k*thy;

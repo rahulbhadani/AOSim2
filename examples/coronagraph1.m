@@ -87,7 +87,6 @@ LYOTSTOP_DEFN = [
 
 LYOT.pupils = LYOTSTOP_DEFN;
 LYOT.make;
-LYOT.show;
 
 [PSF0,thx,thy] = F.mkPSF(FOV,PLATE_SCALE); % This is the reference PSF.
 PSFmax = max(PSF0(:)); % Save for normalizing.
@@ -137,7 +136,7 @@ colormap((hot));
 CCD = 0;
 IMG_LYOT = 0;  % for studying the average irradiance in the Lyot plane.
 
-for n=1:20
+for n=1:1000
     modprint(n,20);
     
     TURBULENCE.grid(wavefront-circshift(wavefront,WIND_SHIFT));
@@ -170,20 +169,16 @@ for n=1:20
     [PSF,thx,thy] = F.mkPSF(FOV,PLATE_SCALE); % This is the reference PSF.
     PSFplanet = PSF/PSFmax;  % reference to the non-coronagraph PSF peak.
     
-    subplot(3,1,1);
+    subplot(2,1,1);
     imagesc(log10([PSFstar PSFplanet]),[-6 0]);sqar;colorbar;
     axis off;
     
-    subplot(3,1,2);
+    subplot(2,1,2);
     
     %CCD = CCD + (PSFstar + PLANET_CONTRAST*PSFplanet);
     CCD = CCD + photonz(PSFstar + PLANET_CONTRAST*PSFplanet,PHOTONS_PER_EXPOSURE);
     imagesc(log10(normalize(CCD)),[-4 0]);sqar;colorbar;
     axis off;
-    
-    
-    subplot(3,1,3);
-    TURBULENCE.show;
     
     drawnow;
     

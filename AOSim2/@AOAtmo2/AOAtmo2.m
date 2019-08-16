@@ -268,7 +268,7 @@ classdef AOAtmo2 < AOAtmo
                 end
             end
             
-            fprintf('\nThe total Fried Scale for a star would be %.3f m.\n',ATMO.totalFriedScaleStar);
+            fprintf('\tThe total Fried Scale for a star would be %.3f m.\n',ATMO.totalFriedScale);
         end 
         
         function ATMO = showTransmission(ATMO)
@@ -285,40 +285,6 @@ classdef AOAtmo2 < AOAtmo
 
             %drawnow;
         end
-
-        function ATMO = showShadows(ATMO,linespec)
-            % ATMO = ATMO.showLayers([linespec])
-            % Make a set of images for the various layers.
-            
-            if(nargin<2)
-                linespec = '-';
-            end
-            
-            [~,ORDER] = sort(ATMO.listHeights,'descend');
-            
-            clf;
-            BBOX = ATMO.BBox;
-            
-            %N1 = ATMO.nLayers;
-            %N2 = 1;
-            N1 = ceil(sqrt(ATMO.nLayers));
-            N2 = ceil(ATMO.nLayers/N1);
-            
-            if(N1>5)
-                FF = factor(N1);
-                N1 = N1 / FF(1);
-                N2 = N2 * FF(1);
-            end
-            
-            for n=1:ATMO.nLayers
-                subplot(N1,N2,n);
-                ATMO.layers{ORDER(n)}.shadow.show;
-                
-                [X_,Y_] = scaleCone(ATMO,BBOX(:,2),BBOX(:,1),ATMO.z,ATMO.layers{ORDER(n)}.screen.altitude);
-                ATMO.plotBBox([Y_,X_],linespec);
-            end
-        end
-
         
         %%
         function A = addGaussian(A,CENTER,amp,width,whichOnes)

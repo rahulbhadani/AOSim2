@@ -2,16 +2,13 @@
 % 
 % 20150225 JLCodona
 
-addpath('../AOSim2')
-addpath('../AOSim2/utils')
+lambda = 1550e-9;%AOField.RBAND; % Red light.
+r0 = 0.15; % r0 is 15 cm at 500 nm.
 
-lambda = AOField.RBAND; % Red light.
-r0 = 0.15; % r0 is 15 cm at 500 nm. %Fried parameter
+D = 0.75;
+secondary = 14.5/100;
 
-D = 1.54; % Aperture Diameter of Kuiper 61inch telescope http://james.as.arizona.edu/~psmith/61inch/
-secondary = 14.5/100; %Secondary Diameter of Kuiper 61inch telescope http://james.as.arizona.edu/~psmith/61inch/
-
-SPACING = 0.01;            % fine spacing makes nice pupil images but is really overkill.
+SPACING = 0.002;            % fine spacing makes nice pupil images but is really overkill.
 aa = SPACING;              % for antialiasing.
 % aa = 0.04;
 spider = 0.0254;
@@ -19,10 +16,10 @@ spider = 0.0254;
 
 PUPIL_DEFN = [
    0 0 D         1 aa 0 0 0 0 0
-   0 0 secondary 0 aa/2 0 0 0 0 0
-   0 0 spider   -2 aa 4 0 D/1.9 0 0
    ];
 
+%    0 0 secondary 0 aa/2 0 0 0 0 0
+%    0 0 spider   -2 aa 4 0 D/1.9 0 0
 % Since this demo only uses one AOSegment, I will not use the AOAperture wrapper.  
 % I will only use AOSegment.  This is fine for simple pupils.
 
@@ -30,7 +27,7 @@ A = AOSegment;
 A.spacing(SPACING);
 A.name = 'Kuiper 61inch Primary';
 A.pupils = PUPIL_DEFN;
-A.make
+A.make;
 
 clf;
 colormap(gray);
@@ -49,13 +46,13 @@ colormap(gray);
 ATMO = AOAtmo(A);
 ATMO.name = 'Layered Atmosphere';
 
-for n=1:5 
+for n=1:12 
     ps = AOScreen(2*1024);
     ps.name = sprintf('Layer %d',n);
-    ps.spacing(0.02);
-%     ps.setCn2(1e-16,1000);
-    ps.setCn2(0,1000);
-    ATMO.addLayer(ps,1000.*n);
+    ps.spacing(0.002);
+    ps.setCn2(1e-16,2500);
+%     ps.setCn2(0,1000);
+    ATMO.addLayer(ps,2500.*n);
     ATMO.layers{n}.Wind = [0 1]; % random wind layers.
 %     ATMO.layers{n}.Wind = randn([1 2])*5; % random wind layers.
 end    
@@ -124,7 +121,7 @@ F.show;
 % input 'Continue...'
 
 THld = F.lambda/D * 206265; % Lambda/D in arcsecs.
-FOV = 4;
+FOV = 20;
 PLATE_SCALE = THld/5;
 
 F.planewave*A;

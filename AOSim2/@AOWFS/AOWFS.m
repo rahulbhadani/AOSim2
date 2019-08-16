@@ -46,7 +46,6 @@ classdef AOWFS < AOGrid & AODetector
             WFS.Offset = WFS.Offset+(mod(WFS.size,2)==0).*WFS.spacing/2; % even number subaps get bumped by half to center.
             WFS.init(APER,0.2); % I just pick a masking threshold here.
             
-
 			% Compute screens for projecting global aperture tip/tilt
 			pupilMask = (APER.grid >= 0.5);
 			pupilComplimentMask = (pupilMask == 0);
@@ -188,8 +187,8 @@ classdef AOWFS < AOGrid & AODetector
                 useNoise = false;
             end
             
-            [xw,yw] = coords(WFS); % Coarse grid of the WFS subaps.
-            [xf,yf] = coords(F); % Fine grid of the field.
+            [xw,yw] = WFS.coords; % Coarse grid of the WFS subaps.
+            [xf,yf] = F.coords; % Fine grid of the field.
             yf = yf';
             %dx = F.dx; % Size of the field pixels.  Assuming square. 
             
@@ -436,20 +435,6 @@ classdef AOWFS < AOGrid & AODetector
             
             
         end
-        
-         function WFS = setBias(WFS)
-%             WFS.XSLOPES0 = WFS.XSLOPES;
-%             WFS.YSLOPES0 = WFS.YSLOPES;
-            % WFS.setBias()
-            % This method sets the last WFS-specific measurement as the zero bias.
-            % Subsequent measurements will include the bias.
-            % Implementors sWFS.XSLOPES0 = WFS.XSLOPES;
-%             WFS.YSLOPES0 = WFS.YSLOPES;WFS.XSLOPES0 = WFS.XSLOPES;
-%             WFS.YSLOPES0 = WFS.YSLOPES;hould think about how this should most
-%             % logically work for the specific WFS type.
-% 
-%             error('error: The WFS.setBias method needs to be implemented.');
-         end
         
         function WFS = quiver(WFS,overplot)
             [XW,YW] = COORDS(WFS);

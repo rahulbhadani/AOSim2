@@ -48,12 +48,7 @@ classdef AODM < AOScreen
 					touch(DM);
 					
 				case 'AOAtmo'
-					DM.actuators(:,3) = gather(-WF.interpGrid(DM.actuators(:,1),DM.actuators(:,2)));
-					% TODO: clip.
-					touch(DM);
-					
-				case 'AOAtmo2'
-					DM.actuators(:,3) = gather(-WF.interpGrid(DM.actuators(:,1),DM.actuators(:,2)));
+					DM.actuators(:,3) = -WF.interpGrid(DM.actuators(:,1),DM.actuators(:,2));
 					% TODO: clip.
 					touch(DM);
 					
@@ -175,19 +170,9 @@ classdef AODM < AOScreen
             end    
 		end
 		
-		function DM = removeMean(DM,MASK)
-		% AODM.removeMean([MASK]): This removes the mean actuator
-		% displacement.
-        if(nargin<2)
-            MASK = true(1,DM.nActs);
-        end
-        
-        SELECT = DM.actuators(:,5)~=0;
-            if(nargin<2)
-                SELECT(~MASK(:)) = false;
-            end
+		function DM = removeMean(DM)
+			SELECT = DM.actuators(:,5)~=0;
 			MEAN = mean(DM.actuators(SELECT,3));
-            
 			DM.actuators(SELECT,3) = DM.actuators(SELECT,3) - MEAN;
 		end
 		
@@ -331,13 +316,12 @@ classdef AODM < AOScreen
 			touch(DM);
 		end
 		
-        function DM = addRippleActs(DM,K,amp,phase)
-            % DM.actuators(:,3) = DM.actuators(:,3) + ...
-            %    amp*cos(K(1)*DM.actuators(:,1) + K(2)*DM.actuators(:,2) + phase);
-            DM.actuators(:,3) = DM.actuators(:,3) + ...
-                amp*cos(DM.actuators(:,1:2)*K(:) + phase);
-            touch(DM);
-        end
+		function DM = addRippleActs(DM,K,amp,phase)
+			DM.actuators(:,3) = DM.actuators(:,3) + ...
+				amp*cos(K(1)*DM.actuators(:,1) + K(2)*DM.actuators(:,2) + phase);
+			% TODO: clip.
+			touch(DM);
+		end
 		
 		function LIST = listActuators(DM,seg)
 			if(nargin<2)
@@ -386,13 +370,12 @@ classdef AODM < AOScreen
 			if(DM.touched)
 				%fprintf('DEBUG: DM.rendering\n');
 				[X,Y] = COORDS(DM);
-                X = gather(X);
-                Y = gather(Y);
-                
 				SEL = DM.actuators(:,5)~=0;
-
-                if(isempty(DM.interpolate_method))
-                    g = griddata(double([DM.actuators(SEL,1);DM.bconds(:,1)]),...
+				
+                if(DM.double_precision)
+                
+                    DM.grid_ = ...
+                        griddata(double([DM.actuators(SEL,1);DM.bconds(:,1)]),...
                         double([DM.actuators(SEL,2);DM.bconds(:,2)]),...
                         double([DM.actuators(SEL,3);DM.bconds(:,3)]),...
                         double(X),double(Y),'cubic');
@@ -400,23 +383,18 @@ classdef AODM < AOScreen
                     g = griddata(double([DM.actuators(SEL,1);DM.bconds(:,1)]),...
                         double([DM.actuators(SEL,2);DM.bconds(:,2)]),...
                         double([DM.actuators(SEL,3);DM.bconds(:,3)]),...
-                        double(X),double(Y),DM.interpolate_method);
-                end
-                
-                if(DM.double_precision)
-                    DM.grid_ = g;
-                else
+                        double(X),double(Y),'cubic');
                     DM.grid_ = single(g);
                 end
-                
+                    
                 DM.grid_(isnan(DM.grid_)) = 0; % TODO: rethink extrapolation.
-                DM.touched = false;
+				DM.touched = false;
             else
                 if(DM.verbosity>0)
                     fprintf('DEBUG: DM.render using CACHED\n');
                 end
-            end
-        end
+			end
+		end
 		
 		function a = uminus(a)
 			if(a.nActs == 0)
@@ -426,48 +404,22 @@ classdef AODM < AOScreen
 			end
 			touch(a);
 		end
-        
-        function g = grid(DM,nugrid,mask) % TODO: make this fancier.
-            %% AODM.grid(nugrid,[mask])
-            % See AOGrid.grid.
-            
+		
+		function g = grid(DM)
 			if(DM.nActs == 0)
 				g = DM.grid_;
 				return
-            end
-            
-            if(nargin==1) % Just read out the value.
-                DM.render;
-                g = DM.grid_;
-            else % Set the value to the input...
-                if(nargin==2) % the CLASSIC behavior...
-                    nugrid = squeeze(nugrid);
-                    nugrid = nugrid(:,:,1);
-                    nugrid = squeeze(nugrid);
-                    %if(size(obj)==size(nugrid))
-                    if(numel(DM)==numel(nugrid))  %  Also allow vector assignments
-                        %obj.grid_(:) = nugrid(:); % Does not force shape.
-                        DM.grid_ = reshape(nugrid(:),size(DM.grid_)); % Does not force shape.
-                        %obj.touch;
-                    else
-                        DM.resize(size(nugrid));
-                        DM.grid_ = nugrid;
-                        %obj.touch;
-                        %error('different sized grid assignment not supported (yet)');
-                    end
-                else % This when a mask is specified...
-                    DM.grid_(mask(:)) = nugrid(:);
-                end
-                g = DM; % Note that I return the object if setting the grid.
-            end
-        end
-        
+			end
+			DM.render;
+			g = DM.grid_;
+		end
+		
 		function DM = show(DM,RANGE,MASK)
 			% This method allows for a plot to be made with the common
 			% requirement of an externally set range and an AOAperture
 			% mask.
 			
-			G = real(gather(DM.grid));
+			G = real(DM.grid());
 			[x,y] = coords(DM);
 			
 			if(nargin<2 || isempty(RANGE))
@@ -493,7 +445,7 @@ classdef AODM < AOScreen
             title([class(DM) ' ' DM.name ': axis:' DM.axis ' domain:' DM.domain ],...
                 'FontSize',14);
             colorbar;
-            %drawnow;
+            drawnow;
             
             
 			

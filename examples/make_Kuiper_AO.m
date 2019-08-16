@@ -51,9 +51,6 @@ Seg.name = 'Kuiper 61inch Primary';
 Seg.spacing(0.01);
 Seg.pupils = PUPIL_DEFN;
 Seg.make;
-Seg.show;
-
-%%
 
 clf;
 % Seg.touch.make.show;
@@ -90,7 +87,7 @@ DM.plotRegions; daspect([1 1 1]); drawnow;
 
 WFS = AOWFS(A,D/12);
 WFS.name = 'Omega SHWFS';
-A.show; WFS.quiver(1); drawnow; % Show them.
+A.show; WFS.quiver(1/2); drawnow; % Show them.
 
 %% Now for some real work.  Building the RECONSTRUCTOR...
 RECON = AOReconstructor(A,DM,WFS);

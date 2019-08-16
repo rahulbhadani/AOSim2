@@ -1,3 +1,6 @@
+addpath('/home/ivory/Desktop/AOSim2_john/AOSim2');
+addpath('/home/ivory/Desktop/AOSim2_john/AOSim2/utils');
+
 gain = 0.0; % This is the AO gain.  Set to 0 for no AO.
 
 dTHETA = 0.1;

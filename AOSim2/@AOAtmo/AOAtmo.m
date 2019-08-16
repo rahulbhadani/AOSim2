@@ -348,21 +348,12 @@ classdef AOAtmo < AOScreen
             end
         end
         
-        function HEIGHTS = listHeights(ATMO,LIST_SHADOWS)
+        function HEIGHTS = listHeights(ATMO)
             % HEIGHTS = listHeights(ATMO)
-            
-            if(nargin<2)
-                LIST_SHADOWS = false;
-            end
-            
             HEIGHTS = nan(1,ATMO.nLayers);
             
             for n=1:ATMO.nLayers
-                if(LIST_SHADOWS)
-                    HEIGHTS(n) = ATMO.layers{n}.shadow.altitude;
-                else
-                    HEIGHTS(n) = ATMO.layers{n}.screen.altitude;
-                end
+                HEIGHTS(n) = ATMO.layers{n}.screen.altitude;
             end
         end
         
@@ -416,7 +407,7 @@ classdef AOAtmo < AOScreen
                     ATMO.layers{n}.screen.Offset);
             end
             
-            fprintf('\nThe total Fried Scale for a star would be %.3f m.\n',ATMO.totalFriedScaleStar);
+            fprintf('The total Fried Scale for a star would be %.3f m.\n',ATMO.totalFriedScale);
         end
         
         function ATMO = showLayers(ATMO,linespec)
@@ -432,8 +423,8 @@ classdef AOAtmo < AOScreen
             clf;
             BBOX = ATMO.BBox;
             
-            N1 = ceil(sqrt(ATMO.nLayers));
-            N2 = ceil(ATMO.nLayers/N1);
+            N1 = ATMO.nLayers;
+            N2 = 1;
             
             if(N1>5)
                 FF = factor(N1);
