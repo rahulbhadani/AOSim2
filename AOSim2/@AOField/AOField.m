@@ -5,7 +5,7 @@ classdef AOField < AOGrid
     
     %% Properties
     % Static Constants
-    properties(Constant=true, SetAccess = 'private')
+    properties(Constant=true)
         VBAND = 0.5556e-6;
         RBAND = 0.7e-6;
         JBAND = 1.215e-6;
