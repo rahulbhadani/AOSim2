@@ -77,7 +77,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
         %% Constructors
         function obj = AOGrid(nxy)
             % function obj = AOGrid(nxy)
-            % This is the basic AOGrid contructor.
+            % This is the basic AOGrid constructor.
             % The argument can be a pixel size (single number is square)
             % or it can be another AOGrid in which case it is used as a
             % template.  In that case no data is copied, just dimensions.
@@ -324,10 +324,13 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             G.origin(midpoint);
         end
         
+        % Dimension in x direction*/
         function n = nx(obj)
             n = size(obj.grid_,2);
         end
         
+        
+        % Dimension in y direction*/
         function n = ny(obj)
             n = size(obj.grid_,1);
         end
@@ -800,7 +803,7 @@ classdef AOGrid < matlab.mixin.Copyable  % formerly classdef AOGrid < handle
             SZ = A.FFTSize;
             CEN = AOGrid.middlePixel(SZ);
             A.FAXIS_PIXEL = CEN;
-            
+         
             dk = A.dk;
             
             ky = ((1:SZ(1))-CEN(1))*dk(1);
