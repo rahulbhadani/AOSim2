@@ -220,13 +220,15 @@ classdef AOReconstructor < handle
                     RECON.DM.setActs(ABER);
                     F.planewave * RECON.A * RECON.DM;
                     RECON.WFS.sense(F);
-                    
+                   
+                   
                     RECON.ACTS(:,nmode)   = RECON.DM.actuators(:,3);
                     RECON.SLOPES(:,nmode) = RECON.WFS.slopes;
                     
                     nmode = nmode + 1;
                     fprintf('%d ',m);
                     
+                     figure;
                     if(RECON.verbose)
                         [x,y]=coords(F);
                         clf; 
@@ -235,7 +237,8 @@ classdef AOReconstructor < handle
                         quiver(RECON.WFS,1);
                         %pause;
                         subplot(1,2,2);
-                        imagesc(x,y,RECON.A.grid .* RECON.DM.grid); daspect([1 1 1]);
+                        imagesc(x,y,RECON.A.grid .* RECON.DM.grid);
+                        daspect([1 1 1]);
                         hold off;
                         drawnow;
                     end
@@ -642,7 +645,7 @@ classdef AOReconstructor < handle
                     RECON.lambda);
             end
             
-            Nwfs = RECON.WFS.nSubAps;
+            Nwfs = RECON.WFS.nSubAps; %Number of sub apertures
             XY = RECON.WFS.subApCoords;
             xact = RECON.DM.actuators(:,1);
             yact = RECON.DM.actuators(:,2);
