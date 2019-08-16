@@ -13,25 +13,22 @@ PHOTONS_PER_EXPOSURE = 1e4; % Just a test.
 
 WIND_SHIFT = [1 5]; % wind motion in phase screen pixels per exposure.
 
-D = 1.54;
-secondary = 14.5/100;
+% First create the pupil
+x0 = 0; %X-coordinates of the center of the pupil
+y0 = 0; %Y-coordinates of the center of the pupil
+TRANSMISSION_TYPE = 1; % Tranmission Type is 1 for Mirror
+WIND_SHIFT = [1 5]; % 1m/s of wind speed in x-direction, 5m/s in y-direction
+D = 1.54; % Aperture diameter
+SPACING = 0.001; %Setting the number of pixels across the segment/pupil
+SMOOTHING = SPACING/4;
+PUPIL_DEFN = [x0, y0, D, TRANSMISSION_TYPE, SMOOTHING, 0, 0, 0, 0, 0];
 
-SPACING = 0.01;            % fine spacing makes nice pupil images but is really overkill.
-aa = SPACING;              % for antialiasing.
-% aa = 0.04;
-spider = 0.0254;
-% spider = 0.01;
-
-PUPIL_DEFN = [
-   0 0 D         1 aa 0 0 0 0 0
-   0 0 secondary 0 aa/2 0 0 0 0 0
-   0 0 spider   -2 aa 4 0 D/1.9 0 0
-   ];
 
 % Since this demo only uses one AOSegment, I will not use the AOAperture wrapper.  
 % I will only use AOSegment.  This is fine for simple pupils.
 
 A = AOSegment;
+A.verbosity = 1;
 A.spacing(SPACING);
 A.name = 'Kuiper 61inch Primary';
 A.pupils = PUPIL_DEFN;
@@ -95,6 +92,7 @@ N1=2; N2=2; % subplots
 
 % Do this at these ranges
 % RANGES = [100 1e3 5e3 10e3 20e3 ];
+%RANGES = [500 1e3 5e3 10e3 20e3 50e3 ];
 RANGES = [500 1e3 5e3 10e3 20e3 50e3 ];
 
 for z=RANGES
@@ -120,7 +118,7 @@ for z=RANGES
     CCD_noAO = 0; % Start the exposure.
     CCD_AO = 0; % Start the exposure.
     
-    for t=1:1000  % t is just a counter here, not real time.
+    for t=1:100  % t is just a counter here, not real time.
     %for t=1:100  % t is just a counter here, not real time.
         modprint(t,20);
         
