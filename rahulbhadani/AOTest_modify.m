@@ -1,8 +1,9 @@
 % Testing Adaptive Optics
-clc;clear all;clf;close all;
+clc;clear all;
+clf;close all;
 % 
- addpath('/home/ivory/VersionControl/AOSim2/AOSim2');
- addpath('/home/ivory/VersionControl/AOSim2/AOSim2/utils');
+ addpath('../AOSim2');
+ addpath('../AOSim2/utils');
 colormap(hot);
 
 % lambda = AOField.RBAND; % Red light.
@@ -23,11 +24,12 @@ PUPIL = [x0, y0, D, TRANSMISSION_TYPE, SMOOTHING, 0, 0, 0, 0, 0];
 
 A = AOSegment;
 A.spacing(SPACING);
-A.name = 'AO Test';
+A.name = 'AO Segment (An Aperture)';
 A.pupils = PUPIL;
 A.make;
 A.show;
 
+%%
 % Create a field
 
 % When selecting the FFT Size, you want to make sure to have a larger FFT
@@ -57,7 +59,9 @@ figure;
 F.planewave*A;
 F.show;
 colormap(hot);
+title('Planewave through the aperture');
 
+%%
 %Create Point Spread Function
 FOV = 5; %In arc seconds
 % This will result in the PSF being interpolated to a grid that has 
@@ -79,14 +83,13 @@ colormap(hot);
 %% Create the AO System
 % This portion is pulled from the make_kuiper_AO example
 
-
 WFS_FPS = 500.;
 AO_STARTTIME = 0.002;
 gain=1;
 
-STROKE = 5.5e-6;
+STROKE = 5.5e-6; %% What is this?
 
-DM = AODM(A);   %Creating deformable mirror
+DM = AODM(A);   %Creating a deformable mirror
 DM.name = 'BMC 140 element MEMS';
 
 xx = (1:12)*D/12;
@@ -94,18 +97,24 @@ xx = xx - mean(xx);
 [X,Y] = meshgrid(xx,xx);
 ACTS = [X(:) Y(:)];
 
-DM.addActs(ACTS,1,A);
+DM.addActs(ACTS,1,A); %Add Actuators
 DM.defineBC(D,8); % A circle of 8 null points at D radius.
 figure;
 A.show;
 colormap(gray);
-DM.plotRegions; daspect([1 1 1]); drawnow;
+DM.plotRegions; daspect([1 1 1]);
+drawnow;
+title('Plane Wave on a BMC Deformable Mirror');
+
 
 %% Build the Shack-Hartmann WFS.
 figure;
 WFS = AOWFS(A,D/12);
 WFS.name = 'Omega SHWFS';
-A.show; WFS.quiver(1); drawnow; % Show them.
+A.show; 
+WFS.quiver(1); 
+title('Shack-Hartmann Wave front Sensor');
+drawnow; % Show them.
 
 %% Now for some real work.  Building the RECONSTRUCTOR...
 RECON = AOReconstructor(A,DM,WFS);
@@ -120,25 +129,31 @@ RECON.adhocProgram(D/12*3);
 RECON.zprogram(D,12);  % program using Zernikes.
 RECON.rebuild(56).show;
 DM.setActs(0);
-
+colorbar;
+title('Reconstructor');
 
 
 %% Now create some turbulence
 Turbulence = AOScreen(2048);
 %2048x2048 Grid size for Phase Screen,
 %Make the phase screen bigger to get a good low-frequency behavior
-Turbulence.name = 'My turbulence layer';
+Turbulence.name = 'A Turbulence layer';
 Turbulence.spacing(0.02);
 Turbulence.setR0(0.15); %Fried parameter at 500nm
 Turbulence.make;
 [x_t, y_t] = Turbulence.coords; % Coordinate points on turbulence.
+Turbulence.show;
+colormap(hot);
+colorbar;
 
+
+%%
 figure;
 z = 1e2;
 for i = 1:100
     subplot(2,2,1);
     Turbulence.show;
-    Turbulence.shiftPixels([4 8]); % simulate wind.
+    Turbulence.shiftPixels([1 2]); % simulate wind.
     colormap(hot);
 %     drawnow;
     
@@ -153,7 +168,7 @@ for i = 1:100
     imagesc(thx, thy, log10(PSF0),[-4 0]);
     colorbar;
     colormap(hot);
-    title(['i = ', num2str(i)]);
+    title(['Uncorrected at Iteration, i = ', num2str(i)]);
 %     drawnow;
     
     
@@ -162,13 +177,16 @@ for i = 1:100
 	
     WFS.sense(F*DM);
     if(t>AO_STARTTIME)  % Suffer with seeing limit for 50ms.
-        DM.bumpActs(-gain*RECON.RECONSTRUCTOR * WFS.slopes);
+        DM.setActs(0);
+        DM.bumpActs(-gain*RECON.RECONSTRUCTOR * WFS.slopes); 
         DM.removeMean.clip(STROKE);
+        RECON.RECONSTRUCTOR ;
     end
     
     
     subplot(2,2,3);
-    F.show();WFS.quiver(1);
+    F.show();
+    WFS.quiver(1);
     F*DM;
     [PSF0, thx, thy] = F.mkPSF(FOV, PLATE_SCALE);
     PSFMax = max(PSF0(:)); % Get max of PSF for normalizing the PSF
@@ -177,7 +195,7 @@ for i = 1:100
     imagesc(thx, thy, log10(PSF0),[-4 0]);
     colorbar;
     colormap(hot);
-    title('Corrected');
+     title(['Corrected at Iteration, i = ', num2str(i)]);
     drawnow;
 end
 
