@@ -2,6 +2,9 @@
 %
 % 20150412 ATRodack
 
+ addpath('../AOSim2');
+ addpath('../AOSim2/utils');
+
 clear all;
 clc;
 close all;
